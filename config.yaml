@@ -15,14 +15,13 @@ events:
           destination: jenkins
           values:
             target: preview
+
   cli:
       stdin:
         - contains: test
-          destination: jenkins
+          destination: Test
           values:
-            target: test
-
-cron:
+            test: great
 
 
 destinations:
@@ -36,7 +35,7 @@ destinations:
   debug:
       stdout:
         - name: Test
-          text: This is a {{debug}} message
+          text: This is a {{ .Values.test}} message
 
 
 

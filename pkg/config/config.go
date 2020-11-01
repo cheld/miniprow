@@ -50,12 +50,12 @@ type CliEvent struct {
 	Stdin []Rule
 }
 
-type EventCtx struct {
+type InputData struct {
 	Objectiv string
 	Input    map[string]interface{}
 }
 
-type DestinationCtx struct {
+type EventData struct {
 	Name   string
 	Values map[string]interface{}
 }
@@ -68,31 +68,31 @@ type Rule struct {
 	Values      map[string]interface{}
 }
 
-func (rule *Rule) IsMatching(ctx EventCtx) bool {
+func (rule *Rule) IsMatching(inputData InputData) bool {
 	contains := true
 	if rule.Contains != "" {
-		contains = strings.Contains(ctx.Objectiv, rule.Contains)
+		contains = strings.Contains(inputData.Objectiv, rule.Contains)
 	}
 	equals := true
 	if rule.Equals != "" {
-		equals = ctx.Objectiv == rule.Contains
+		equals = inputData.Objectiv == rule.Equals
 	}
 	condition := true
 	if rule.Condition != "" {
 		var tpl bytes.Buffer
 		t, _ := template.New("Condition").Parse(rule.Condition)
-		_ = t.Execute(&tpl, ctx)
+		_ = t.Execute(&tpl, inputData)
 		result := tpl.String()
 		condition, _ = strconv.ParseBool(result)
 	}
 	return contains && equals && condition
 }
 
-func (rule *Rule) DestinationCtx(input EventCtx) DestinationCtx {
-	destination := DestinationCtx{}
-	destination.Name = rule.Destination
-	destination.Values = input.Copy(rule.Values).(map[string]interface{})
-	return destination
+func (rule *Rule) Apply(inputData InputData) EventData {
+	eventData := EventData{}
+	eventData.Name = rule.Destination
+	eventData.Values = inputData.Copy(rule.Values).(map[string]interface{})
+	return eventData
 }
 
 type Destination struct {
@@ -110,10 +110,10 @@ type HttpGetDestination struct {
 }
 
 type DebugDestination struct {
-	Info []DebugStdoutDestination
+	Stdout []DebugStdout
 }
 
-type DebugStdoutDestination struct {
+type DebugStdout struct {
 	Name string
 	Text string
 }
@@ -153,7 +153,7 @@ func Load(filename string) Configuration {
 // Copy creates a deep copy of whatever is passed to it and returns the copy
 // in an interface{}.  The returned value will need to be asserted to the
 // correct type.
-func (ctx *EventCtx) Copy(src interface{}) interface{} {
+func (ctx *InputData) Copy(src interface{}) interface{} {
 	if src == nil {
 		return nil
 	}
@@ -173,7 +173,7 @@ func (ctx *EventCtx) Copy(src interface{}) interface{} {
 
 // copyRecursive does the actual copying of the interface. It currently has
 // limited support for what it can handle. Add as needed.
-func (ctx *EventCtx) copyRecursive(original, cpy reflect.Value) {
+func (ctx *InputData) copyRecursive(original, cpy reflect.Value) {
 
 	// handle according to original's Kind
 	switch original.Kind() {
