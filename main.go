@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/cheld/cicd-bot/pkg/config"
-	"github.com/cheld/cicd-bot/pkg/destination"
 	"github.com/cheld/cicd-bot/pkg/event"
+	"github.com/cheld/cicd-bot/pkg/trigger"
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
 
@@ -18,12 +18,11 @@ const (
 func main() {
 
 	config := config.Load("config.yaml")
-	fmt.Println(config.Events.Github.Comment[0].Values["target"])
 	args := "test"
 	stdin := ""
-	eventData := event.NewHandler(config).HandleStdin(args, stdin)
+	eventData := event.NewHandler(config).HandleCli(args, stdin)
 	fmt.Println(eventData)
-	destination.NewDispatcher(config).Execute(eventData)
+	trigger.NewDispatcher(config).Execute(eventData)
 
 	//event := source.NewGithub(config).ParseInput(payload)
 	// destination.New(config).Execute(event)

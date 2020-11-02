@@ -4,42 +4,46 @@ serve:
 
 
 events:
-  github:
-      comment: 
-        - contains: /needs-performance-tests
-          destination: jenkins
-          values:
-            target: test
+  github: 
+    - type: comment
+      contains: /needs-performance-tests
+      trigger: jenkins
+      values:
+        target: test
 
-        - condition:  ${{.Input.Payload.Branch eq "test" }}
-          destination: jenkins
-          values:
-            target: preview
+    - type: comment
+      rule:  ${{.Input.Payload.Branch eq "test" }}
+      trigger: jenkins
+      values:
+        target: preview
 
   cli:
-      stdin:
-        - contains: test
-          destination: Test
-          values:
-            test: great
+      - contains: test
+        destination: Test
+        values:
+          test: great
 
 
-destinations:
+trigger:
   http:
-      get:
-        - name: Jenkins
-          url:  http://admin:114845acdfac8737510c54607e2af78a84@localhost:8080/job/{{.Values.target}}/build
+      - name: Jenkins
+        url:  http://admin:114845acdfac8737510c54607e2af78a84@localhost:8080/job/{{.Values.target}}/build
 
-        - name: Demo
-          url:  http://localhost:{{ .Values.Serve.port }}/webhook/generic?
+      - name: Demo
+        url:  http://localhost:{{ .Values.Serve.port }}/webhook/generic?
   debug:
-      stdout:
-        - name: Test
-          text: This is a {{ .Values.test}} message
+      - name: Test
+        text: This is a {{ .Values.test}} message
 
 
 
-
+#    - type: comment
+#      condition:
+#        contains: /needs-performance-tests
+#      trigger:
+#        name: jenkins
+#        values:
+#          target: test
 
 
 #curl -f -k -H 'Content-Type: application/json' -XPOST --user login:secret https://ansible.dzbank.vrnet:443/api/v2/job_templates/197/launch/
