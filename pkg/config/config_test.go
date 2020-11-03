@@ -6,15 +6,15 @@ import (
 
 func TestDestinationCtx(t *testing.T) {
 
-	inputData := InputData{}
-	inputData.Objectiv = ""
-	inputData.Input = map[string]interface{}{
+	eventInpt := EventInput{}
+	eventInpt.Objectiv = ""
+	eventInpt.Input = map[string]interface{}{
 		"inputkey1": "inputvalue1",
 		"inputkey2": "inputvalue2",
 	}
 	t.Run("mytest", func(t *testing.T) {
 
-		eventSpec := EventSpec{
+		event := Event{
 			Trigger: "some-destination",
 			Values: map[string]interface{}{
 				"target": "test",
@@ -24,7 +24,7 @@ func TestDestinationCtx(t *testing.T) {
 				"template": "String with {{ .Input.inputkey1 }}",
 			},
 		}
-		eventData := eventSpec.Process(inputData)
+		eventData := event.Process(eventInpt)
 		if eventData.Name != "some-destination" {
 			t.Errorf("got %s, want %s", eventData.Name, "some-destination")
 		}

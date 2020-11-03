@@ -4,13 +4,13 @@ import (
 	"github.com/cheld/cicd-bot/pkg/config"
 )
 
-func (handler *Handler) HandleCli(args, stdin string) []config.EventData {
-	eventData := []config.EventData{}
-	for _, eventSpec := range handler.config.Events.Cli {
-		cliInput := config.InputData{args, nil}
-		if eventSpec.IsMatching(cliInput) {
-			eventData = append(eventData, eventSpec.Process(cliInput))
+func (handler *Handler) HandleCli(args, stdin string) []config.TriggerInput {
+	triggerInput := []config.TriggerInput{}
+	for _, event := range handler.config.Events {
+		eventInput := config.EventInput{args, nil}
+		if event.Type == "cli" && event.IsMatching(eventInput) {
+			triggerInput = append(triggerInput, event.Process(eventInput))
 		}
 	}
-	return eventData
+	return triggerInput
 }

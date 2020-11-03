@@ -4,36 +4,42 @@ serve:
 
 
 events:
-  github: 
-    - type: comment
-      contains: /needs-performance-tests
-      trigger: jenkins
-      values:
-        target: test
+  - source: github
+    type: comment
+    if_contains: /needs-performance-tests
+    trigger: jenkins
+    values:
+      target: test
 
-    - type: comment
-      rule:  ${{.Input.Payload.Branch eq "test" }}
-      trigger: jenkins
-      values:
-        target: preview
+  - source: github
+    type: comment
+    if_true:  ${{.Input.Payload.Branch eq "test" }}
+    trigger: jenkins
+    values:
+      target: preview
 
-  cli:
-      - contains: test
-        destination: Test
-        values:
-          test: great
+  - source: cli
+    if_contains: test
+    trigger: Test
+    values:
+      test: great
 
 
-trigger:
-  http:
-      - name: Jenkins
-        url:  http://admin:114845acdfac8737510c54607e2af78a84@localhost:8080/job/{{.Values.target}}/build
+triggers:
+  - name: Jenkins
+    type: http
+    arguments:
+      url:  http://admin:114845acdfac8737510c54607e2af78a84@localhost:8080/job/{{.Values.target}}/build
 
-      - name: Demo
-        url:  http://localhost:{{ .Values.Serve.port }}/webhook/generic?
-  debug:
-      - name: Test
-        text: This is a {{ .Values.test}} message
+  - name: Demo
+    type: http
+    arguments:
+      url:  http://localhost:{{ .Values.Serve.port }}/webhook/generic?
+
+  - name: Test
+    type: debug
+    arguments:
+      text: This is a {{ .Values.test}} message
 
 
 

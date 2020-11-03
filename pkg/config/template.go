@@ -5,14 +5,25 @@ import (
 	"fmt"
 	"html/template"
 	"reflect"
+	"strings"
 	"time"
 )
 
-func ProcessTemplate(tpl string, data interface{}) string {
+func ProcessTemplate(tpl string, data interface{}) (string, error) {
+	if !strings.Contains(tpl, "{{") {
+		return tpl, nil
+	}
+	tpl = strings.ReplaceAll(tpl, "${{", "{{")
 	var result bytes.Buffer
-	t, _ := template.New("tmp").Parse(tpl)
-	_ = t.Execute(&result, data)
-	return result.String()
+	t, err := template.New("tmp").Parse(tpl)
+	if err != nil {
+		return "", err
+	}
+	err = t.Execute(&result, data)
+	if err != nil {
+		return "", err
+	}
+	return result.String(), nil
 }
 
 func ProcessAllTemplates(templates, data interface{}) interface{} {
@@ -122,7 +133,10 @@ func (ctx *context) copyRecursive(original, cpy reflect.Value) {
 			fmt.Println("test2------------")
 			fmt.Println(original.String())
 			fmt.Println(ctx)
-			n := ProcessTemplate(original.String(), ctx)
+			n, err := ProcessTemplate(original.String(), ctx)
+			if err != nil {
+				fmt.Println(err)
+			}
 			fmt.Println(n)
 			newValue := reflect.ValueOf(n)
 			cpy.Set(newValue)

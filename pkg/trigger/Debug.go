@@ -6,7 +6,8 @@ import (
 	"github.com/cheld/cicd-bot/pkg/config"
 )
 
-func Stdout(trigger config.DebugTrigger, eventData config.EventData) {
-	t := config.ProcessTemplate(trigger.Text, eventData)
+func Stdout(trigger config.Trigger, triggerInput config.TriggerInput) {
+	messageTemplate := trigger.Arguments["Text"].(string)
+	t := config.ProcessTemplate(messageTemplate, triggerInput)
 	fmt.Println(t)
 }

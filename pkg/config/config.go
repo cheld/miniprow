@@ -16,8 +16,8 @@ type Configuration struct {
 		Secret string
 		Port   int
 	}
-	Events  Event
-	Trigger Trigger
+	Events   []Event
+	Triggers []Trigger
 }
 
 //func (config *Configuration) getTrigger(name string) Trigger {
@@ -29,67 +29,54 @@ type Configuration struct {
 //	return Trigger{}
 //}
 
-type Event struct {
-	Github []EventSpec
-	Cli    []EventSpec
-}
-
-type InputData struct {
+type EventInput struct {
 	Objectiv string
 	Input    map[string]interface{}
 }
 
-type EventData struct {
-	Name   string
-	Values map[string]interface{}
+type Event struct {
+	Source      string
+	Type        string
+	If_contains string
+	If_equals   string
+	If_true     string
+	Trigger     string
+	Values      map[string]interface{}
 }
 
-type EventSpec struct {
-	Type     string
-	Contains string
-	Equals   string
-	Rule     string
-	Trigger  string
-	Values   map[string]interface{}
-}
-
-func (rule *EventSpec) IsMatching(inputData InputData) bool {
+func (event *Event) IsMatching(eventInput EventInput) bool {
 	contains := true
-	if rule.Contains != "" {
-		contains = strings.Contains(inputData.Objectiv, rule.Contains)
+	if event.If_contains != "" {
+		contains = strings.Contains(eventInput.Objectiv, event.If_contains)
 	}
 	equals := true
-	if rule.Equals != "" {
-		equals = inputData.Objectiv == rule.Equals
+	if event.If_equals != "" {
+		equals = eventInput.Objectiv == event.If_equals
 	}
 	condition := true
-	if rule.Rule != "" {
-		result := ProcessTemplate(rule.Rule, inputData)
+	if event.If_true != "" {
+		result, _ := ProcessTemplate(event.If_true, eventInput)
 		condition, _ = strconv.ParseBool(result)
 	}
 	return contains && equals && condition
 }
 
-func (spec *EventSpec) Process(inputData InputData) EventData {
-	eventData := EventData{}
-	eventData.Name = spec.Trigger
-	eventData.Values = ProcessAllTemplates(spec.Values, inputData).(map[string]interface{})
-	return eventData
+func (event *Event) Process(eventInput EventInput) TriggerInput {
+	triggerInput := TriggerInput{}
+	triggerInput.Name = event.Trigger
+	triggerInput.Values = ProcessAllTemplates(event.Values, eventInput).(map[string]interface{})
+	return triggerInput
+}
+
+type TriggerInput struct {
+	Name   string
+	Values map[string]interface{}
 }
 
 type Trigger struct {
-	Http  []HttpTrigger
-	Debug []DebugTrigger
-}
-
-type HttpTrigger struct {
-	Name string
-	Url  string
-}
-
-type DebugTrigger struct {
-	Name string
-	Text string
+	Name      string
+	Type      string
+	Arguments map[string]interface{}
 }
 
 func Load(filename string) Configuration {
