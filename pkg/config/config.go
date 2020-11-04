@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"strconv"
 	"strings"
 
@@ -47,15 +48,19 @@ type Event struct {
 func (event *Event) IsMatching(eventInput EventInput) bool {
 	contains := true
 	if event.If_contains != "" {
-		contains = strings.Contains(eventInput.Objectiv, event.If_contains)
+		contains = strings.Contains(strings.ToUpper(eventInput.Objectiv), strings.ToUpper(event.If_contains))
 	}
 	equals := true
 	if event.If_equals != "" {
-		equals = eventInput.Objectiv == event.If_equals
+		equals = strings.EqualFold(eventInput.Objectiv, event.If_equals)
 	}
 	condition := true
 	if event.If_true != "" {
-		result, _ := ProcessTemplate(event.If_true, eventInput)
+		result, err := ProcessTemplate(event.If_true, eventInput)
+		if err != nil {
+			result = "false"
+			log.Println(err)
+		}
 		condition, _ = strconv.ParseBool(result)
 	}
 	return contains && equals && condition
