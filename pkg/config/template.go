@@ -2,7 +2,6 @@ package config
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"reflect"
 	"strings"
@@ -26,15 +25,20 @@ func ProcessTemplate(tpl string, data interface{}) (string, error) {
 	return result.String(), nil
 }
 
-func ProcessAllTemplates(templates, data interface{}) interface{} {
+func ProcessAllTemplates(templates, input interface{}) (interface{}, error) {
 	ctx := context{
-		data: data,
+		input: input,
 	}
-	return ctx.copy(templates)
+	result := ctx.copy(templates)
+	if ctx.err != nil {
+		return nil, ctx.err
+	}
+	return result, nil
 }
 
 type context struct {
-	data interface{}
+	input interface{}
+	err   error
 }
 
 // Copy creates a deep copy of whatever is passed to it and returns the copy
@@ -130,14 +134,11 @@ func (ctx *context) copyRecursive(original, cpy reflect.Value) {
 
 	default:
 		if original.Kind() == reflect.String {
-			fmt.Println("test2------------")
-			fmt.Println(original.String())
-			fmt.Println(ctx)
-			n, err := ProcessTemplate(original.String(), ctx)
+			n, err := ProcessTemplate(original.String(), ctx.input)
 			if err != nil {
-				fmt.Println(err)
+				ctx.err = err
+				n = original.String()
 			}
-			fmt.Println(n)
 			newValue := reflect.ValueOf(n)
 			cpy.Set(newValue)
 		} else {

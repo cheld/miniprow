@@ -64,7 +64,11 @@ func (event *Event) IsMatching(eventInput EventInput) bool {
 func (event *Event) Process(eventInput EventInput) TriggerInput {
 	triggerInput := TriggerInput{}
 	triggerInput.Name = event.Trigger
-	triggerInput.Values = ProcessAllTemplates(event.Values, eventInput).(map[string]interface{})
+	result, err := ProcessAllTemplates(event.Values, eventInput)
+	if err != nil {
+		panic(err)
+	}
+	triggerInput.Values = result.(map[string]interface{})
 	return triggerInput
 }
 
