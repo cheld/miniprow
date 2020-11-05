@@ -21,6 +21,17 @@ type Configuration struct {
 	Triggers []Trigger
 }
 
+func (config *Configuration) FindMatchingEvent(source, eventType string, eventInput EventInput) *Event {
+	for _, event := range config.Events {
+		if strings.EqualFold(event.Source, source) &&
+			strings.EqualFold(event.Type, eventType) &&
+			event.IsMatching(eventInput) {
+			return &event
+		}
+	}
+	return nil
+}
+
 //func (config *Configuration) getTrigger(name string) Trigger {
 //	for _, trigger := range config.Triggers {
 //		if trigger.Name == name {

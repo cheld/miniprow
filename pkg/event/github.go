@@ -1,8 +1,6 @@
 package event
 
 import (
-	"fmt"
-
 	"github.com/cheld/cicd-bot/pkg/config"
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
@@ -22,11 +20,9 @@ func (handler *Handler) HandleGithub(payload interface{}) []config.TriggerInput 
 	case github.IssueCommentPayload:
 		commentPayload := payload.(github.IssueCommentPayload)
 		eventInput.Objectiv = commentPayload.Comment.Body
-		fmt.Println(eventInput.Objectiv)
-		for _, event := range handler.config.Events {
-			if event.Source == "github" && event.Type == "comment" && event.IsMatching(eventInput) {
-				triggerInput = append(triggerInput, event.Handle(eventInput))
-			}
+		event := handler.config.FindMatchingEvent("Github", "comment", eventInput)
+		if event != nil {
+			triggerInput = append(triggerInput, event.Handle(eventInput))
 		}
 	}
 	return triggerInput

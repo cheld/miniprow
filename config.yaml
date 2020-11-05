@@ -9,7 +9,7 @@ events:
     if_contains: /needs-performance-tests
     trigger: Test
     values:
-      test: myValue
+      test: ${{ .Input.Payload.Comment.Body }}
 
   - source: gitlab
     type: comment
