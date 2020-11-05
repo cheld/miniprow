@@ -7,7 +7,7 @@ import (
 )
 
 func Stdout(trigger config.Trigger, triggerInput config.TriggerInput) {
-	messageTemplate := trigger.Arguments["Text"].(string)
-	t := config.ProcessTemplate(messageTemplate, triggerInput)
+	messageTemplate := trigger.Arguments["text"].(string)
+	t, _ := config.ProcessTemplate(messageTemplate, triggerInput)
 	fmt.Println(t)
 }

@@ -9,5 +9,6 @@ type Handler struct {
 }
 
 func NewHandler(config config.Configuration) *Handler {
-	return &Handler{config}
+	return &Handler{
+		config: config}
 }

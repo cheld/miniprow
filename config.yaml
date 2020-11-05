@@ -7,11 +7,11 @@ events:
   - source: github
     type: comment
     if_contains: /needs-performance-tests
-    trigger: jenkins
+    trigger: Test
     values:
-      target: test
+      test: myValue
 
-  - source: github
+  - source: gitlab
     type: comment
     if_true:  ${{ eq .Input.Payload.Branch "test" }}
     trigger: jenkins

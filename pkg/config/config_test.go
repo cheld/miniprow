@@ -160,7 +160,7 @@ func TestDestinationCtx(t *testing.T) {
 				"template": "String with {{ .Input.inputkey1 }}",
 			},
 		}
-		eventData := event.Process(eventInpt)
+		eventData := event.Handle(eventInpt)
 		if eventData.Name != "some-destination" {
 			t.Errorf("got %s, want %s", eventData.Name, "some-destination")
 		}

@@ -66,7 +66,7 @@ func (event *Event) IsMatching(eventInput EventInput) bool {
 	return contains && equals && condition
 }
 
-func (event *Event) Process(eventInput EventInput) TriggerInput {
+func (event *Event) Handle(eventInput EventInput) TriggerInput {
 	triggerInput := TriggerInput{}
 	triggerInput.Name = event.Trigger
 	result, err := ProcessAllTemplates(event.Values, eventInput)
