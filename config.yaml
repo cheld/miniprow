@@ -7,9 +7,9 @@ events:
   - source: github
     type: comment
     if_contains: /needs-performance-tests
-    trigger: Test
+    trigger: Debug
     values:
-      test: ${{ .Input.Payload.Comment.Body }}
+      message: Github comment was {{ .Input.Payload.Comment.Body }}
 
   - source: gitlab
     type: comment
@@ -36,10 +36,10 @@ triggers:
     arguments:
       url:  http://localhost:{{ .Values.Serve.port }}/webhook/generic?
 
-  - name: Test
+  - name: Debug
     type: debug
     arguments:
-      text: This is a {{ .Values.test}} message
+      stdout: ${{ .Values.message }}
 
 
 
