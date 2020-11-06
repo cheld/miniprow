@@ -7,9 +7,9 @@ events:
   - source: github
     type: comment
     if_contains: /needs-performance-tests
-    trigger: Debug
+    trigger: Test2
     values:
-      message: Github comment was {{ .Input.Payload.Comment.Body }}
+      number: '{{ .Input.Payload.Issue.Number }}'
 
   - source: gitlab
     type: comment
@@ -20,9 +20,10 @@ events:
 
   - source: cli
     if_contains: test
-    trigger: Test
+    trigger: Debug
     values:
       test: great
+      message: Hello World
 
 
 triggers:
@@ -31,15 +32,24 @@ triggers:
     arguments:
       url:  http://admin:114845acdfac8737510c54607e2af78a84@localhost:8080/job/{{.Values.target}}/build
 
-  - name: Demo
+  - name: Test
     type: http
     arguments:
-      url:  http://localhost:{{ .Values.Serve.port }}/webhook/generic?
+      url:   https://api.github.com/repos/cheld/code-snippets/issues
+      method: GET
+
+  - name: Test2
+    type: http
+    arguments:
+      url:   https://api.github.com/repos/cheld/code-snippets/issues/{{.Values.number}}/comments
+      method: POST
+      data: '{ "body": "hello from bot" }'
+
 
   - name: Debug
     type: debug
     arguments:
-      stdout: ${{ .Values.message }}
+      stdout: '{{ .Values.message }}'
 
 
 

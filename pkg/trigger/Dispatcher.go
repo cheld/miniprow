@@ -18,16 +18,18 @@ func NewDispatcher(cfg config.Configuration) *Dispatcher {
 	for _, trigger := range cfg.Triggers {
 		dispatcher.targets[trigger.Name] = trigger
 	}
-	fmt.Println(dispatcher.targets)
 	return &dispatcher
 }
 
 func (dispatcher *Dispatcher) Execute(triggerInput []config.TriggerInput) {
-	for _, data := range triggerInput {
-		target := dispatcher.targets[data.Name]
-		switch target.Type {
+	for _, triggerInput := range triggerInput {
+		trigger := dispatcher.targets[triggerInput.Name]
+		fmt.Println(trigger)
+		switch trigger.Type {
 		case "debug":
-			Stdout(target, data)
+			ExecuteDebug(trigger, triggerInput)
+		case "http":
+			ExecuteHttp(trigger, triggerInput)
 		default:
 			fmt.Printf("I don't know about type %s!\n", "")
 		}

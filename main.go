@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-
 	"net/http"
 
 	"github.com/cheld/cicd-bot/pkg/config"
@@ -22,9 +21,9 @@ func main() {
 	stdin := ""
 	handler := event.NewHandler(config)
 	dispatcher := trigger.NewDispatcher(config)
-	eventData := handler.HandleCli(args, stdin)
-	fmt.Println(eventData)
-	trigger.NewDispatcher(config).Execute(eventData)
+	triggerInput := handler.HandleCli(args, stdin)
+	fmt.Println(triggerInput)
+	trigger.NewDispatcher(config).Execute(triggerInput)
 
 	//event := source.NewGithub(config).ParseInput(payload)
 	// destination.New(config).Execute(event)

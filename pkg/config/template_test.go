@@ -34,6 +34,12 @@ func TestProcessTemplate(t *testing.T) {
 			Expected: "Hello World",
 		},
 		{
+			Name:     "Single quotes",
+			Template: "'{{.}}'",
+			Input:    "Hello World",
+			Expected: "Hello World",
+		},
+		{
 			Name:     "Start with dollar",
 			Template: "${{.}}",
 			Input:    "Hello World",

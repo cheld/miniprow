@@ -12,6 +12,9 @@ func ProcessTemplate(tpl string, data interface{}) (string, error) {
 	if !strings.Contains(tpl, "{{") {
 		return tpl, nil
 	}
+	if strings.HasPrefix(tpl, "'") && strings.HasSuffix(tpl, "'") {
+		tpl = tpl[1 : len(tpl)-1]
+	}
 	tpl = strings.ReplaceAll(tpl, "${{", "{{")
 	var result bytes.Buffer
 	t, err := template.New("tmp").Parse(tpl)
