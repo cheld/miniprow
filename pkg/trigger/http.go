@@ -9,15 +9,16 @@ import (
 	"github.com/cheld/cicd-bot/pkg/config"
 )
 
-func ExecuteHttp(trigger config.Trigger, triggerInput config.TriggerInput) {
-	url := trigger.Arguments["url"].(string)
-	method := trigger.Arguments["method"].(string)
-	data := trigger.Arguments["data"].(string)
+func ExecuteHttp(trigger config.Trigger, task config.Task) {
+	s, _ := config.ProcessAllTemplates(trigger.Spec, task)
+	spec := s.(map[string]string)
+	url := spec["url"]
+	method := spec["method"]
+	data := spec["data"]
 
-	u, _ := config.ProcessTemplate(url, triggerInput)
 	httpClient := &http.Client{}
 
-	req, err := http.NewRequest(method, u, bytes.NewBufferString(data))
+	req, err := http.NewRequest(method, url, bytes.NewBufferString(data))
 	if err != nil {
 		fmt.Println(err)
 	}

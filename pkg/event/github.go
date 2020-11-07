@@ -5,25 +5,22 @@ import (
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
 
-func (handler *Handler) HandleGithub(payload interface{}) []config.TriggerInput {
+func (handler *Handler) HandleGithub(payload interface{}) []config.Task {
 
-	eventInput := config.EventInput{
-		Objectiv: "",
-		Input: map[string]interface{}{ // TODO remove. Name payload
-			"Payload": payload,
-		},
+	source := config.Source{
+		Payload: payload,
 	}
 
-	triggerInput := []config.TriggerInput{}
+	tasks := []config.Task{}
 
 	switch payload.(type) {
 	case github.IssueCommentPayload:
 		commentPayload := payload.(github.IssueCommentPayload)
-		eventInput.Objectiv = commentPayload.Comment.Body
-		event := handler.config.FindMatchingEvent("Github", "comment", eventInput)
+		source.Value = commentPayload.Comment.Body
+		event := handler.config.FindMatchingEvent("Github", "comment", source)
 		if event != nil {
-			triggerInput = append(triggerInput, event.Handle(eventInput))
+			tasks = append(tasks, event.NewTask(source))
 		}
 	}
-	return triggerInput
+	return tasks
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 
@@ -21,11 +22,11 @@ type Configuration struct {
 	Triggers []Trigger
 }
 
-func (config *Configuration) FindMatchingEvent(source, eventType string, eventInput EventInput) *Event {
+func (config *Configuration) FindMatchingEvent(source, eventType string, sourceData Source) *Event {
 	for _, event := range config.Events {
 		if strings.EqualFold(event.Source, source) &&
 			strings.EqualFold(event.Type, eventType) &&
-			event.IsMatching(eventInput) {
+			event.IsMatching(sourceData) {
 			return &event
 		}
 	}
@@ -41,9 +42,9 @@ func (config *Configuration) FindMatchingEvent(source, eventType string, eventIn
 //	return Trigger{}
 //}
 
-type EventInput struct {
-	Objectiv string
-	Input    map[string]interface{}
+type Source struct {
+	Value   string
+	Payload interface{}
 }
 
 type Event struct {
@@ -56,18 +57,18 @@ type Event struct {
 	Values      map[string]interface{}
 }
 
-func (event *Event) IsMatching(eventInput EventInput) bool {
+func (event *Event) IsMatching(source Source) bool {
 	contains := true
 	if event.If_contains != "" {
-		contains = strings.Contains(strings.ToUpper(eventInput.Objectiv), strings.ToUpper(event.If_contains))
+		contains = strings.Contains(strings.ToUpper(source.Value), strings.ToUpper(event.If_contains))
 	}
 	equals := true
 	if event.If_equals != "" {
-		equals = strings.EqualFold(eventInput.Objectiv, event.If_equals)
+		equals = strings.EqualFold(source.Value, event.If_equals)
 	}
 	condition := true
 	if event.If_true != "" {
-		result, err := ProcessTemplate(event.If_true, eventInput)
+		result, err := ProcessTemplate(event.If_true, source)
 		if err != nil {
 			result = "false"
 			log.Println(err)
@@ -77,26 +78,28 @@ func (event *Event) IsMatching(eventInput EventInput) bool {
 	return contains && equals && condition
 }
 
-func (event *Event) Handle(eventInput EventInput) TriggerInput {
-	triggerInput := TriggerInput{}
-	triggerInput.Name = event.Trigger
-	result, err := ProcessAllTemplates(event.Values, eventInput)
+func (event *Event) NewTask(source Source) Task {
+	task := Task{}
+	task.Trigger = event.Trigger
+	result, err := ProcessAllTemplates(event.Values, source)
 	if err != nil {
 		panic(err)
 	}
-	triggerInput.Values = result.(map[string]interface{})
-	return triggerInput
+	task.Values = result.(map[string]interface{})
+	task.Env = Env()
+	return task
 }
 
-type TriggerInput struct {
-	Name   string
-	Values map[string]interface{}
+type Task struct {
+	Trigger string
+	Values  map[string]interface{}
+	Env     map[string]string
 }
 
 type Trigger struct {
-	Name      string
-	Type      string
-	Arguments map[string]interface{}
+	Name string
+	Type string
+	Spec map[string]interface{}
 }
 
 func Load(filename string) Configuration {
@@ -112,4 +115,13 @@ func Load(filename string) Configuration {
 	}
 
 	return yamlConfig
+}
+
+func Env() map[string]string {
+	env := make(map[string]string)
+	for _, entry := range os.Environ() {
+		keyValue := strings.Split(entry, "=")
+		env[keyValue[0]] = keyValue[1]
+	}
+	return env
 }

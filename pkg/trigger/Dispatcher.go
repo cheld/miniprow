@@ -21,15 +21,14 @@ func NewDispatcher(cfg config.Configuration) *Dispatcher {
 	return &dispatcher
 }
 
-func (dispatcher *Dispatcher) Execute(triggerInput []config.TriggerInput) {
-	for _, triggerInput := range triggerInput {
-		trigger := dispatcher.targets[triggerInput.Name]
-		fmt.Println(trigger)
+func (dispatcher *Dispatcher) Execute(tasks []config.Task) {
+	for _, task := range tasks {
+		trigger := dispatcher.targets[task.Trigger]
 		switch trigger.Type {
 		case "debug":
-			ExecuteDebug(trigger, triggerInput)
+			ExecuteDebug(trigger, task)
 		case "http":
-			ExecuteHttp(trigger, triggerInput)
+			ExecuteHttp(trigger, task)
 		default:
 			fmt.Printf("I don't know about type %s!\n", "")
 		}

@@ -29,18 +29,18 @@ events:
 triggers:
   - name: Jenkins
     type: http
-    arguments:
+    spec:
       url:  http://admin:114845acdfac8737510c54607e2af78a84@localhost:8080/job/{{.Values.target}}/build
 
   - name: Test
     type: http
-    arguments:
+    spec:
       url:   https://api.github.com/repos/cheld/code-snippets/issues
       method: GET
 
   - name: Test2
     type: http
-    arguments:
+    spec:
       url:   https://api.github.com/repos/cheld/code-snippets/issues/{{.Values.number}}/comments
       method: POST
       data: '{ "body": "hello from bot" }'
@@ -48,7 +48,7 @@ triggers:
 
   - name: Debug
     type: debug
-    arguments:
+    spec:
       stdout: '{{ .Values.message }}'
 
 
