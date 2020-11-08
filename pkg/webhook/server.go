@@ -1,6 +1,7 @@
 package webhook
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/cheld/cicd-bot/pkg/config"
@@ -22,6 +23,7 @@ func Run() {
 	githubWebhook, _ := github.New(github.Options.Secret("MySecret"))
 
 	http.HandleFunc(pathGithubWebhook, func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Gihub event received")
 		payload, err := githubWebhook.Parse(r, github.IssueCommentEvent)
 		if err != nil {
 			if err == github.ErrEventNotFound {

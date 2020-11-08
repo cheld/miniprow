@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -48,6 +49,12 @@ func TestIsMatching(t *testing.T) {
 			expected:   true,
 		},
 		{
+			name:       "Contains: space",
+			ifContains: "/TEST all",
+			input:      "Run /test all",
+			expected:   true,
+		},
+		{
 			name:     "Equals: Simple test",
 			ifEquals: "/test",
 			input:    "/test",
@@ -69,6 +76,12 @@ func TestIsMatching(t *testing.T) {
 			name:     "Equals: Ignore case",
 			ifEquals: "/TEST",
 			input:    "/test",
+			expected: true,
+		},
+		{
+			name:     "Equals: Space",
+			ifEquals: "/TEST all",
+			input:    "/test all",
 			expected: true,
 		},
 		{
@@ -97,7 +110,7 @@ func TestIsMatching(t *testing.T) {
 		},
 		{
 			name:     "IfTrue: Condition",
-			ifTrue:   "${{ eq .Objectiv \"test\" }}",
+			ifTrue:   "${{ eq .Value \"test\" }}",
 			input:    "test",
 			expected: true,
 		},
@@ -129,10 +142,10 @@ func TestIsMatching(t *testing.T) {
 				If_equals:   tc.ifEquals,
 				If_true:     tc.ifTrue,
 			}
-			eventInput := EventInput{
-				Objectiv: tc.input,
+			source := Source{
+				Value: tc.input,
 			}
-			result := event.IsMatching(eventInput)
+			result := event.IsMatching(source)
 			if result != tc.expected {
 				t.Fatalf("Error expected %v, got %v.", tc.expected, result)
 			}
@@ -142,9 +155,9 @@ func TestIsMatching(t *testing.T) {
 
 func TestDestinationCtx(t *testing.T) {
 
-	eventInpt := EventInput{}
-	eventInpt.Objectiv = ""
-	eventInpt.Input = map[string]interface{}{
+	source := Source{}
+	source.Value = ""
+	source.Payload = map[string]interface{}{
 		"inputkey1": "inputvalue1",
 		"inputkey2": "inputvalue2",
 	}
@@ -157,21 +170,26 @@ func TestDestinationCtx(t *testing.T) {
 				"nested": map[string]string{
 					"nestedkey": "nestedvalue",
 				},
-				"template": "String with {{ .Input.inputkey1 }}",
+				"template": "String with {{ .Payload.inputkey1 }}",
 			},
 		}
-		eventData := event.Handle(eventInpt)
-		if eventData.Name != "some-destination" {
-			t.Errorf("got %s, want %s", eventData.Name, "some-destination")
+		task, err := event.NewTask(source)
+		if err != nil {
+			//fmt.Println(err)
+			t.Errorf("Error not exptected: %v", err)
 		}
-		if eventData.Values["target"] != "test" {
-			t.Errorf("got %s, want %s", eventData.Values["target"], "test")
+		if task.Trigger != "some-destination" {
+			t.Errorf("got %s, want %s", task.Trigger, "some-destination")
 		}
-		if (eventData.Values["nested"]).(map[string]string)["nestedkey"] != "nestedvalue" {
-			t.Errorf("got %s, want %s", "", "nestedvalue")
+		if task.Values["target"] != "test" {
+			t.Errorf("got %s, want %s", task.Values["target"], "test")
 		}
-		if eventData.Values["template"] != "String with inputvalue1" {
-			t.Errorf("got %s, want %s", eventData.Values["template"], "String with inputvalue1")
+		fmt.Println(task.Values["nested"])
+		//if (task.Values["nested"]).(map[string]string)["nestedkey"] != "nestedvalue" {
+		//	t.Errorf("got %s, want %s", "", "nestedvalue")
+		//}
+		if task.Values["template"] != "String with inputvalue1" {
+			t.Errorf("got %s, want %s", task.Values["template"], "String with inputvalue1")
 		}
 	})
 }

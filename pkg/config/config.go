@@ -22,26 +22,6 @@ type Configuration struct {
 	Triggers []Trigger
 }
 
-func (config *Configuration) FindMatchingEvent(source, eventType string, sourceData Source) *Event {
-	for _, event := range config.Events {
-		if strings.EqualFold(event.Source, source) &&
-			strings.EqualFold(event.Type, eventType) &&
-			event.IsMatching(sourceData) {
-			return &event
-		}
-	}
-	return nil
-}
-
-//func (config *Configuration) getTrigger(name string) Trigger {
-//	for _, trigger := range config.Triggers {
-//		if trigger.Name == name {
-//			return trigger
-//		}
-//	}
-//	return Trigger{}
-//}
-
 type Source struct {
 	Value   string
 	Payload interface{}
@@ -55,6 +35,17 @@ type Event struct {
 	If_true     string
 	Trigger     string
 	Values      map[string]interface{}
+}
+
+func (config *Configuration) Event(source, eventType string, sourceData Source) *Event {
+	for _, event := range config.Events {
+		if strings.EqualFold(event.Source, source) &&
+			strings.EqualFold(event.Type, eventType) &&
+			event.IsMatching(sourceData) {
+			return &event
+		}
+	}
+	return nil
 }
 
 func (event *Event) IsMatching(source Source) bool {
@@ -78,16 +69,16 @@ func (event *Event) IsMatching(source Source) bool {
 	return contains && equals && condition
 }
 
-func (event *Event) NewTask(source Source) Task {
+func (event *Event) NewTask(source Source) (Task, error) {
 	task := Task{}
 	task.Trigger = event.Trigger
 	result, err := ProcessAllTemplates(event.Values, source)
 	if err != nil {
-		panic(err)
+		return task, fmt.Errorf("Cannot trigger: %v. Error: %v", task.Trigger, err)
 	}
 	task.Values = result.(map[string]interface{})
 	task.Env = Env()
-	return task
+	return task, nil
 }
 
 type Task struct {
@@ -100,6 +91,15 @@ type Trigger struct {
 	Name string
 	Type string
 	Spec map[string]interface{}
+}
+
+func (config *Configuration) Trigger(name string) *Trigger {
+	for _, trigger := range config.Triggers {
+		if strings.EqualFold(trigger.Name, name) {
+			return &trigger
+		}
+	}
+	return nil
 }
 
 func Load(filename string) Configuration {

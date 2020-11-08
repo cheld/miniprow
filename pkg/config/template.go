@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"reflect"
 	"strings"
@@ -19,11 +20,11 @@ func ProcessTemplate(tpl string, data interface{}) (string, error) {
 	var result bytes.Buffer
 	t, err := template.New("tmp").Parse(tpl)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Cannot parse template: %v. Error: %v", tpl, err)
 	}
 	err = t.Execute(&result, data)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Cannot process template: %v. Error: %v", tpl, err)
 	}
 	return result.String(), nil
 }
