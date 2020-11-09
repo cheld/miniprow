@@ -74,7 +74,7 @@ func (event *Event) NewTask(source Source) (Task, error) {
 	task.Trigger = event.Trigger
 	result, err := ProcessAllTemplates(event.Values, source)
 	if err != nil {
-		return task, fmt.Errorf("Cannot trigger: %v. Error: %v", task.Trigger, err)
+		return task, fmt.Errorf("Cannot process: %v. Error: %v", task.Trigger, err)
 	}
 	task.Values = result.(map[string]interface{})
 	task.Env = Env()

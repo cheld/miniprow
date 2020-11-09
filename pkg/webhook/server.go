@@ -15,10 +15,13 @@ const (
 )
 
 func Run() {
-	config := config.Load("config.yaml")
-
-	handler := event.NewHandler(config)
-	dispatcher := trigger.NewDispatcher(config)
+	cfg := config.Load("config.yaml")
+	err := config.Validate(cfg) // TODO move to load
+	if err != nil {
+		fmt.Println(err)
+	}
+	handler := event.NewHandler(cfg)
+	dispatcher := trigger.NewDispatcher(cfg)
 
 	githubWebhook, _ := github.New(github.Options.Secret("MySecret"))
 

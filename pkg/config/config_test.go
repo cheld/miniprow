@@ -153,6 +153,109 @@ func TestIsMatching(t *testing.T) {
 	}
 }
 
+func TestTrigger(t *testing.T) {
+	cfg := Configuration{}
+	cfg.Triggers = []Trigger{
+		{
+			Name: "some-trigger-definition",
+		},
+	}
+	type testcase struct {
+		Name    string
+		Trigger string
+		Found   bool
+	}
+	testcases := []testcase{
+		{
+			Name:    "Simple match",
+			Trigger: "some-trigger-definition",
+			Found:   true,
+		},
+		{
+			Name:    "Ignore case",
+			Trigger: "sOme-Trigger-definition",
+			Found:   true,
+		},
+		{
+			Name:    "Not found",
+			Trigger: "not available",
+			Found:   false,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.Name, func(t *testing.T) {
+			trigger := cfg.Trigger(tc.Trigger)
+			if trigger == nil && tc.Found {
+				t.Fatalf("Trigger not found")
+			}
+			if trigger != nil && !tc.Found {
+				t.Fatalf("Trigger found, but not expected")
+			}
+		})
+	}
+}
+
+func TestEvent(t *testing.T) {
+	cfg := Configuration{}
+	cfg.Events = []Event{
+		{
+			Source:    "github",
+			Type:      "comment",
+			If_equals: "/test",
+		},
+	}
+	type testcase struct {
+		Name string
+
+		Source string
+		Type   string
+		Value  string
+
+		Found bool
+	}
+	testcases := []testcase{
+		{
+			Name:   "Simple match",
+			Source: "github",
+			Type:   "comment",
+			Value:  "/test",
+			Found:  true,
+		},
+		{
+			Name:   "Ignore case",
+			Source: "GithuB",
+			Type:   "COmmEnt",
+			Value:  "/test",
+			Found:  true,
+		},
+		{
+			Name:   "No match",
+			Source: "github",
+			Type:   "comment",
+			Value:  "/not-equals",
+			Found:  false,
+		},
+		{
+			Name:  "Empty source",
+			Type:  "comment",
+			Value: "/test",
+			Found: false,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.Name, func(t *testing.T) {
+			source := Source{Value: tc.Value}
+			event := cfg.Event(tc.Source, tc.Type, source)
+			if event == nil && tc.Found {
+				t.Fatalf("Event not found")
+			}
+			if event != nil && !tc.Found {
+				t.Fatalf("Trigger found, but not expected")
+			}
+		})
+	}
+}
+
 func TestDestinationCtx(t *testing.T) {
 
 	source := Source{}

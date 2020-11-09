@@ -7,7 +7,7 @@ events:
   - source: github
     type: comment
     if_contains: /needs-performance-tests
-    trigger: Test2
+    trigger: Github_Comment
     values:
       number: '{{ .Payload.Issue.Number }}'
 
@@ -19,6 +19,7 @@ events:
       target: preview
 
   - source: cli
+    type: stdin
     if_contains: test
     trigger: Debug
     values:
@@ -38,7 +39,7 @@ triggers:
       url:   https://api.github.com/repos/cheld/code-snippets/issues
       method: GET
 
-  - name: Test2
+  - name: Github_Comment
     type: http
     spec:
       url:   https://api.github.com/repos/cheld/code-snippets/issues/{{.Values.number}}/comments
