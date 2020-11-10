@@ -59,13 +59,8 @@ func TestExecute_errorhandling(t *testing.T) {
 					Trigger: tc.trigger,
 				},
 			}
-			err := dispatcher.Execute(tasks)
-			if tc.err && err == nil {
-				t.Fatalf("Error expected error.")
-			}
-			if !tc.err && err != nil {
-				t.Fatalf("No error expected but received: %v", err)
-			}
+			dispatcher.Execute(tasks)
+
 		})
 	}
 }

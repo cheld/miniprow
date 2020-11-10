@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	//"gopkg.in/yaml.v2"
-	//sigs.k8s.io/yaml"
 	"gopkg.in/yaml.v2"
 )
 
@@ -102,19 +100,21 @@ func (config *Configuration) Trigger(name string) *Trigger {
 	return nil
 }
 
-func Load(filename string) Configuration {
+func Load(filename string) (Configuration, error) {
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
-		fmt.Printf("Error reading YAML file: %s\n", err)
+		return Configuration{}, fmt.Errorf("Error reading YAML file: %s", err)
 	}
-
 	var yamlConfig Configuration
 	err = yaml.Unmarshal(yamlFile, &yamlConfig)
 	if err != nil {
-		fmt.Printf("Error parsing YAML file: %s\n", err)
+		return Configuration{}, fmt.Errorf("Error parsing YAML file: %s", err)
 	}
-
-	return yamlConfig
+	err = Validate(yamlConfig)
+	if err != nil {
+		return Configuration{}, fmt.Errorf("Error validating YAML file: %s", err)
+	}
+	return yamlConfig, nil
 }
 
 func Env() map[string]string {

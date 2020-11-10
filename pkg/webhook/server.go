@@ -3,6 +3,7 @@ package webhook
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/cheld/cicd-bot/pkg/config"
 	"github.com/cheld/cicd-bot/pkg/event"
@@ -15,10 +16,10 @@ const (
 )
 
 func Run() {
-	cfg := config.Load("config.yaml")
-	err := config.Validate(cfg) // TODO move to load
+	cfg, err := config.Load("config.yaml")
 	if err != nil {
 		fmt.Println(err)
+		os.Exit(1)
 	}
 	handler := event.NewHandler(cfg)
 	dispatcher := trigger.NewDispatcher(cfg)

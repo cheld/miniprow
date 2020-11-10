@@ -16,11 +16,12 @@ func NewDispatcher(cfg config.Configuration) Dispatcher {
 	return dispatcher
 }
 
-func (dispatcher *Dispatcher) Execute(tasks []config.Task) error { // TODO remove tests
+func (dispatcher *Dispatcher) Execute(tasks []config.Task) {
 	for _, task := range tasks {
-		trigger := dispatcher.config.Trigger(task.Trigger) //TODO add error handling internal
+		trigger := dispatcher.config.Trigger(task.Trigger)
 		if trigger == nil {
-			return fmt.Errorf("No trigger definition with name '%s' found\n", task.Trigger) //TODO Print
+			fmt.Printf("No trigger definition with name '%s' found\n", task.Trigger)
+			break
 		}
 		switch trigger.Type {
 		case "debug":
@@ -28,8 +29,7 @@ func (dispatcher *Dispatcher) Execute(tasks []config.Task) error { // TODO remov
 		case "http":
 			ExecuteHttp(trigger, task)
 		default:
-			return fmt.Errorf("No implementation for trigger type '%s' found!\n", trigger.Type) // TODO print
+			fmt.Printf("No implementation for trigger type '%s' found!\n", trigger.Type)
 		}
 	}
-	return nil
 }
