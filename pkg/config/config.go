@@ -35,7 +35,7 @@ type Event struct {
 	Values      map[string]interface{}
 }
 
-func (config *Configuration) Event(source, eventType string, sourceData Source) *Event {
+func (config *Configuration) FindEvent(source, eventType string, sourceData Source) *Event {
 	for _, event := range config.Events {
 		if strings.EqualFold(event.Source, source) &&
 			strings.EqualFold(event.Type, eventType) &&
@@ -67,7 +67,7 @@ func (event *Event) IsMatching(source Source) bool {
 	return contains && equals && condition
 }
 
-func (event *Event) NewTask(source Source) (Task, error) {
+func (event *Event) BuildTask(source Source) (Task, error) {
 	task := Task{}
 	task.Trigger = event.Trigger
 	result, err := ProcessAllTemplates(event.Values, source)
@@ -91,7 +91,7 @@ type Trigger struct {
 	Spec map[string]interface{}
 }
 
-func (config *Configuration) Trigger(name string) *Trigger {
+func (config *Configuration) FindTrigger(name string) *Trigger {
 	for _, trigger := range config.Triggers {
 		if strings.EqualFold(trigger.Name, name) {
 			return &trigger

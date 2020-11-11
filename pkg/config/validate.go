@@ -23,7 +23,7 @@ func Validate(cfg Configuration) error {
 		if event.Trigger == "" {
 			return fmt.Errorf("Event (%s,%s) has no trigger definition", event.Source, event.Type)
 		}
-		if event.Trigger != "" && cfg.Trigger(event.Trigger) == nil {
+		if event.Trigger != "" && cfg.FindTrigger(event.Trigger) == nil {
 			return fmt.Errorf("Event (%s,%s) references a trigger that does not exist", event.Source, event.Type)
 		}
 

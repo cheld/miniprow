@@ -18,7 +18,7 @@ func NewDispatcher(cfg config.Configuration) Dispatcher {
 
 func (dispatcher *Dispatcher) Execute(tasks []config.Task) {
 	for _, task := range tasks {
-		trigger := dispatcher.config.Trigger(task.Trigger)
+		trigger := dispatcher.config.FindTrigger(task.Trigger)
 		if trigger == nil {
 			fmt.Printf("No trigger definition with name '%s' found\n", task.Trigger)
 			break

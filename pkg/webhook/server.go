@@ -34,7 +34,7 @@ func Run() {
 				// ok event wasn;t one of the ones asked to be parsed
 			}
 		}
-		dispatcher.Execute(handler.HandleGithub(payload))
+		go dispatcher.Execute(handler.HandleGithub(payload))
 	})
 	http.ListenAndServe(":3000", nil)
 }

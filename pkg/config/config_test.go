@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -153,7 +152,7 @@ func TestIsMatching(t *testing.T) {
 	}
 }
 
-func TestTrigger(t *testing.T) {
+func TestFindTrigger(t *testing.T) {
 	cfg := Configuration{}
 	cfg.Triggers = []Trigger{
 		{
@@ -184,7 +183,7 @@ func TestTrigger(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
-			trigger := cfg.Trigger(tc.Trigger)
+			trigger := cfg.FindTrigger(tc.Trigger)
 			if trigger == nil && tc.Found {
 				t.Fatalf("Trigger not found")
 			}
@@ -195,7 +194,7 @@ func TestTrigger(t *testing.T) {
 	}
 }
 
-func TestEvent(t *testing.T) {
+func TestFindEvent(t *testing.T) {
 	cfg := Configuration{}
 	cfg.Events = []Event{
 		{
@@ -245,7 +244,7 @@ func TestEvent(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
 			source := Source{Value: tc.Value}
-			event := cfg.Event(tc.Source, tc.Type, source)
+			event := cfg.FindEvent(tc.Source, tc.Type, source)
 			if event == nil && tc.Found {
 				t.Fatalf("Event not found")
 			}
@@ -256,43 +255,70 @@ func TestEvent(t *testing.T) {
 	}
 }
 
-func TestDestinationCtx(t *testing.T) {
-
-	source := Source{}
-	source.Value = ""
-	source.Payload = map[string]interface{}{
-		"inputkey1": "inputvalue1",
-		"inputkey2": "inputvalue2",
-	}
-	t.Run("mytest", func(t *testing.T) {
-
-		event := Event{
-			Trigger: "some-destination",
-			Values: map[string]interface{}{
-				"target": "test",
-				"nested": map[string]string{
-					"nestedkey": "nestedvalue",
-				},
-				"template": "String with {{ .Payload.inputkey1 }}",
+func TestBuildTask(t *testing.T) {
+	event := Event{
+		Trigger: "mytrigger",
+		Values: map[string]interface{}{
+			"simple": "test",
+			"nested": map[string]string{
+				"nestedkey": "nestedvalue",
 			},
-		}
-		task, err := event.NewTask(source)
-		if err != nil {
-			//fmt.Println(err)
-			t.Errorf("Error not exptected: %v", err)
-		}
-		if task.Trigger != "some-destination" {
-			t.Errorf("got %s, want %s", task.Trigger, "some-destination")
-		}
-		if task.Values["target"] != "test" {
-			t.Errorf("got %s, want %s", task.Values["target"], "test")
-		}
-		fmt.Println(task.Values["nested"])
-		//if (task.Values["nested"]).(map[string]string)["nestedkey"] != "nestedvalue" {
-		//	t.Errorf("got %s, want %s", "", "nestedvalue")
-		//}
-		if task.Values["template"] != "String with inputvalue1" {
-			t.Errorf("got %s, want %s", task.Values["template"], "String with inputvalue1")
-		}
-	})
+			"template": "Hello {{ .Payload.sourcekey }}",
+		},
+	}
+	type testcase struct {
+		Name string
+
+		Payload map[string]string
+
+		Expected Task
+	}
+	testcases := []testcase{
+		{
+			Name: "Simple",
+
+			Payload: map[string]string{
+				"sourcekey": "World",
+			},
+
+			Expected: Task{
+				Trigger: "mytrigger",
+				Values: map[string]interface{}{
+					"simple": "test",
+					"nested": map[string]string{
+						"nestedkey": "nestedvalue",
+					},
+					"template": "Hello World",
+				},
+			},
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.Name, func(t *testing.T) {
+			source := Source{}
+			source.Payload = tc.Payload
+
+			task, err := event.BuildTask(source)
+			if err != nil {
+				t.Errorf("Error not exptected: %v", err)
+			}
+			if task.Trigger != tc.Expected.Trigger {
+				t.Errorf("got %s, want %s", task.Trigger, tc.Expected.Trigger)
+			}
+			if task.Values["simple"] != tc.Expected.Values["simple"] {
+				t.Errorf("got %s, want %s", task.Values["simple"], tc.Expected.Values["simple"])
+			}
+			if task.Values["template"] != tc.Expected.Values["template"] {
+				t.Errorf("got %s, want %s", task.Values["template"], tc.Expected.Values["template"])
+			}
+			if task.Values["template"] != tc.Expected.Values["template"] {
+				t.Errorf("got %s, want %s", task.Values["template"], tc.Expected.Values["template"])
+			}
+			nestedValue := task.Values["nested"].(map[string]string)["nestedkey"]
+			expectedNestedValue := tc.Expected.Values["nested"].(map[string]string)["nestedkey"]
+			if nestedValue != expectedNestedValue {
+				t.Errorf("got %s, want %s", nestedValue, expectedNestedValue)
+			}
+		})
+	}
 }
