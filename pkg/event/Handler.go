@@ -6,9 +6,12 @@ import (
 
 type Handler struct {
 	config config.Configuration
+	env    map[string]string
 }
 
-func NewHandler(config config.Configuration) *Handler {
+func NewHandler(config config.Configuration, env map[string]string) *Handler {
 	return &Handler{
-		config: config}
+		config: config,
+		env:    env,
+	}
 }

@@ -16,15 +16,23 @@ limitations under the License.
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"strings"
 
+	"github.com/cheld/cicd-bot/pkg/config"
+	"github.com/cheld/cicd-bot/pkg/event"
+	"github.com/cheld/cicd-bot/pkg/trigger"
 	"github.com/spf13/cobra"
 )
 
 // eventCmd represents the event command
 var eventCmd = &cobra.Command{
-	Use:   "event",
-	Short: "A brief description of your command",
+	Use:   "event [payload]",
+	Short: "Manually fire an event over command line",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -32,20 +40,53 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("event called")
+		cfgFile, _ := cmd.Flags().GetString("config")
+		overrideVariables, _ := cmd.Flags().GetStringToString("env")
+		payload := strings.Join(args, " ")
+		payloadFile, _ := cmd.Flags().GetString("file")
+		if payloadFile == "-" {
+			payload = readStdIn()
+		} else if payloadFile != "" {
+			payload = readFile(payloadFile)
+		}
+		cfg, err := config.Load(cfgFile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		env := config.Environ(overrideVariables)
+		handler := event.NewHandler(cfg, env)
+		dispatcher := trigger.NewDispatcher(cfg)
+		dispatcher.Execute(handler.HandleCli(payload))
+		fmt.Println()
 	},
+}
+
+func readStdIn() string {
+	reader := bufio.NewReader(os.Stdin)
+	var chars []rune
+	for {
+		c, _, err := reader.ReadRune()
+		if err != nil && err == io.EOF {
+			break
+		}
+		chars = append(chars, c)
+	}
+	return string(chars)
+}
+
+func readFile(filename string) string {
+	filecontent, err := ioutil.ReadFile(filename)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	return string(filecontent)
 }
 
 func init() {
 	rootCmd.AddCommand(eventCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// eventCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// eventCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	eventCmd.Flags().StringToStringP("env", "e", nil, "provide environment variables that can be accessed by event handlers")
+	eventCmd.Flags().StringP("config", "c", "", "config file (default is $HOME/.cicd-bot.yaml)")
+	eventCmd.Flags().StringP("file", "f", "", "read event payload from a file (use \"-f -\" for stdin)")
 }

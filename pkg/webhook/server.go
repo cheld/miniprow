@@ -3,9 +3,9 @@ package webhook
 import (
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/cheld/cicd-bot/pkg/config"
+
 	"github.com/cheld/cicd-bot/pkg/event"
 	"github.com/cheld/cicd-bot/pkg/trigger"
 	"gopkg.in/go-playground/webhooks.v5/github"
@@ -15,16 +15,17 @@ const (
 	pathGithubWebhook = "/webhooks/github"
 )
 
-func Run() {
-	cfg, err := config.Load("config.yaml")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	handler := event.NewHandler(cfg)
-	dispatcher := trigger.NewDispatcher(cfg)
+type Options struct {
+	Port     int
+	Bindaddr string
+	Secret   string
+}
 
-	githubWebhook, _ := github.New(github.Options.Secret("MySecret"))
+func Run(cfg config.Configuration, env map[string]string, opts Options) {
+
+	handler := event.NewHandler(cfg, env)
+	dispatcher := trigger.NewDispatcher(cfg)
+	githubWebhook, _ := github.New(github.Options.Secret(opts.Secret))
 
 	http.HandleFunc(pathGithubWebhook, func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Gihub event received")
@@ -36,5 +37,9 @@ func Run() {
 		}
 		go dispatcher.Execute(handler.HandleGithub(payload))
 	})
-	http.ListenAndServe(":3000", nil)
+
+	addr := fmt.Sprintf("%s:%d", opts.Bindaddr, opts.Port)
+	fmt.Printf("Webhook listening on %s", addr)
+	http.ListenAndServe(addr, nil)
+
 }

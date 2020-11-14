@@ -2,6 +2,7 @@ package trigger
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cheld/cicd-bot/pkg/config"
 )
@@ -23,7 +24,7 @@ func (dispatcher *Dispatcher) Execute(tasks []config.Task) {
 			fmt.Printf("No trigger definition with name '%s' found\n", task.Trigger)
 			break
 		}
-		switch trigger.Type {
+		switch strings.ToLower(trigger.Type) {
 		case "debug":
 			ExecuteDebug(trigger, task)
 		case "http":

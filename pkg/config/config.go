@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 
+	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v2"
+)
+
+const (
+	cfgDefaultName = "cicd-bot.yaml"
 )
 
 type Configuration struct {
@@ -23,6 +27,7 @@ type Configuration struct {
 type Source struct {
 	Value   string
 	Payload interface{}
+	Environ map[string]string
 }
 
 type Event struct {
@@ -75,14 +80,14 @@ func (event *Event) BuildTask(source Source) (Task, error) {
 		return task, fmt.Errorf("Cannot process: %v. Error: %v", task.Trigger, err)
 	}
 	task.Values = result.(map[string]interface{})
-	task.Env = Env()
+	task.Environ = source.Environ
 	return task, nil
 }
 
 type Task struct {
 	Trigger string
 	Values  map[string]interface{}
-	Env     map[string]string
+	Environ map[string]string
 }
 
 type Trigger struct {
@@ -101,7 +106,7 @@ func (config *Configuration) FindTrigger(name string) *Trigger {
 }
 
 func Load(filename string) (Configuration, error) {
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := readFile(filename)
 	if err != nil {
 		return Configuration{}, fmt.Errorf("Error reading YAML file: %s", err)
 	}
@@ -117,11 +122,30 @@ func Load(filename string) (Configuration, error) {
 	return yamlConfig, nil
 }
 
-func Env() map[string]string {
-	env := make(map[string]string)
-	for _, entry := range os.Environ() {
-		keyValue := strings.Split(entry, "=")
-		env[keyValue[0]] = keyValue[1]
+func readFile(filename string) ([]byte, error) {
+	var yamlFile []byte
+	if filename != "" {
+		yamlFile, err := ioutil.ReadFile(filename)
+		if err != nil {
+			return yamlFile, fmt.Errorf("Error reading YAML file: %s", err)
+		}
+		return yamlFile, nil
 	}
-	return env
+	etcPath := fmt.Sprintf("/etc/.%s", cfgDefaultName)
+	yamlFile, err := ioutil.ReadFile(etcPath)
+	if err == nil {
+		return yamlFile, nil
+	}
+	home, _ := homedir.Dir()
+	homepath := fmt.Sprintf("%s/.%s", home, cfgDefaultName)
+	yamlFile, err = ioutil.ReadFile(homepath)
+	if err == nil {
+		return yamlFile, nil
+	}
+	yamlFile, err = ioutil.ReadFile(cfgDefaultName)
+	if err == nil {
+		return yamlFile, nil
+	}
+	return yamlFile, fmt.Errorf("Cound not reading config file from %s, %s, %s", etcPath, homepath, cfgDefaultName)
+
 }

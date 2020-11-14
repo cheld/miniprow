@@ -19,6 +19,7 @@ func (handler *Handler) HandleGithub(payload interface{}) []config.Task {
 	// parse payload
 	source := config.Source{
 		Payload: payload,
+		Environ: handler.env,
 	}
 	switch payload.(type) {
 	case github.IssueCommentPayload:

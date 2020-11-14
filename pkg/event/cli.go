@@ -6,10 +6,10 @@ import (
 	"github.com/cheld/cicd-bot/pkg/config"
 )
 
-func (handler *Handler) HandleCli(args, stdin string) []config.Task {
+func (handler *Handler) HandleCli(payload string) []config.Task {
 	tasks := []config.Task{}
 	for _, event := range handler.config.Events {
-		source := config.Source{args, nil}
+		source := config.Source{payload, payload, handler.env}
 		if event.Source == "cli" && event.IsMatching(source) {
 			task, err := event.BuildTask(source)
 			if err != nil {

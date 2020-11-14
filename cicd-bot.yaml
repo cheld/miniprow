@@ -1,6 +1,3 @@
-serve:
-  secret: MySecret
-  port: 3000
 
 
 events:
@@ -20,11 +17,10 @@ events:
 
   - source: cli
     type: stdin
-    if_contains: test
+    if_contains: go
     trigger: Debug
     values:
-      test: great
-      message: Hello World
+      message: 'Files: {{.Payload}}'
 
 
 triggers:

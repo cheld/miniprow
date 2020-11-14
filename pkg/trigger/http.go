@@ -23,8 +23,8 @@ func ExecuteHttp(trigger *config.Trigger, task config.Task) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	token := task.Env["SECRET_GITHUB"]
-	fmt.Println(task.Env)
+	token := task.Environ["SECRET_GITHUB"]
+	fmt.Println(task.Environ)
 	fmt.Println(token)
 	req.Header.Add("Authorization", "token "+token)
 	resp, err := httpClient.Do(req)

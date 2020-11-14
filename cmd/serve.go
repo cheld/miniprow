@@ -17,35 +17,49 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/cheld/cicd-bot/pkg/config"
+	"github.com/cheld/cicd-bot/pkg/webhook"
 	"github.com/spf13/cobra"
 )
 
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Launch a HTTP server to provide a webhook integration endpoint",
+	Long: `Launch a HTTP server to provide a webhook integration endpoint.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+The following endpoints are available:
+http://<localhost:port>/webhook/github
+http://<localhost:port>/webhook/gitlab
+http://<localhost:port>/webhook/http`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("serve called")
+		cfgFile, _ := cmd.Flags().GetString("config")
+		secret, _ := cmd.Flags().GetString("secret")
+		bindaddr, _ := cmd.Flags().GetString("bind-addr")
+		port, _ := cmd.Flags().GetInt("port")
+		overrideVariables, _ := cmd.Flags().GetStringToString("env")
+		cfg, err := config.Load(cfgFile)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		env := config.Environ(overrideVariables)
+		opts := webhook.Options{
+			Port:     port,
+			Secret:   secret,
+			Bindaddr: bindaddr,
+		}
+		webhook.Run(cfg, env, opts)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// serveCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	serveCmd.Flags().IntP("port", "p", 3000, "Port for the HTTP endpoint")
+	serveCmd.Flags().StringP("bind-addr", "", "127.0.0.1", "the bind addr of the server")
+	serveCmd.Flags().StringP("secret", "s", "", "Protect access to the webhook")
+	serveCmd.Flags().StringToStringP("env", "e", nil, "Provide environment variables that can be accessed by event handlers")
+	serveCmd.Flags().StringP("config", "c", "", "config file (default is $HOME/.cicd-bot.yaml)")
 }
