@@ -8,12 +8,28 @@ events:
     values:
       number: '{{ .Payload.Issue.Number }}'
 
+
+  - source: github
+    type: comment
+    if_contains: test
+    trigger: Debug
+    values:
+      message: '{{ .Payload.Issue.Number }}'
+      
+      
   - source: gitlab
     type: comment
     if_true:  ${{ eq .Payload.Branch "test" }}
     trigger: jenkins
     values:
       target: preview
+
+  - source: http
+    type: get
+    if_contains: action
+    trigger: Debug
+    values:
+      message: '{{ .Payload.comment.body }}'
 
   - source: cli
     type: stdin

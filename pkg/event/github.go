@@ -27,7 +27,7 @@ func (handler *Handler) HandleGithub(payload interface{}) []config.Task {
 		sourceName = Github
 		sourceType = Comment
 	default:
-		fmt.Printf("No implementation for payload")
+		fmt.Printf("Github event not implemented: %v\n", payload)
 		return []config.Task{}
 	}
 
