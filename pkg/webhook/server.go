@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/cheld/cicd-bot/pkg/config"
 
@@ -36,7 +37,7 @@ func Run(cfg config.Configuration, env map[string]string, opts Options) {
 		payload, err := githubWebhook.Parse(r, github.IssueCommentEvent)
 		if err != nil {
 			if err == github.ErrEventNotFound {
-				log.Printf("Github event not implemented: %s", err)
+				log.Printf("Github event not implemented.")
 			} else {
 				log.Printf("Error reading body: %s", err)
 				http.Error(w, "can't read body", http.StatusBadRequest)
@@ -49,6 +50,12 @@ func Run(cfg config.Configuration, env map[string]string, opts Options) {
 	// Http generic
 	http.HandleFunc(pathHttpWebhook, func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Http event received")
+		path := strings.TrimPrefix(r.URL.Path, pathHttpWebhook)
+		if path == "" {
+			log.Printf("Call http webhook with url %s<event-type>", pathHttpWebhook)
+			http.Error(w, "can't read body", http.StatusBadRequest)
+			return
+		}
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -56,7 +63,7 @@ func Run(cfg config.Configuration, env map[string]string, opts Options) {
 			http.Error(w, "can't read body", http.StatusBadRequest)
 			return
 		}
-		go dispatcher.Execute(handler.HandleHttp(body))
+		go dispatcher.Execute(handler.HandleHttp(body, path))
 	})
 
 	addr := fmt.Sprintf("%s:%d", opts.Bindaddr, opts.Port)

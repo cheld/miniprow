@@ -20,7 +20,7 @@ events:
   - source: gitlab
     type: comment
     if_true:  ${{ eq .Payload.Branch "test" }}
-    trigger: jenkins
+    trigger: jenkins_job
     values:
       target: preview
 
@@ -29,7 +29,8 @@ events:
     if_contains: action
     trigger: Debug
     values:
-      message: '{{ .Payload.comment.body }}'
+      message: '{{ .Payload }}'
+
 
   - source: cli
     type: stdin
@@ -40,10 +41,21 @@ events:
 
 
 triggers:
-  - name: Jenkins
+
+    ############################################################
+    #    jenkins_job - Trigger job on Jenkins
+    #
+    #    Input:
+    #    - jobname: the nome of the job to be run
+    #
+    #    Environment:
+    #    - SECRET_JENKINS: authentication token of admin user
+    #
+    ############################################################
+  - name: jenkins_job
     type: http
     spec:
-      url:  http://admin:114845acdfac8737510c54607e2af78a84@localhost:8080/job/{{.Values.target}}/build
+      url:  http://admin:{{.Env.SECRET_JENKINS}}@localhost:8080/job/{{.Values.jobname}}/build
 
   - name: Test
     type: http
@@ -51,7 +63,17 @@ triggers:
       url:   https://api.github.com/repos/cheld/code-snippets/issues
       method: GET
 
-  - name: Github_Comment
+    ############################################################
+    #    github_comment - Write a comment to a Github PR or issue
+    #
+    #    Input:
+    #    - number: the id of the issue or pull request
+    #
+    #    Environment:
+    #    - SECRET_GITHUB: oauth token used in the authorization header
+    #
+    ############################################################
+  - name: github_comment
     type: http
     spec:
       url:   https://api.github.com/repos/cheld/code-snippets/issues/{{.Values.number}}/comments

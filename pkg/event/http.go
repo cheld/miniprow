@@ -7,7 +7,7 @@ import (
 	"github.com/cheld/cicd-bot/pkg/config"
 )
 
-func (handler *Handler) HandleHttp(body []byte) []config.Task {
+func (handler *Handler) HandleHttp(body []byte, path string) []config.Task {
 
 	// parse payload
 	var payload interface{}
@@ -27,7 +27,7 @@ func (handler *Handler) HandleHttp(body []byte) []config.Task {
 	}
 
 	// handle event
-	event := handler.config.FindEvent("http", "get", source)
+	event := handler.config.FindEvent("http", path, source)
 	if event == nil {
 		fmt.Printf("No event found for value %s\n", source.Value)
 		return []config.Task{}
