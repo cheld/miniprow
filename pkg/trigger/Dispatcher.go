@@ -1,10 +1,10 @@
 package trigger
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/cheld/cicd-bot/pkg/config"
+	"github.com/golang/glog"
 )
 
 type Dispatcher struct {
@@ -21,7 +21,7 @@ func (dispatcher *Dispatcher) Execute(tasks []config.Task) {
 	for _, task := range tasks {
 		trigger := dispatcher.config.FindTrigger(task.Trigger)
 		if trigger == nil {
-			fmt.Printf("No trigger definition with name '%s' found\n", task.Trigger)
+			glog.Errorf("No trigger definition with name '%s' found\n", task.Trigger)
 			break
 		}
 		switch strings.ToLower(trigger.Type) {
@@ -30,7 +30,7 @@ func (dispatcher *Dispatcher) Execute(tasks []config.Task) {
 		case "http":
 			ExecuteHttp(trigger, task)
 		default:
-			fmt.Printf("No implementation for trigger type '%s' found!\n", trigger.Type)
+			glog.Errorf("No implementation for trigger type '%s' found!\n", trigger.Type)
 		}
 	}
 }

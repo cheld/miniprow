@@ -35,11 +35,15 @@ http://<localhost:port>/webhook/github
 http://<localhost:port>/webhook/gitlab
 http://<localhost:port>/webhook/http`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		// parse cli
 		cfgFile, _ := cmd.Flags().GetString("config")
 		secret, _ := cmd.Flags().GetString("secret")
 		bindaddr, _ := cmd.Flags().GetString("bind-addr")
 		port, _ := cmd.Flags().GetInt("port")
 		overrideVariables, _ := cmd.Flags().GetStringToString("env")
+
+		// prepare configuration
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
 			fmt.Println(err)
@@ -51,6 +55,8 @@ http://<localhost:port>/webhook/http`,
 			Secret:   secret,
 			Bindaddr: bindaddr,
 		}
+
+		// start webhook
 		webhook.Run(cfg, env, opts)
 	},
 }

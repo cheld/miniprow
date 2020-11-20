@@ -1,9 +1,8 @@
 package event
 
 import (
-	"fmt"
-
 	"github.com/cheld/cicd-bot/pkg/config"
+	"github.com/golang/glog"
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
 
@@ -27,21 +26,21 @@ func (handler *Handler) HandleGithub(payload interface{}) []config.Task {
 		sourceName = Github
 		sourceType = Comment
 	default:
-		fmt.Printf("Github event not implemented: %v\n", payload)
+		glog.Infof("Github event not implemented: %v\n", payload)
 		return []config.Task{}
 	}
 
 	// handle event
 	event := handler.config.FindEvent(sourceName, sourceType, source)
 	if event == nil {
-		fmt.Printf("No event found for value %s", source.Value)
+		glog.Infof("No event found for value %s", source.Value)
 		return []config.Task{}
 	}
 
 	// build execution task
 	task, err := event.BuildTask(source)
 	if err != nil {
-		fmt.Printf("Cannot handle event: %v. Error: %v", event.Trigger, err)
+		glog.Errorf("Cannot handle event: %v. Error: %v", event.Trigger, err)
 		return []config.Task{}
 	}
 	return []config.Task{task}

@@ -3,8 +3,11 @@ module github.com/cheld/cicd-bot
 go 1.13
 
 require (
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v1.1.1
+	github.com/spf13/flag v0.0.0-20140426202619-916eaf9e2dc5
+	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	gopkg.in/go-playground/webhooks.v5 v5.15.0
 	gopkg.in/yaml.v2 v2.3.0

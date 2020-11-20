@@ -2,19 +2,19 @@ package event
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/cheld/cicd-bot/pkg/config"
+	"github.com/golang/glog"
 )
 
 func (handler *Handler) HandleHttp(body []byte, path string) []config.Task {
 
-	// parse payload
+	// parse body
 	var payload interface{}
 	if len(body) > 0 {
 		err := json.Unmarshal(body, &payload)
 		if err != nil {
-			fmt.Printf("Not possible to parse request body %s", string(body))
+			glog.Errorf("Not possible to parse request body %s", string(body))
 			return []config.Task{}
 		}
 	} else {
@@ -29,14 +29,14 @@ func (handler *Handler) HandleHttp(body []byte, path string) []config.Task {
 	// handle event
 	event := handler.config.FindEvent("http", path, source)
 	if event == nil {
-		fmt.Printf("No event found for value %s\n", source.Value)
+		glog.V(5).Infof("No event found for value %s\n", source.Value)
 		return []config.Task{}
 	}
 
 	// build execution task
 	task, err := event.BuildTask(source)
 	if err != nil {
-		fmt.Printf("Cannot handle event: %v. Error: %v", event.Trigger, err)
+		glog.Errorf("Cannot handle event: %v. Error: %v", event.Trigger, err)
 		return []config.Task{}
 	}
 	return []config.Task{task}

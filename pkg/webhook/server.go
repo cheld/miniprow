@@ -3,14 +3,13 @@ package webhook
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/cheld/cicd-bot/pkg/config"
-
 	"github.com/cheld/cicd-bot/pkg/event"
 	"github.com/cheld/cicd-bot/pkg/trigger"
+	"github.com/golang/glog"
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
 
@@ -37,9 +36,9 @@ func Run(cfg config.Configuration, env map[string]string, opts Options) {
 		payload, err := githubWebhook.Parse(r, github.IssueCommentEvent)
 		if err != nil {
 			if err == github.ErrEventNotFound {
-				log.Printf("Github event not implemented.")
+				glog.Infof("Github event not implemented.")
 			} else {
-				log.Printf("Error reading body: %s", err)
+				glog.Errorf("Error reading body: %s", err)
 				http.Error(w, "can't read body", http.StatusBadRequest)
 			}
 			return
@@ -52,14 +51,13 @@ func Run(cfg config.Configuration, env map[string]string, opts Options) {
 		fmt.Println("Http event received")
 		path := strings.TrimPrefix(r.URL.Path, pathHttpWebhook)
 		if path == "" {
-			log.Printf("Call http webhook with url %s<event-type>", pathHttpWebhook)
+			glog.Errorf("Call http webhook with url %s<event-type>", pathHttpWebhook)
 			http.Error(w, "can't read body", http.StatusBadRequest)
 			return
 		}
-
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Printf("Error reading body: %v", err)
+			glog.Errorf("Error reading body: %v", err)
 			http.Error(w, "can't read body", http.StatusBadRequest)
 			return
 		}

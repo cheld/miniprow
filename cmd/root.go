@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	goflag "flag"
 	"fmt"
 	"os"
+
+	pflag "github.com/spf13/pflag"
 
 	"github.com/spf13/cobra"
 )
@@ -24,4 +27,9 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+func init() {
+	pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
+	goflag.Parse()
 }
