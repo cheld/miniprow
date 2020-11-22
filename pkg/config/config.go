@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	cfgDefaultName = "cicd-bot.yaml"
+	CFG_DEFAULT_NAME = "cicd-bot.yaml"
 )
 
 type Configuration struct {
@@ -131,21 +131,21 @@ func readFile(filename string) ([]byte, error) {
 		}
 		return yamlFile, nil
 	}
-	etcPath := fmt.Sprintf("/etc/.%s", cfgDefaultName)
+	etcPath := fmt.Sprintf("/etc/%s", CFG_DEFAULT_NAME)
 	yamlFile, err := ioutil.ReadFile(etcPath)
 	if err == nil {
 		return yamlFile, nil
 	}
 	home, _ := homedir.Dir()
-	homepath := fmt.Sprintf("%s/.%s", home, cfgDefaultName)
+	homepath := fmt.Sprintf("%s/.%s", home, CFG_DEFAULT_NAME)
 	yamlFile, err = ioutil.ReadFile(homepath)
 	if err == nil {
 		return yamlFile, nil
 	}
-	yamlFile, err = ioutil.ReadFile(cfgDefaultName)
+	yamlFile, err = ioutil.ReadFile(CFG_DEFAULT_NAME)
 	if err == nil {
 		return yamlFile, nil
 	}
-	return yamlFile, fmt.Errorf("Cound not reading config file from %s, %s, %s", etcPath, homepath, cfgDefaultName)
+	return yamlFile, fmt.Errorf("Cound not reading config file from %s, %s, %s", etcPath, homepath, CFG_DEFAULT_NAME)
 
 }
