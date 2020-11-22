@@ -39,6 +39,14 @@ events:
     values:
       message: 'Files: {{.Payload}}'
 
+  - source: cli
+    type: headers
+    if_true: true
+    trigger: github_comment
+    values:
+      comment: hello
+      number: 2
+
 
 triggers:
 
@@ -68,6 +76,7 @@ triggers:
     #
     #    Input:
     #    - number: the id of the issue or pull request
+    #    - comment: the Github comment
     #
     #    Environment:
     #    - SECRET_GITHUB: oauth token used in the authorization header
@@ -78,13 +87,17 @@ triggers:
     spec:
       url:   https://api.github.com/repos/cheld/code-snippets/issues/{{.Values.number}}/comments
       method: POST
-      data: '{ "body": "hello from bot" }'
+      body: '{ "body": "{{.Values.comment}}"" }'
+      headers: 
+        Authorization: 'token {{.Environ.SECRET_GITHUB }}'
 
 
   - name: Debug
     type: debug
     spec:
       stdout: '{{ .Values.message }}'
+      headers: 
+        authorisation: token {{.Values.Env["SECRET_GITHUB"] }}
 
 
 

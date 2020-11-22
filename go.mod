@@ -11,5 +11,6 @@ require (
 	github.com/spf13/viper v1.7.1
 	gopkg.in/go-playground/webhooks.v5 v5.15.0
 	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	sigs.k8s.io/yaml v1.2.0
 )

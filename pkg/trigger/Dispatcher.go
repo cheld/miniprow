@@ -26,9 +26,15 @@ func (dispatcher *Dispatcher) Execute(tasks []config.Task) {
 		}
 		switch strings.ToLower(trigger.Type) {
 		case "debug":
-			ExecuteDebug(trigger, task)
+			err := ExecuteDebug(trigger, task)
+			if err != nil {
+				glog.Errorln(err)
+			}
 		case "http":
-			ExecuteHttp(trigger, task)
+			err := ExecuteHttp(trigger, task)
+			if err != nil {
+				glog.Errorln(err)
+			}
 		default:
 			glog.Errorf("No implementation for trigger type '%s' found!\n", trigger.Type)
 		}

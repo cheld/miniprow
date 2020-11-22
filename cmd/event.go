@@ -44,6 +44,7 @@ to quickly create a Cobra application.`,
 		// parse cli
 		cfgFile, _ := cmd.Flags().GetString("config")
 		overrideVariables, _ := cmd.Flags().GetStringToString("env")
+		eventType, _ := cmd.Flags().GetString("type")
 
 		// prepare configuration
 		payload := strings.Join(args, " ")
@@ -63,7 +64,7 @@ to quickly create a Cobra application.`,
 		// execute event
 		handler := event.NewHandler(cfg, env)
 		dispatcher := trigger.NewDispatcher(cfg)
-		dispatcher.Execute(handler.HandleCli(payload))
+		dispatcher.Execute(handler.HandleCli(eventType, payload))
 		fmt.Println()
 	},
 }
@@ -95,4 +96,6 @@ func init() {
 	eventCmd.Flags().StringToStringP("env", "e", nil, "provide environment variables that can be accessed by event handlers")
 	eventCmd.Flags().StringP("config", "c", "", "config file (default is $HOME/.cicd-bot.yaml)")
 	eventCmd.Flags().StringP("file", "f", "", "read event payload from a file (use \"-f -\" for stdin)")
+	eventCmd.Flags().StringP("type", "t", "", "The type of event. It must match the event configuration")
+	eventCmd.MarkFlagRequired("type")
 }
