@@ -18,6 +18,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/cheld/cicd-bot/pkg/config"
 	"github.com/cheld/cicd-bot/pkg/webhook"
@@ -50,6 +51,12 @@ http://<localhost:port>/webhook/http`,
 			os.Exit(1)
 		}
 		env := config.Environ(overrideVariables)
+		if env["PORT"] != "" {
+			p, _ := strconv.Atoi(env["PORT"])
+			if p != 0 {
+				port = p
+			}
+		}
 		opts := webhook.Options{
 			Port:     port,
 			Secret:   secret,
