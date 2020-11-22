@@ -30,3 +30,7 @@ jobs:
 
     - name: Test
       run: go test ./pkg/config
+    
+    - name: Build and push Docker images
+      uses: docker/build-push-action@v2.2.0
+    
