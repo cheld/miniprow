@@ -1,0 +1,122 @@
+
+
+events:
+  - source: github
+    type: comment
+    if_contains: /needs-performance-tests
+    trigger: Github_Comment
+    values:
+      number: '{{ .Payload.Issue.Number }}'
+
+
+  - source: github
+    type: comment
+    if_contains: test
+    trigger: Debug
+    values:
+      message: '{{ .Payload.Issue.Number }}'
+      
+      
+  - source: gitlab
+    type: comment
+    if_true:  ${{ eq .Payload.Branch "test" }}
+    trigger: jenkins_job
+    values:
+      target: preview
+
+  - source: http
+    type: get
+    if_contains: action
+    trigger: Debug
+    values:
+      message: '{{ .Payload }}'
+
+
+  - source: cli
+    type: stdin
+    if_contains: go
+    trigger: Debug
+    values:
+      message: 'Files: {{.Payload}}'
+
+  - source: cli
+    type: headers
+    if_true: true
+    trigger: github_comment
+    values:
+      comment: hello
+      number: 2
+
+
+triggers:
+
+    ############################################################
+    #    jenkins_job - Trigger job on Jenkins
+    #
+    #    Input:
+    #    - jobname: the nome of the job to be run
+    #
+    #    Environment:
+    #    - SECRET_JENKINS: authentication token of admin user
+    #
+    ############################################################
+  - name: jenkins_job
+    type: http
+    spec:
+      url:  http://admin:{{.Env.SECRET_JENKINS}}@localhost:8080/job/{{.Values.jobname}}/build
+
+  - name: Test
+    type: http
+    spec:
+      url:   https://api.github.com/repos/cheld/code-snippets/issues
+      method: GET
+
+    ############################################################
+    #    github_comment - Write a comment to a Github PR or issue
+    #
+    #    Input:
+    #    - number: the id of the issue or pull request
+    #    - comment: the Github comment
+    #
+    #    Environment:
+    #    - SECRET_GITHUB: oauth token used in the authorization header
+    #
+    ############################################################
+  - name: github_comment
+    type: http
+    spec:
+      url:   https://api.github.com/repos/cheld/code-snippets/issues/{{.Values.number}}/comments
+      method: POST
+      body: '{ "body": "{{.Values.comment}}"" }'
+      headers: 
+        Authorization: 'token {{.Environ.SECRET_GITHUB }}'
+
+
+  - name: Debug
+    type: debug
+    spec:
+      stdout: '{{ .Values.message }}'
+      headers: 
+        authorisation: token {{.Values.Env["SECRET_GITHUB"] }}
+
+
+
+#    - type: comment
+#      condition:
+#        contains: /needs-performance-tests
+#      trigger:
+#        name: jenkins
+#        values:
+#          target: test
+
+
+#curl -f -k -H 'Content-Type: application/json' -XPOST --user login:secret https://ansible.dzbank.vrnet:443/api/v2/job_templates/197/launch/
+
+#name: set gitlab merge url set_fact: gitlab_merge_url: "https://git.dzbank.vrnet/api/v4/projects/{{ tower_webhook_status_api.split("/")[6] }}/merge_requests/{{ tower_webhook_payload.object_attributes.iid }}/notes"
+
+#name: set microservice url set_fact: microservice_url: "https://dfvvp01ciops.dzbank.vrnet/artifactory/helm-unstable-local/harissa/{{ tower_webhook_payload.object_attributes.source.path_with_namespace.split("/")[3] }}/{{ tower_webhook_payload.object_attributes.source.path_with_namespace.split("/")[3] }}-9.9.9-{{ tower_webhook_payload.object_attributes.last_commit.id }}-{{ tower_webhook_payload.object_attributes.source_branch.split("/")[1] }}-SNAPSHOT.tgz"
+#name: set microservice version set_fact: microservice_version: "9.9.9-{{ tower_webhook_payload.object_attributes.last_commit.id }}-{{ tower_webhook_payload.object_attributes.source_branch.split("/")[1] }}-SNAPSHOT"
+#name: set service name set_fact: microservice_name: "{{ tower_webhook_payload.object_attributes.source.path_with_namespace.split("/")[3] }}"
+#name: set workspace set_fact: workspace: "{{ tower_webhook_payload.object_attributes.source_branch.split("/")[1] | lower}}" 08:50 Uhr
+#name: curl gitlab merge request uri: url: "{{ gitlab_merge_url }}" method: POST status_code: 201 body: "body=Ansible Pipeline pending" headers: PRIVATE-TOKEN: "xxx"
+
