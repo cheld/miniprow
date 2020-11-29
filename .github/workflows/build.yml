@@ -21,7 +21,7 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
-      - name: Tag image again
+    - name: Tag image again
       run: echo ${{.github.ref}}
 
     - name: Get dependencies
