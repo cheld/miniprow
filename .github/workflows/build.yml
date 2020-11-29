@@ -76,7 +76,7 @@ jobs:
           --quiet \
           --region "europe-west3" \
           --image "eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest" \
-          --platform "managed"
+          --platform "managed" \
           --allow-unauthenticated
 
     #- name: Build and push Docker images
