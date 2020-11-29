@@ -67,6 +67,9 @@ jobs:
         service_account_key: ${{secrets.GCP_SA_KEY}}
         project_id: ${{secrets.GCP_PROJECT}}
 
+    - name: Add login credentials for GCR
+      run: gcloud auth configure-docker
+
     - name: Push demo image to gcr
       run: docker push eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:${GITHUB_SHA::5}
 
