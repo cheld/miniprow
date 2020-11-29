@@ -53,7 +53,7 @@ jobs:
       run: docker build examples/hello --file examples/hello/Dockerfile --tag eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:${GITHUB_SHA::5}
 
     - name: Tag Image
-      run: docker tag cheld/cicd-bot:latest cheld/cicd-bot:${GITHUB_SHA::5}
+      run: docker tag cheld/cicd-bot:latest cheld/cicd-bot:latest
     
     - name: List Images
       run: docker images
@@ -71,7 +71,16 @@ jobs:
       run: gcloud auth configure-docker
 
     - name: Push demo image to gcr
-      run: docker push eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:${GITHUB_SHA::5}
+      run: docker push eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest
+
+    - name: Deploy on cloud run
+      run: |-
+        gloud run deploy "cicdbot" \
+          --quiet
+          --region "europe-west3" \
+          --image "eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest" \
+          --platform "managed"
+          --allow-unauthenticated
 
     #- name: Build and push Docker images
     #  uses: docker/build-push-action@v2.2.0
