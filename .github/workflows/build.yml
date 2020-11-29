@@ -27,6 +27,15 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+    - name: Checkout gcloud
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        service_account_key: ${{secrets.GCP_SA_KEY}}
+        project_id: ${{secrets.GCP_PROJECT}}
+
+    - name: Add login credentials for GCR
+      run: gcloud auth configure-docker
+
     - name: Get dependencies
       run: |
         go get -v -t -d ./...
@@ -57,15 +66,6 @@ jobs:
 
     - name: Push Base Image
       run: docker push cheld/cicd-bot:latest
-    
-    - name: Checkout gcloud
-      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
-      with:
-        service_account_key: ${{secrets.GCP_SA_KEY}}
-        project_id: ${{secrets.GCP_PROJECT}}
-
-    - name: Add login credentials for GCR
-      run: gcloud auth configure-docker
 
     - name: Push demo image to gcr
       run: docker push eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest
