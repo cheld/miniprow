@@ -50,13 +50,15 @@ jobs:
       run: docker build . --file Dockerfile --tag cheld/cicd-bot:latest
     
     - name: Build Demo Bot Image
-      run: docker build examples/hello --file Dockerfile --tag eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:${GITHUB_SHA::5}
+      run: docker build examples/hello --file examples/hello/Dockerfile --tag eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:${GITHUB_SHA::5}
 
     - name: Tag Image
       run: docker tag cheld/cicd-bot:latest cheld/cicd-bot:${GITHUB_SHA::5}
     
     - name: List Images
       run: docker images
+
+
 
     #- name: Build and push Docker images
     #  uses: docker/build-push-action@v2.2.0
