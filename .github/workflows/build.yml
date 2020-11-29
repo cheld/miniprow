@@ -52,7 +52,7 @@ jobs:
     - name: Tag Image
       run: |
         docker tag cheld/cicd-bot:latest cheld/cicd-bot:${GITHUB_SHA::5}
-        docker tag cheld/cicd-bot:latest eu.gcr.io/${GCP_PROJECT}/cicd-bot:${GITHUB_SHA::5}
+        docker tag cheld/cicd-bot:latest eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:${GITHUB_SHA::5}
     
     - name: List Images
       run: docker images
