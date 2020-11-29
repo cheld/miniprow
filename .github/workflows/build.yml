@@ -17,9 +17,27 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: ^1.13
+    
+    - name: Setup GCloud
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        service_account_key: ${{secrets.GCP_SA_KEY}}
+        project_id: ${{secrets.GCP_PROJECT}}
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Add docker login credentials for GCR
+      run: gcloud auth configure-docker
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
+
+    - name: Echo Sha
+      run: echo ${GITHUB_SHA::5}
 
     - name: Get dependencies
       run: |
@@ -31,18 +49,21 @@ jobs:
     - name: Test
       run: go test ./pkg/config
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+    - name: Build images
+      run: |
+        docker build . --file Dockerfile --tag cheld/cicd-bot:latest
+        docker build examples/hello --file examples/hello/Dockerfile --tag eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest
+    
+    - name: Push images
+      run: |
+        docker push cheld/cicd-bot:latest
+        docker push eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest
 
-    - name: Login to DockerHub
-      uses: docker/login-action@v1 
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    
-    - name: Build and push Docker images
-      uses: docker/build-push-action@v2.2.0
-      with:
-        push: true
-        tags: cheld/cicd-bot:latest
-    
+    - name: Deploy on cloud run
+      run: |-
+        gcloud run deploy "cicdbot" \
+          --quiet \
+          --region "europe-west3" \
+          --image "eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest" \
+          --platform "managed" \
+          --allow-unauthenticated
