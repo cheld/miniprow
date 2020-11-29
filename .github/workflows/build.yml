@@ -61,8 +61,11 @@ jobs:
     - name: Push Base Image
       run: docker push cheld/cicd-bot:latest
     
-      
-
+    - name: Checkout gcloud
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        service_account_key: 
+        project_id: ${{secrets.GCP_PROJECT}}
 
     #- name: Build and push Docker images
     #  uses: docker/build-push-action@v2.2.0
