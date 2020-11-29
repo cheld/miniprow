@@ -58,6 +58,10 @@ jobs:
     - name: List Images
       run: docker images
 
+    - name: Push Base Image
+      run: docker push cheld/cicd-bot:latest
+    
+      
 
 
     #- name: Build and push Docker images
