@@ -24,7 +24,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Tag image again
-      run: echo $SHA8
+      run: echo SHA8
 
     - name: Get dependencies
       run: |
