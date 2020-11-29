@@ -72,7 +72,7 @@ jobs:
 
     - name: Deploy on cloud run
       run: |-
-        gloud run deploy "cicdbot" \
+        gcloud run deploy "cicdbot" \
           --quiet
           --region "europe-west3" \
           --image "eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest" \
