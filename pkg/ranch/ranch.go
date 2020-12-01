@@ -222,6 +222,7 @@ func addResource(new bool, logger *logrus.Entry, r *Ranch, rType string, typeCou
 // Out: A valid list of Resource object on success, or
 //      ResourceNotFound error if target type resource does not exist in target state.
 func (r *Ranch) AcquireByState(state, dest, owner string, names []string) ([]*common.Resource, error) {
+	fmt.Println("AcquireByState")
 	if names == nil {
 		return nil, fmt.Errorf("must provide names of expected resources")
 	}
@@ -497,25 +498,7 @@ func newResourceFromNewDynamicResourceLifeCycle(name string, now time.Time) *com
 }
 
 func retryOnConflict(fn func() error) error {
-	//return retry.OnError(backoff, isConflict, fn)
-	return nil
-}
-
-func isConflict(err error) bool {
-	// if kerrors.IsConflict(err) {
-	// 	return true
-	// }
-	// if x, ok := err.(interface{ Unwrap() error }); ok {
-	// 	return isConflict(x.Unwrap())
-	// }
-	// if aggregate, ok := err.(utilerrors.Aggregate); ok {
-	// 	for _, err := range aggregate.Errors() {
-	// 		if isConflict(err) {
-	// 			return true
-	// 		}
-	// 	}
-	// }
-	return false
+	return fn()
 }
 
 type Empty struct{}

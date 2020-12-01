@@ -14,7 +14,6 @@ limitations under the License.
 package ranch
 
 import (
-	"context"
 	"time"
 
 	"github.com/cheld/cicd-bot/pkg/common"
@@ -22,7 +21,6 @@ import (
 
 // Storage is used to decouple ranch functionality with the resource persistence layer
 type Storage struct {
-	ctx context.Context
 
 	// For testing
 	now          func() time.Time
@@ -30,9 +28,8 @@ type Storage struct {
 }
 
 // NewStorage instantiates a new Storage with a PersistenceLayer implementation
-func NewStorage(ctx context.Context) *Storage {
+func NewStorage() *Storage {
 	return &Storage{
-		ctx:          ctx,
 		now:          func() time.Time { return time.Now() },
 		generateName: common.GenerateDynamicResourceName,
 	}
