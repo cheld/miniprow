@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package boskos
+package ranch
 
 import (
 	"fmt"
@@ -23,14 +23,8 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	kerrors "k8s.io/apimachinery/pkg/api/errors"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/util/retry"
 
 	"github.com/cheld/cicd-bot/pkg/common"
-	"sigs.k8s.io/boskos/crds"
 )
 
 // Ranch is the place which all of the Resource objects lives.
@@ -114,7 +108,7 @@ type acquireRequestPriorityKey struct {
 //     requestID - request ID to get a priority in the queue
 // Out: A valid Resource object and the time when the resource was originally requested on success, or
 //      ResourceNotFound error if target type resource does not exist in target state.
-func (r *Ranch) Acquire(rType, state, dest, owner, requestID string) (*crds.ResourceObject, time.Time, error) {
+func (r *Ranch) Acquire(rType, state, dest, owner, requestID string) (*common.Resource, time.Time, error) {
 	logger := logrus.WithFields(logrus.Fields{
 		"type":       rType,
 		"state":      state,
@@ -123,9 +117,9 @@ func (r *Ranch) Acquire(rType, state, dest, owner, requestID string) (*crds.Reso
 		"identifier": requestID,
 	})
 
-	var returnRes *crds.ResourceObject
+	var returnRes *common.Resource
 	createdTime := r.now()
-	if err := retryOnConflict(retry.DefaultBackoff, func() error {
+	if err := retryOnConflict(func() error {
 		logger.Debug("Determining request priority...")
 		ts := acquireRequestPriorityKey{rType: rType, state: state}
 		rank, new := r.requestMgr.GetRank(ts, requestID)
@@ -136,19 +130,18 @@ func (r *Ranch) Acquire(rType, state, dest, owner, requestID string) (*crds.Reso
 			logger.WithError(err).Errorf("could not get resources")
 			return &ResourceNotFound{rType}
 		}
-		logger.Debugf("Considering %d resources.", len(resources.Items))
+		logger.Debugf("Considering %d resources.", len(resources))
 
 		// For request priority we need to go over all the list until a matching rank
 		matchingResoucesCount := 0
 		typeCount := 0
-		for idx := range resources.Items {
-			res := resources.Items[idx]
-			if rType != res.Spec.Type {
+		for _, res := range resources {
+			if rType != res.Type {
 				continue
 			}
 			typeCount++
 
-			if state != res.Status.State || res.Status.Owner != "" {
+			if state != res.State || res.Owner != "" {
 				continue
 			}
 			matchingResoucesCount++
@@ -157,10 +150,10 @@ func (r *Ranch) Acquire(rType, state, dest, owner, requestID string) (*crds.Reso
 				continue
 			}
 			logger = logger.WithField("resource", res.Name)
-			res.Status.Owner = owner
-			res.Status.State = dest
+			res.Owner = owner
+			res.State = dest
 			logger.Debug("Updating resource.")
-			updatedRes, err := r.Storage.UpdateResource(&res)
+			updatedRes, err := r.Storage.UpdateResource(res)
 			if err != nil {
 				return err
 			}
@@ -204,20 +197,20 @@ func addResource(new bool, logger *logrus.Entry, r *Ranch, rType string, typeCou
 		return
 	}
 	logger.Debug("Checking for associated dynamic resource type...")
-	lifeCycle, err := r.Storage.GetDynamicResourceLifeCycle(rType)
-	// Assuming error means no associated dynamic resource.
-	if err == nil {
-		if typeCount < lifeCycle.Spec.MaxCount {
-			logger.Debug("Adding new dynamic resources...")
-			res := newResourceFromNewDynamicResourceLifeCycle(r.Storage.generateName(), lifeCycle, r.now())
-			if err := r.Storage.AddResource(res); err != nil {
-				logger.WithError(err).Warningf("unable to add a new resource of type %s", rType)
-			}
-			logger.Infof("Added dynamic resource %s of type %s", res.Name, res.Spec.Type)
-		}
-	} else {
-		logrus.WithError(err).Debug("Failed listing DRLC")
-	}
+	// lifeCycle, err := r.Storage.GetDynamicResourceLifeCycle(rType)
+	// // Assuming error means no associated dynamic resource.
+	// if err == nil {
+	// 	if typeCount < lifeCycle.MaxCount {
+	// 		logger.Debug("Adding new dynamic resources...")
+	// 		res := newResourceFromNewDynamicResourceLifeCycle(r.Storage.generateName(), r.now())
+	// 		if err := r.Storage.AddResource(res); err != nil {
+	// 			logger.WithError(err).Warningf("unable to add a new resource of type %s", rType)
+	// 		}
+	// 		logger.Infof("Added dynamic resource %s of type %s", res.Name, res.Type)
+	// 	}
+	// } else {
+	// 	logrus.WithError(err).Debug("Failed listing DRLC")
+	// }
 }
 
 // AcquireByState checks out resources of a given type without an owner,
@@ -228,14 +221,14 @@ func addResource(new bool, logger *logrus.Entry, r *Ranch, rType string, typeCou
 //     names - names of resource to acquire
 // Out: A valid list of Resource object on success, or
 //      ResourceNotFound error if target type resource does not exist in target state.
-func (r *Ranch) AcquireByState(state, dest, owner string, names []string) ([]*crds.ResourceObject, error) {
+func (r *Ranch) AcquireByState(state, dest, owner string, names []string) ([]*common.Resource, error) {
 	if names == nil {
 		return nil, fmt.Errorf("must provide names of expected resources")
 	}
 
-	var returnRes []*crds.ResourceObject
-	if err := retryOnConflict(retry.DefaultBackoff, func() error {
-		rNames := sets.NewString(names...)
+	var returnRes []*common.Resource
+	if err := retryOnConflict(func() error {
+		rNames := NewString(names...)
 
 		allResources, err := r.Storage.GetResources()
 		if err != nil {
@@ -243,17 +236,17 @@ func (r *Ranch) AcquireByState(state, dest, owner string, names []string) ([]*cr
 			return &ResourceNotFound{state}
 		}
 
-		var resources []*crds.ResourceObject
+		var resources []*common.Resource
 
-		for idx := range allResources.Items {
-			res := allResources.Items[idx]
-			if state != res.Status.State || res.Status.Owner != "" || !rNames.Has(res.Name) {
+		for _, res := range allResources {
+
+			if state != res.State || res.Owner != "" || !rNames.Has(res.Name) {
 				continue
 			}
 
-			res.Status.Owner = owner
-			res.Status.State = dest
-			updatedRes, err := r.Storage.UpdateResource(&res)
+			res.Owner = owner
+			res.State = dest
+			updatedRes, err := r.Storage.UpdateResource(res)
 			if err != nil {
 				return err
 			}
@@ -287,29 +280,29 @@ func (r *Ranch) AcquireByState(state, dest, owner string, names []string) ([]*cr
 //      OwnerNotMatch error if owner does not match current owner of the resource, or
 //      ResourceNotFound error if target named resource does not exist.
 func (r *Ranch) Release(name, dest, owner string) error {
-	if err := retryOnConflict(retry.DefaultBackoff, func() error {
+	if err := retryOnConflict(func() error {
 		res, err := r.Storage.GetResource(name)
 		if err != nil {
 			logrus.WithError(err).Errorf("unable to release resource %s", name)
 			return &ResourceNotFound{name}
 		}
-		if owner != res.Status.Owner {
-			return &OwnerNotMatch{request: owner, owner: res.Status.Owner}
+		if owner != res.Owner {
+			return &OwnerNotMatch{request: owner, owner: res.Owner}
 		}
 
-		res.Status.Owner = ""
-		res.Status.State = dest
+		res.Owner = ""
+		res.State = dest
 
-		if lf, err := r.Storage.GetDynamicResourceLifeCycle(res.Spec.Type); err == nil {
-			// Assuming error means not existing as the only way to differentiate would be to list
-			// all resources and find the right one which is more costly.
-			if lf.Spec.LifeSpan != nil {
-				expirationTime := r.now().Add(*lf.Spec.LifeSpan)
-				res.Status.ExpirationDate = &expirationTime
-			}
-		} else {
-			res.Status.ExpirationDate = nil
-		}
+		// if lf, err := r.Storage.GetDynamicResourceLifeCycle(res.Type); err == nil {
+		// 	// Assuming error means not existing as the only way to differentiate would be to list
+		// 	// all resources and find the right one which is more costly.
+		// 	if lf.LifeSpan != nil {
+		// 		expirationTime := r.now().Add(*lf.LifeSpan)
+		// 		res.ExpirationDate = &expirationTime
+		// 	}
+		// } else {
+		// 	res.ExpirationDate = nil
+		// }
 
 		if _, err := r.Storage.UpdateResource(res); err != nil {
 			return err
@@ -333,22 +326,22 @@ func (r *Ranch) Release(name, dest, owner string) error {
 //      ResourceNotFound error if target named resource does not exist, or
 //      StateNotMatch error if state does not match current state of the resource.
 func (r *Ranch) Update(name, owner, state string, ud *common.UserData) error {
-	if err := retryOnConflict(retry.DefaultBackoff, func() error {
+	if err := retryOnConflict(func() error {
 		res, err := r.Storage.GetResource(name)
 		if err != nil {
 			logrus.WithError(err).Errorf("could not find resource %s for update", name)
 			return &ResourceNotFound{name}
 		}
-		if owner != res.Status.Owner {
-			return &OwnerNotMatch{request: owner, owner: res.Status.Owner}
+		if owner != res.Owner {
+			return &OwnerNotMatch{request: owner, owner: res.Owner}
 		}
-		if state != res.Status.State {
-			return &StateNotMatch{res.Status.State, state}
+		if state != res.State {
+			return &StateNotMatch{res.State, state}
 		}
-		if res.Status.UserData == nil {
-			res.Status.UserData = &common.UserData{}
+		if res.UserData == nil {
+			res.UserData = &common.UserData{}
 		}
-		res.Status.UserData.Update(ud)
+		res.UserData.Update(ud)
 		if _, err := r.Storage.UpdateResource(res); err != nil {
 			return err
 		}
@@ -369,23 +362,22 @@ func (r *Ranch) Update(name, owner, state string, ud *common.UserData) error {
 // Out: map of resource name - resource owner.
 func (r *Ranch) Reset(rtype, state string, expire time.Duration, dest string) (map[string]string, error) {
 	var ret map[string]string
-	if err := retryOnConflict(retry.DefaultBackoff, func() error {
+	if err := retryOnConflict(func() error {
 		ret = make(map[string]string)
 		resources, err := r.Storage.GetResources()
 		if err != nil {
 			return err
 		}
 
-		for idx := range resources.Items {
-			res := resources.Items[idx]
-			if rtype != res.Spec.Type || state != res.Status.State || res.Status.Owner == "" || r.now().Sub(res.Status.LastUpdate) < expire {
+		for _, res := range resources {
+			if rtype != res.Type || state != res.State || res.Owner == "" || r.now().Sub(res.LastUpdate) < expire {
 				continue
 			}
 
-			ret[res.Name] = res.Status.Owner
-			res.Status.Owner = ""
-			res.Status.State = dest
-			if _, err := r.Storage.UpdateResource(&res); err != nil {
+			ret[res.Name] = res.Owner
+			res.Owner = ""
+			res.State = dest
+			if _, err := r.Storage.UpdateResource(res); err != nil {
 				return err
 			}
 		}
@@ -400,14 +392,15 @@ func (r *Ranch) Reset(rtype, state string, expire time.Duration, dest string) (m
 
 // SyncConfig updates resource list from a file
 func (r *Ranch) SyncConfig(configPath string) error {
-	config, err := common.ParseConfig(configPath)
-	if err != nil {
-		return err
-	}
-	if err := common.ValidateConfig(config); err != nil {
-		return err
-	}
-	return r.Storage.SyncResources(config)
+	// config, err := common.ParseConfig(configPath)
+	// if err != nil {
+	// 	return err
+	// }
+	// if err := common.ValidateConfig(config); err != nil {
+	// 	return err
+	// }
+	// return r.Storage.SyncResources(config)
+	return nil
 }
 
 // StartDynamicResourceUpdater starts a goroutine which periodically
@@ -444,13 +437,13 @@ func (r *Ranch) Metric(rtype string) (common.Metric, error) {
 		return metric, &ResourceNotFound{rtype}
 	}
 
-	for _, res := range resources.Items {
-		if res.Spec.Type != rtype {
+	for _, res := range resources {
+		if res.Type != rtype {
 			continue
 		}
 
-		metric.Current[res.Status.State]++
-		metric.Owners[res.Status.Owner]++
+		metric.Current[res.State]++
+		metric.Owners[res.Owner]++
 	}
 
 	if len(metric.Current) == 0 && len(metric.Owners) == 0 {
@@ -470,15 +463,15 @@ func (r *Ranch) AllMetrics() ([]common.Metric, error) {
 
 	metrics := map[string]common.Metric{}
 
-	for _, res := range resources.Items {
-		metric, ok := metrics[res.Spec.Type]
+	for _, res := range resources {
+		metric, ok := metrics[res.Type]
 		if !ok {
-			metric = common.NewMetric(res.Spec.Type)
-			metrics[res.Spec.Type] = metric
+			metric = common.NewMetric(res.Type)
+			metrics[res.Type] = metric
 		}
 
-		metric.Current[res.Status.State]++
-		metric.Owners[res.Status.Owner]++
+		metric.Current[res.State]++
+		metric.Owners[res.Owner]++
 	}
 
 	result := make([]common.Metric, 0, len(metrics))
@@ -493,27 +486,93 @@ func (r *Ranch) AllMetrics() ([]common.Metric, error) {
 
 // newResourceFromNewDynamicResourceLifeCycle creates a resource from DynamicResourceLifeCycle given a name and a time.
 // Using this method helps make sure all the resources are created the same way.
-func newResourceFromNewDynamicResourceLifeCycle(name string, dlrc *crds.DRLCObject, now time.Time) *crds.ResourceObject {
-	return crds.NewResource(name, dlrc.Name, dlrc.Spec.InitialState, "", now)
+//func newResourceFromNewDynamicResourceLifeCycle(name string, dlrc *crds.DRLCObject, now time.Time) *common.Resource {
+//	//return crds.NewResource(name, dlrc.Name, dlrc.Spec.InitialState, "", now)
+//	return nil
+//}
+
+func newResourceFromNewDynamicResourceLifeCycle(name string, now time.Time) *common.Resource {
+	//return crds.NewResource(name, dlrc.Name, dlrc.Spec.InitialState, "", now)
+	return nil
 }
 
-func retryOnConflict(backoff wait.Backoff, fn func() error) error {
-	return retry.OnError(backoff, isConflict, fn)
+func retryOnConflict(fn func() error) error {
+	//return retry.OnError(backoff, isConflict, fn)
+	return nil
 }
 
 func isConflict(err error) bool {
-	if kerrors.IsConflict(err) {
-		return true
-	}
-	if x, ok := err.(interface{ Unwrap() error }); ok {
-		return isConflict(x.Unwrap())
-	}
-	if aggregate, ok := err.(utilerrors.Aggregate); ok {
-		for _, err := range aggregate.Errors() {
-			if isConflict(err) {
-				return true
-			}
-		}
-	}
+	// if kerrors.IsConflict(err) {
+	// 	return true
+	// }
+	// if x, ok := err.(interface{ Unwrap() error }); ok {
+	// 	return isConflict(x.Unwrap())
+	// }
+	// if aggregate, ok := err.(utilerrors.Aggregate); ok {
+	// 	for _, err := range aggregate.Errors() {
+	// 		if isConflict(err) {
+	// 			return true
+	// 		}
+	// 	}
+	// }
 	return false
+}
+
+type Empty struct{}
+
+// sets.String is a set of strings, implemented via map[string]struct{} for minimal memory consumption.
+type String map[string]Empty
+
+// NewString creates a String from a list of values.
+func NewString(items ...string) String {
+	ss := String{}
+	ss.Insert(items...)
+	return ss
+}
+
+// Insert adds items to the set.
+func (s String) Insert(items ...string) String {
+	for _, item := range items {
+		s[item] = Empty{}
+	}
+	return s
+}
+
+// Delete removes all items from the set.
+func (s String) Delete(items ...string) String {
+	for _, item := range items {
+		delete(s, item)
+	}
+	return s
+}
+
+// Has returns true if and only if item is contained in the set.
+func (s String) Has(item string) bool {
+	_, contained := s[item]
+	return contained
+}
+
+// Len returns the size of the set.
+func (s String) Len() int {
+	return len(s)
+}
+
+type sortableSliceOfString []string
+
+func (s sortableSliceOfString) Len() int           { return len(s) }
+func (s sortableSliceOfString) Less(i, j int) bool { return lessString(s[i], s[j]) }
+func (s sortableSliceOfString) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
+// List returns the contents as a sorted string slice.
+func (s String) List() []string {
+	res := make(sortableSliceOfString, 0, len(s))
+	for key := range s {
+		res = append(res, key)
+	}
+	sort.Sort(res)
+	return []string(res)
+}
+
+func lessString(lhs, rhs string) bool {
+	return lhs < rhs
 }
