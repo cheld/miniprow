@@ -141,6 +141,7 @@ func (r *Ranch) Acquire(rType, state, dest, owner, requestID string) (*common.Re
 			}
 			typeCount++
 
+			fmt.Printf("state, res.State, res.Owner %v, %v , %v\n", state, res.State, res.Owner)
 			if state != res.State || res.Owner != "" {
 				continue
 			}
@@ -400,8 +401,7 @@ func (r *Ranch) SyncConfig(configPath string) error {
 	if err := common.ValidateConfig(config); err != nil {
 		return err
 	}
-	// return r.Storage.SyncResources(config)
-	return nil
+	return r.Storage.SyncResources(config)
 }
 
 // StartDynamicResourceUpdater starts a goroutine which periodically

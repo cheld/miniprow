@@ -17,19 +17,22 @@ import (
 	"time"
 
 	"github.com/cheld/cicd-bot/pkg/boskos/common"
+
+	"github.com/cheld/cicd-bot/pkg/boskos/storage"
 )
 
 // Storage is used to decouple ranch functionality with the resource persistence layer
 type Storage struct {
-
+	persistence storage.PersistenceLayer
 	// For testing
 	now          func() time.Time
 	generateName func() string
 }
 
 // NewStorage instantiates a new Storage with a PersistenceLayer implementation
-func NewStorage() *Storage {
+func NewStorage(persistence storage.PersistenceLayer) *Storage {
 	return &Storage{
+		persistence:  persistence,
 		now:          func() time.Time { return time.Now() },
 		generateName: common.GenerateDynamicResourceName,
 	}
@@ -37,43 +40,34 @@ func NewStorage() *Storage {
 
 // AddResource adds a new resource
 func (s *Storage) AddResource(resource *common.Resource) error {
-	return nil
+	return s.persistence.Add(*resource)
 }
 
 // DeleteResource deletes a resource if it exists, errors otherwise
 func (s *Storage) DeleteResource(name string) error {
-	return nil
+	return s.persistence.Delete(name)
 }
 
 // UpdateResource updates a resource if it exists, errors otherwise
 func (s *Storage) UpdateResource(resource *common.Resource) (*common.Resource, error) {
 	resource.LastUpdate = s.now()
-
+	s.persistence.Update(*resource)
 	return resource, nil
 }
 
 // GetResource gets an existing resource, errors otherwise
 func (s *Storage) GetResource(name string) (*common.Resource, error) {
-	o := &common.Resource{}
-
-	if o.UserData == nil {
-		o.UserData = &common.UserData{}
-	}
-
-	return o, nil
+	res, err := s.persistence.Get(name)
+	return &res, err
 }
 
 // GetResources list all resources
 func (s *Storage) GetResources() ([]*common.Resource, error) {
-	resourceList := make([]*common.Resource, 0)
-	// if err := s.client.List(s.ctx, resourceList, ctrlruntimeclient.InNamespace(s.namespace)); err != nil {
-	// 	return nil, fmt.Errorf("failed to list resources; %v", err)
-	// }
-
-	// sort.SliceStable(resourceList.Items, func(i, j int) bool {
-	// 	return resourceList.Items[i].Status.LastUpdate.Before(resourceList.Items[j].Status.LastUpdate)
-	// })
-
+	r, _ := s.persistence.List()
+	resourceList := make([]*common.Resource, len(r))
+	for i, res := range r {
+		resourceList[i] = &res
+	}
 	return resourceList, nil
 }
 
@@ -133,25 +127,19 @@ func (s *Storage) GetDynamicResourceLifeCycles() (string, error) {
 // If the newly deleted resource is currently held by a user, the deletion will
 // yield to next update cycle.
 func (s *Storage) SyncResources(config *common.BoskosConfig) error {
-	// if config == nil {
-	// 	return nil
-	// }
+	if config == nil {
+		return nil
+	}
 
-	// if err := retryOnConflict(retry.DefaultBackoff, func() error {
-	// 	newSRByName := map[string]crds.ResourceObject{}
-	// 	existingSRByName := map[string]crds.ResourceObject{}
-	// 	newDRLCByType := map[string]crds.DRLCObject{}
-	// 	existingDRLCByType := map[string]crds.DRLCObject{}
-
-	// 	for _, entry := range config.Resources {
-	// 		if entry.IsDRLC() {
-	// 			newDRLCByType[entry.Type] = *crds.FromDynamicResourceLifecycle(common.NewDynamicResourceLifeCycleFromConfig(entry))
-	// 		} else {
-	// 			for _, res := range common.NewResourcesFromConfig(entry) {
-	// 				newSRByName[res.Name] = *crds.FromResource(res)
-	// 			}
-	// 		}
-	// 	}
+	for _, entry := range config.Resources {
+		if entry.IsDRLC() {
+			// 			newDRLCByType[entry.Type] = *crds.FromDynamicResourceLifecycle(common.NewDynamicResourceLifeCycleFromConfig(entry))
+		} else {
+			for _, res := range common.NewResourcesFromConfig(entry) {
+				s.persistence.Add(res)
+			}
+		}
+	}
 
 	// 	if err := func() error {
 	// 		s.resourcesLock.Lock()
@@ -197,11 +185,6 @@ func (s *Storage) SyncResources(config *common.BoskosConfig) error {
 	// 	}(); err != nil {
 	// 		return err
 	// 	}
-	// 	return nil
-	// }); err != nil {
-	// 	logrus.WithError(err).Error("Encountered error syncing resources from configfile.")
-	// 	return err
-	// }
 
 	// if err := s.UpdateAllDynamicResources(); err != nil {
 	// 	logrus.WithError(err).Error("Encountered error updating dynamic resources.")

@@ -7,6 +7,7 @@ import (
 
 	"github.com/cheld/cicd-bot/pkg/boskos/handlers"
 	"github.com/cheld/cicd-bot/pkg/boskos/ranch"
+	"github.com/cheld/cicd-bot/pkg/boskos/storage"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,7 +25,7 @@ func main() {
 	//runtime.SetBlockProfileRate(1)
 	//runtime.SetMutexProfileFraction(1)
 
-	storage := ranch.NewStorage()
+	storage := ranch.NewStorage(storage.NewMemoryStorage())
 
 	r, _ := ranch.NewRanch("boskos.yaml", storage, defaultRequestTTL)
 
