@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cheld/cicd-bot/pkg/config"
-	"github.com/cheld/cicd-bot/pkg/event"
-	"github.com/cheld/cicd-bot/pkg/trigger"
+	"github.com/cheld/cicd-bot/pkg/piper/config"
+	"github.com/cheld/cicd-bot/pkg/piper/event"
+	"github.com/cheld/cicd-bot/pkg/piper/trigger"
 	"github.com/golang/glog"
 	"gopkg.in/go-playground/webhooks.v5/github"
 )

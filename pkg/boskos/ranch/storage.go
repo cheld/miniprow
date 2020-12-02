@@ -16,7 +16,7 @@ package ranch
 import (
 	"time"
 
-	"github.com/cheld/cicd-bot/pkg/common"
+	"github.com/cheld/cicd-bot/pkg/boskos/common"
 )
 
 // Storage is used to decouple ranch functionality with the resource persistence layer

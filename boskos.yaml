@@ -1,0 +1,7 @@
+resources:
+    # Static
+    - type: "aws-account"
+      state: free
+      names:
+      - "account1"
+      - "account2"

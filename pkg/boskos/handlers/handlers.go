@@ -26,8 +26,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cheld/cicd-bot/pkg/common"
-	"github.com/cheld/cicd-bot/pkg/ranch"
+	"github.com/cheld/cicd-bot/pkg/boskos/common"
+	"github.com/cheld/cicd-bot/pkg/boskos/ranch"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -176,7 +176,6 @@ func handleAcquire(r *ranch.Ranch) http.HandlerFunc {
 //		Required: names=[string] : expected resources names
 func handleAcquireByState(r *ranch.Ranch) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		fmt.Println("handleAcquireByState")
 		logrus.WithField("handler", "handleStart").Infof("From %v", req.RemoteAddr)
 
 		if req.Method != http.MethodPost {

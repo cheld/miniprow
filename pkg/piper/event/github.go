@@ -1,7 +1,7 @@
 package event
 
 import (
-	"github.com/cheld/cicd-bot/pkg/config"
+	"github.com/cheld/cicd-bot/pkg/piper/config"
 	"github.com/golang/glog"
 	"gopkg.in/go-playground/webhooks.v5/github"
 )

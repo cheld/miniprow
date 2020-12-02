@@ -24,7 +24,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/cheld/cicd-bot/pkg/common"
+	"github.com/cheld/cicd-bot/pkg/boskos/common"
 )
 
 // Ranch is the place which all of the Resource objects lives.
@@ -393,13 +393,13 @@ func (r *Ranch) Reset(rtype, state string, expire time.Duration, dest string) (m
 
 // SyncConfig updates resource list from a file
 func (r *Ranch) SyncConfig(configPath string) error {
-	// config, err := common.ParseConfig(configPath)
-	// if err != nil {
-	// 	return err
-	// }
-	// if err := common.ValidateConfig(config); err != nil {
-	// 	return err
-	// }
+	config, err := common.ParseConfig(configPath)
+	if err != nil {
+		return err
+	}
+	if err := common.ValidateConfig(config); err != nil {
+		return err
+	}
 	// return r.Storage.SyncResources(config)
 	return nil
 }

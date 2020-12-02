@@ -3,7 +3,7 @@ package trigger
 import (
 	"testing"
 
-	"github.com/cheld/cicd-bot/pkg/config"
+	"github.com/cheld/cicd-bot/pkg/piper/config"
 )
 
 func TestExecute_errorhandling(t *testing.T) {

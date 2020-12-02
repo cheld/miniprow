@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cheld/cicd-bot/pkg/handlers"
-	"github.com/cheld/cicd-bot/pkg/ranch"
+	"github.com/cheld/cicd-bot/pkg/boskos/handlers"
+	"github.com/cheld/cicd-bot/pkg/boskos/ranch"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,7 +26,7 @@ func main() {
 
 	storage := ranch.NewStorage()
 
-	r, _ := ranch.NewRanch("", storage, defaultRequestTTL)
+	r, _ := ranch.NewRanch("boskos.yaml", storage, defaultRequestTTL)
 
 	boskos := &http.Server{
 		Handler: handlers.NewBoskosHandler(r),

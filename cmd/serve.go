@@ -20,7 +20,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/cheld/cicd-bot/pkg/config"
+	"github.com/cheld/cicd-bot/pkg/piper/config"
 	"github.com/cheld/cicd-bot/pkg/webhook"
 	"github.com/spf13/cobra"
 )

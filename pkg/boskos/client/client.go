@@ -35,8 +35,8 @@ import (
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
-	"github.com/cheld/cicd-bot/pkg/common"
-	"github.com/cheld/cicd-bot/pkg/storage"
+	"github.com/cheld/cicd-bot/pkg/boskos/common"
+	"github.com/cheld/cicd-bot/pkg/boskos/storage"
 	"k8s.io/test-infra/prow/config/secret"
 )
 
