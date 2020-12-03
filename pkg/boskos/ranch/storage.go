@@ -65,8 +65,8 @@ func (s *Storage) GetResource(name string) (*common.Resource, error) {
 func (s *Storage) GetResources() ([]*common.Resource, error) {
 	r, _ := s.persistence.List()
 	resourceList := make([]*common.Resource, len(r))
-	for i, res := range r {
-		resourceList[i] = &res
+	for i := 0; i < len(r); i++ {
+		resourceList[i] = &r[i]
 	}
 	return resourceList, nil
 }

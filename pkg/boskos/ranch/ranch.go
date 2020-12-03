@@ -136,12 +136,14 @@ func (r *Ranch) Acquire(rType, state, dest, owner, requestID string) (*common.Re
 		matchingResoucesCount := 0
 		typeCount := 0
 		for _, res := range resources {
+			fmt.Printf("Resource %v\n", res)
+		}
+		for _, res := range resources {
 			if rType != res.Type {
 				continue
 			}
 			typeCount++
 
-			fmt.Printf("state, res.State, res.Owner %v, %v , %v\n", state, res.State, res.Owner)
 			if state != res.State || res.Owner != "" {
 				continue
 			}
