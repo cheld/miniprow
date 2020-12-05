@@ -31,6 +31,8 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	r.StartRequestGC(defaultRequestGCPeriod)
+	r.StartDynamicResourceUpdater(defaultDynamicResourceUpdatePeriod)
 
 	boskos := &http.Server{
 		Handler: handlers.NewBoskosHandler(r),

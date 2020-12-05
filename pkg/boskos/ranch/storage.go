@@ -166,66 +166,6 @@ func (s *Storage) SyncResources(config *common.BoskosConfig) error {
 	return nil
 }
 
-// updateDynamicResources updates dynamic resource based on an existing dynamic resource life cycle.
-// It will make sure than MinCount of resource exists, and attempt to delete expired and resources over MaxCount.
-// If resources are held by another user than Boskos, they will be deleted in a following cycle.
-// func (s *Storage) updateDynamicResources(lifecycle *crds.DRLCObject, resources []crds.ResourceObject) (toAdd, toDelete []crds.ResourceObject) {
-// 	var notInUseRes []crds.ResourceObject
-// 	tombStoned := 0
-// 	toBeDeleted := 0
-// 	for _, r := range resources {
-// 		if r.Status.Owner != "" {
-// 			// We can only delete resources not in use.
-// 			continue
-// 		}
-// 		if r.Status.State == common.Tombstone {
-// 			// Ready to be fully deleted.
-// 			toDelete = append(toDelete, r)
-// 			tombStoned++
-// 		} else if r.Status.State == common.ToBeDeleted {
-// 			// Already in the process of cleaning up.
-// 			// Don't create new resources yet, but also don't delete additional
-// 			// resources.
-// 			toBeDeleted++
-// 		} else {
-// 			if r.Status.ExpirationDate != nil && s.now().After(*r.Status.ExpirationDate) {
-// 				// Expired. Don't decrement the active count until it's tombstoned,
-// 				// however, as it might be depending on other resources that need
-// 				// to be released first.
-// 				toDelete = append(toDelete, r)
-// 				toBeDeleted++
-// 			} else {
-// 				notInUseRes = append(notInUseRes, r)
-// 			}
-// 		}
-// 	}
-
-// 	// Tombstoned resources are ready to be fully deleted, so replace them if necessary.
-// 	activeCount := len(resources) - tombStoned
-// 	for i := activeCount; i < lifecycle.Spec.MinCount; i++ {
-// 		res := newResourceFromNewDynamicResourceLifeCycle(s.generateName(), lifecycle, s.now())
-// 		toAdd = append(toAdd, *res)
-// 		activeCount++
-// 	}
-
-// 	// ToBeDeleted resources may take some time to be fully cleaned up.
-// 	// We can temporarily exceed MaxCount while these are being cleaned up,
-// 	// particularly if MaxCount was recently lowered.
-// 	numberOfResToDelete := activeCount - toBeDeleted - lifecycle.Spec.MaxCount
-// 	// Sorting to get consistent deletion mechanism (ease testing)
-// 	sort.SliceStable(notInUseRes, func(i, j int) bool {
-// 		return notInUseRes[i].Name > notInUseRes[j].Name
-// 	})
-// 	for i := 0; i < len(notInUseRes); i++ {
-// 		res := notInUseRes[i]
-// 		if i < numberOfResToDelete {
-// 			toDelete = append(toDelete, res)
-// 		}
-// 	}
-// 	logrus.Infof("DRLC type %s: adding %+v, deleting %+v", lifecycle.Name, toAdd, toDelete)
-// 	return
-// }
-
 // UpdateAllDynamicResources queries for all existing DynamicResourceLifeCycles
 // and dynamic resources and calls updateDynamicResources for each type.
 // This ensures that the MinCount and MaxCount parameters are honored, that
@@ -290,6 +230,66 @@ func (s *Storage) UpdateAllDynamicResources() error {
 	// })
 	return nil
 }
+
+// updateDynamicResources updates dynamic resource based on an existing dynamic resource life cycle.
+// It will make sure than MinCount of resource exists, and attempt to delete expired and resources over MaxCount.
+// If resources are held by another user than Boskos, they will be deleted in a following cycle.
+// func (s *Storage) updateDynamicResources(lifecycle *crds.DRLCObject, resources []crds.ResourceObject) (toAdd, toDelete []crds.ResourceObject) {
+// 	var notInUseRes []crds.ResourceObject
+// 	tombStoned := 0
+// 	toBeDeleted := 0
+// 	for _, r := range resources {
+// 		if r.Status.Owner != "" {
+// 			// We can only delete resources not in use.
+// 			continue
+// 		}
+// 		if r.Status.State == common.Tombstone {
+// 			// Ready to be fully deleted.
+// 			toDelete = append(toDelete, r)
+// 			tombStoned++
+// 		} else if r.Status.State == common.ToBeDeleted {
+// 			// Already in the process of cleaning up.
+// 			// Don't create new resources yet, but also don't delete additional
+// 			// resources.
+// 			toBeDeleted++
+// 		} else {
+// 			if r.Status.ExpirationDate != nil && s.now().After(*r.Status.ExpirationDate) {
+// 				// Expired. Don't decrement the active count until it's tombstoned,
+// 				// however, as it might be depending on other resources that need
+// 				// to be released first.
+// 				toDelete = append(toDelete, r)
+// 				toBeDeleted++
+// 			} else {
+// 				notInUseRes = append(notInUseRes, r)
+// 			}
+// 		}
+// 	}
+
+// 	// Tombstoned resources are ready to be fully deleted, so replace them if necessary.
+// 	activeCount := len(resources) - tombStoned
+// 	for i := activeCount; i < lifecycle.Spec.MinCount; i++ {
+// 		res := newResourceFromNewDynamicResourceLifeCycle(s.generateName(), lifecycle, s.now())
+// 		toAdd = append(toAdd, *res)
+// 		activeCount++
+// 	}
+
+// 	// ToBeDeleted resources may take some time to be fully cleaned up.
+// 	// We can temporarily exceed MaxCount while these are being cleaned up,
+// 	// particularly if MaxCount was recently lowered.
+// 	numberOfResToDelete := activeCount - toBeDeleted - lifecycle.Spec.MaxCount
+// 	// Sorting to get consistent deletion mechanism (ease testing)
+// 	sort.SliceStable(notInUseRes, func(i, j int) bool {
+// 		return notInUseRes[i].Name > notInUseRes[j].Name
+// 	})
+// 	for i := 0; i < len(notInUseRes); i++ {
+// 		res := notInUseRes[i]
+// 		if i < numberOfResToDelete {
+// 			toDelete = append(toDelete, res)
+// 		}
+// 	}
+// 	logrus.Infof("DRLC type %s: adding %+v, deleting %+v", lifecycle.Name, toAdd, toDelete)
+// 	return
+// }
 
 // syncDynamicResourceLifeCycles compares the new DRLC configuration against
 // the current configuration. If a DRLC has been deleted from the new
