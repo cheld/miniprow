@@ -117,7 +117,6 @@ func init() {
 //		Required: owner=[string] : requester of the resource
 func handleAcquire(r *ranch.Ranch) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		fmt.Println("handleAcquire")
 		logrus.WithField("handler", "handleStart").Infof("From %v", req.RemoteAddr)
 
 		if req.Method != http.MethodPost {
@@ -176,6 +175,7 @@ func handleAcquire(r *ranch.Ranch) http.HandlerFunc {
 //		Required: names=[string] : expected resources names
 func handleAcquireByState(r *ranch.Ranch) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
+		fmt.Println("handleAcquireBySteate")
 		logrus.WithField("handler", "handleStart").Infof("From %v", req.RemoteAddr)
 
 		if req.Method != http.MethodPost {

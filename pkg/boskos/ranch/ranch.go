@@ -139,6 +139,7 @@ func (r *Ranch) Acquire(rType, state, dest, owner, requestID string) (*common.Re
 			fmt.Printf("Resource %v\n", res)
 		}
 		for _, res := range resources {
+			fmt.Printf("Typecount, Matchcount, rank %v, %v, %v\n", typeCount, matchingResoucesCount, rank)
 			if rType != res.Type {
 				continue
 			}
@@ -175,7 +176,7 @@ func (r *Ranch) Acquire(rType, state, dest, owner, requestID string) (*common.Re
 		}
 
 		addResource(new, logger, r, rType, typeCount)
-
+		fmt.Printf("Typecount: %v", typeCount)
 		if typeCount > 0 {
 			return &ResourceNotFound{rType}
 		}
@@ -196,24 +197,25 @@ func (r *Ranch) Acquire(rType, state, dest, owner, requestID string) (*common.Re
 }
 
 func addResource(new bool, logger *logrus.Entry, r *Ranch, rType string, typeCount int) {
+	fmt.Printf("add resource %v\n", new)
 	if !new {
 		return
 	}
 	logger.Debug("Checking for associated dynamic resource type...")
-	// lifeCycle, err := r.Storage.GetDynamicResourceLifeCycle(rType)
+	lifeCycle, err := r.Storage.GetDynamicResourceLifeCycle(rType)
 	// // Assuming error means no associated dynamic resource.
-	// if err == nil {
-	// 	if typeCount < lifeCycle.MaxCount {
-	// 		logger.Debug("Adding new dynamic resources...")
-	// 		res := newResourceFromNewDynamicResourceLifeCycle(r.Storage.generateName(), r.now())
-	// 		if err := r.Storage.AddResource(res); err != nil {
-	// 			logger.WithError(err).Warningf("unable to add a new resource of type %s", rType)
-	// 		}
-	// 		logger.Infof("Added dynamic resource %s of type %s", res.Name, res.Type)
-	// 	}
-	// } else {
-	// 	logrus.WithError(err).Debug("Failed listing DRLC")
-	// }
+	if err == nil {
+		if typeCount < lifeCycle.MaxCount {
+			logger.Debug("Adding new dynamic resources...")
+			res := newResourceFromNewDynamicResourceLifeCycle(r.Storage.generateName(), r.now(), lifeCycle)
+			if err := r.Storage.AddResource(res); err != nil {
+				logger.WithError(err).Warningf("unable to add a new resource of type %s", rType)
+			}
+			logger.Infof("Added dynamic resource %s of type %s", res.Name, res.Type)
+		}
+	} else {
+		logrus.WithError(err).Debug("Failed listing DRLC")
+	}
 }
 
 // AcquireByState checks out resources of a given type without an owner,
@@ -225,7 +227,6 @@ func addResource(new bool, logger *logrus.Entry, r *Ranch, rType string, typeCou
 // Out: A valid list of Resource object on success, or
 //      ResourceNotFound error if target type resource does not exist in target state.
 func (r *Ranch) AcquireByState(state, dest, owner string, names []string) ([]*common.Resource, error) {
-	fmt.Println("AcquireByState")
 	if names == nil {
 		return nil, fmt.Errorf("must provide names of expected resources")
 	}
@@ -284,6 +285,7 @@ func (r *Ranch) AcquireByState(state, dest, owner string, names []string) ([]*co
 //      OwnerNotMatch error if owner does not match current owner of the resource, or
 //      ResourceNotFound error if target named resource does not exist.
 func (r *Ranch) Release(name, dest, owner string) error {
+	logrus.Infof("Release")
 	if err := retryOnConflict(func() error {
 		res, err := r.Storage.GetResource(name)
 		if err != nil {
@@ -297,16 +299,16 @@ func (r *Ranch) Release(name, dest, owner string) error {
 		res.Owner = ""
 		res.State = dest
 
-		// if lf, err := r.Storage.GetDynamicResourceLifeCycle(res.Type); err == nil {
-		// 	// Assuming error means not existing as the only way to differentiate would be to list
-		// 	// all resources and find the right one which is more costly.
-		// 	if lf.LifeSpan != nil {
-		// 		expirationTime := r.now().Add(*lf.LifeSpan)
-		// 		res.ExpirationDate = &expirationTime
-		// 	}
-		// } else {
-		// 	res.ExpirationDate = nil
-		// }
+		if lf, err := r.Storage.GetDynamicResourceLifeCycle(res.Type); err == nil {
+			// Assuming error means not existing as the only way to differentiate would be to list
+			// all resources and find the right one which is more costly.
+			if lf.LifeSpan != nil {
+				expirationTime := r.now().Add(*lf.LifeSpan)
+				res.ExpirationDate = &expirationTime
+			}
+		} else {
+			res.ExpirationDate = nil
+		}
 
 		if _, err := r.Storage.UpdateResource(res); err != nil {
 			return err
@@ -494,9 +496,16 @@ func (r *Ranch) AllMetrics() ([]common.Metric, error) {
 //	return nil
 //}
 
-func newResourceFromNewDynamicResourceLifeCycle(name string, now time.Time) *common.Resource {
-	//return crds.NewResource(name, dlrc.Name, dlrc.Spec.InitialState, "", now)
-	return nil
+func newResourceFromNewDynamicResourceLifeCycle(name string, now time.Time, lifeCycle common.DynamicResourceLifeCycle) *common.Resource {
+	expirationTime := now.Add(*lifeCycle.LifeSpan)
+	res := common.Resource{
+		Type:           lifeCycle.Type,
+		Name:           name,
+		State:          lifeCycle.InitialState,
+		LastUpdate:     now,
+		ExpirationDate: &expirationTime,
+	}
+	return &res
 }
 
 func retryOnConflict(fn func() error) error {
