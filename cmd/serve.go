@@ -17,12 +17,22 @@ package cmd
 
 import (
 	"fmt"
+	"net/http"
 	"os"
-	"strconv"
+	"time"
 
+	boskoshandler "github.com/cheld/cicd-bot/pkg/boskos/handlers"
+	"github.com/cheld/cicd-bot/pkg/boskos/ranch"
+	"github.com/cheld/cicd-bot/pkg/boskos/storage"
 	"github.com/cheld/cicd-bot/pkg/piper/config"
-	"github.com/cheld/cicd-bot/pkg/webhook"
+	piperhandler "github.com/cheld/cicd-bot/pkg/piper/handlers"
 	"github.com/spf13/cobra"
+)
+
+const (
+	defaultDynamicResourceUpdatePeriod = 10 * time.Minute
+	defaultRequestTTL                  = 30 * time.Second
+	defaultRequestGCPeriod             = time.Minute
 )
 
 // serveCmd represents the serve command
@@ -40,31 +50,45 @@ http://<localhost:port>/webhook/http`,
 		// parse cli
 		cfgFile, _ := cmd.Flags().GetString("config")
 		secret, _ := cmd.Flags().GetString("secret")
-		bindaddr, _ := cmd.Flags().GetString("bind-addr")
-		port, _ := cmd.Flags().GetInt("port")
+		//bindaddr, _ := cmd.Flags().GetString("bind-addr")
+		//port, _ := cmd.Flags().GetInt("port")
 		overrideVariables, _ := cmd.Flags().GetStringToString("env")
 
-		// prepare configuration
+		// Setup piper
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 		env := config.Environ(overrideVariables)
-		if env["PORT"] != "" {
-			p, _ := strconv.Atoi(env["PORT"])
-			if p != 0 {
-				port = p
-			}
-		}
-		opts := webhook.Options{
-			Port:     port,
-			Secret:   secret,
-			Bindaddr: bindaddr,
-		}
+		// if env["PORT"] != "" {
+		// 	p, _ := strconv.Atoi(env["PORT"])
+		// 	if p != 0 {
+		// 		port = p
+		// 	}
+		// }
 
-		// start webhook
-		webhook.Run(cfg, env, opts)
+		// Setup boskos
+		storage := ranch.NewStorage(storage.NewMemoryStorage())
+		r, err := ranch.NewRanch("boskos.yaml", storage, defaultRequestTTL)
+		if err != nil {
+			fmt.Println(err)
+		}
+		r.StartRequestGC(defaultRequestGCPeriod)
+		r.StartDynamicResourceUpdater(defaultDynamicResourceUpdatePeriod)
+
+		// Register endpoints
+		mux := http.NewServeMux()
+		boskoshandler.Register(mux, r)
+		piperhandler.Register(mux, cfg, env, secret)
+
+		// Start server
+		server := &http.Server{
+			Handler: mux,
+			Addr:    ":8080",
+		}
+		err = server.ListenAndServe()
+		fmt.Println(err)
 	},
 }
 

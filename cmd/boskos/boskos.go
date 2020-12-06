@@ -25,8 +25,8 @@ func main() {
 	//runtime.SetBlockProfileRate(1)
 	//runtime.SetMutexProfileFraction(1)
 
+	// Setup boskos
 	storage := ranch.NewStorage(storage.NewMemoryStorage())
-
 	r, err := ranch.NewRanch("boskos.yaml", storage, defaultRequestTTL)
 	if err != nil {
 		fmt.Println(err)
@@ -34,11 +34,15 @@ func main() {
 	r.StartRequestGC(defaultRequestGCPeriod)
 	r.StartDynamicResourceUpdater(defaultDynamicResourceUpdatePeriod)
 
-	boskos := &http.Server{
-		Handler: handlers.NewBoskosHandler(r),
+	// Register endpoints
+	mux := http.NewServeMux()
+	handlers.Register(mux, r)
+
+	// Start server
+	server := &http.Server{
+		Handler: mux,
 		Addr:    ":8080",
 	}
-
-	err = boskos.ListenAndServe()
+	err = server.ListenAndServe()
 	fmt.Println(err)
 }

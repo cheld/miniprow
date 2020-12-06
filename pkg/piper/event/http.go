@@ -14,7 +14,7 @@ func (handler *Handler) HandleHttp(body []byte, path string) []config.Task {
 	if len(body) > 0 {
 		err := json.Unmarshal(body, &payload)
 		if err != nil {
-			glog.Errorf("Not possible to parse request body %s", string(body))
+			glog.Errorf("Not possible to parse request body %s, %v", string(body), err)
 			return []config.Task{}
 		}
 	} else {

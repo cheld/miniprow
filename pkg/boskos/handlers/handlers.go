@@ -49,17 +49,14 @@ import (
 // 	))
 // }
 
-//NewBoskosHandler constructs the boskos handler.
-func NewBoskosHandler(r *ranch.Ranch) *http.ServeMux {
-	mux := http.NewServeMux()
-	mux.Handle("/", handleDefault(r))
+//Adds the boskos endpoints to the handler
+func Register(mux *http.ServeMux, r *ranch.Ranch) {
 	mux.Handle("/acquire", handleAcquire(r))
 	mux.Handle("/acquirebystate", handleAcquireByState(r))
 	mux.Handle("/release", handleRelease(r))
 	mux.Handle("/reset", handleReset(r))
 	mux.Handle("/update", handleUpdate(r))
 	mux.Handle("/metric", handleMetric(r))
-	return mux
 }
 
 type badRequestError string
