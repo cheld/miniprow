@@ -13,9 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+package main
 
 import (
+	goflag "flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -27,7 +28,25 @@ import (
 	"github.com/cheld/miniprow/pkg/piper/config"
 	piperhandler "github.com/cheld/miniprow/pkg/piper/handlers"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
+
+func main() {
+	if err := command().Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+// rootCmd represents the base command when called without any subcommands
+var rootCmd = &cobra.Command{
+	Use:   "cicd-bot",
+	Short: "CI/CD bot helps to automate tasks for typical development projects.",
+	Long: `CI/CD bot helps to automate tasks for typical development projects. 
+Tools are integrated using webhooks, flexible rules and triggers. Examples
+for automation tasks are job execution, GitHub/Gitlab policy enforcement,
+chat-ops via /foo style commands and Slack notifications.`,
+}
 
 const (
 	defaultDynamicResourceUpdatePeriod = 10 * time.Minute
@@ -92,11 +111,17 @@ http://<localhost:port>/webhook/http`,
 	},
 }
 
-func init() {
+func command() *cobra.Command {
 	rootCmd.AddCommand(serveCmd)
 	serveCmd.Flags().IntP("port", "p", 3000, "Port for the HTTP endpoint")
 	serveCmd.Flags().StringP("bind-addr", "", "127.0.0.1", "the bind addr of the server")
 	serveCmd.Flags().StringP("secret", "s", "", "Protect access to the webhook")
 	serveCmd.Flags().StringToStringP("env", "e", nil, "Provide environment variables that can be accessed by event handlers")
 	serveCmd.Flags().StringP("config", "c", "", "config file (default is $HOME/.piper.yaml)")
+	return rootCmd
+}
+
+func init() {
+	pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
+	goflag.Parse()
 }
