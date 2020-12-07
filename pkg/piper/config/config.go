@@ -7,12 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v3"
-)
-
-const (
-	configDefaultName = "piper.yaml"
 )
 
 type Configuration struct {
@@ -123,29 +118,10 @@ func Load(filename string) (Configuration, error) {
 }
 
 func readFile(filename string) ([]byte, error) {
-	var yamlFile []byte
-	if filename != "" {
-		yamlFile, err := ioutil.ReadFile(filename)
-		if err != nil {
-			return yamlFile, fmt.Errorf("Error reading YAML file: %s", err)
-		}
-		return yamlFile, nil
-	}
-	etcPath := fmt.Sprintf("/etc/%s", configDefaultName)
-	yamlFile, err := ioutil.ReadFile(etcPath)
+	yamlFile, err := ioutil.ReadFile(filename)
 	if err == nil {
 		return yamlFile, nil
 	}
-	home, _ := homedir.Dir()
-	homepath := fmt.Sprintf("%s/.%s", home, configDefaultName)
-	yamlFile, err = ioutil.ReadFile(homepath)
-	if err == nil {
-		return yamlFile, nil
-	}
-	yamlFile, err = ioutil.ReadFile(configDefaultName)
-	if err == nil {
-		return yamlFile, nil
-	}
-	return yamlFile, fmt.Errorf("Cound not reading config file from %s, %s, %s", etcPath, homepath, configDefaultName)
+	return yamlFile, fmt.Errorf("Cound not reading config file from %s", filename)
 
 }

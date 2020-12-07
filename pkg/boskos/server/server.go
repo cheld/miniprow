@@ -28,6 +28,7 @@ import (
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
 	"github.com/cheld/miniprow/pkg/boskos/ranch"
+	"github.com/cheld/miniprow/pkg/boskos/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -49,8 +50,22 @@ import (
 // 	))
 // }
 
+const (
+	defaultDynamicResourceUpdatePeriod = 10 * time.Minute
+	defaultRequestTTL                  = 30 * time.Second
+	defaultRequestGCPeriod             = time.Minute
+)
+
 //Adds the boskos endpoints to the handler
-func Register(mux *http.ServeMux, r *ranch.Ranch) {
+func Register(mux *http.ServeMux, boskosCfg string) {
+	storage := ranch.NewStorage(storage.NewMemoryStorage())
+	r, err := ranch.NewRanch(boskosCfg, storage, defaultRequestTTL)
+	if err != nil {
+		fmt.Println(err)
+	}
+	r.StartRequestGC(defaultRequestGCPeriod)
+	r.StartDynamicResourceUpdater(defaultDynamicResourceUpdatePeriod)
+
 	mux.Handle("/acquire", handleAcquire(r))
 	mux.Handle("/acquirebystate", handleAcquireByState(r))
 	mux.Handle("/release", handleRelease(r))

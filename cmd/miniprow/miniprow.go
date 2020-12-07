@@ -16,19 +16,16 @@ limitations under the License.
 package main
 
 import (
-	goflag "flag"
 	"fmt"
 	"net/http"
 	"os"
-	"time"
+	"strconv"
+	"strings"
 
-	boskoshandler "github.com/cheld/miniprow/pkg/boskos/handlers"
-	"github.com/cheld/miniprow/pkg/boskos/ranch"
-	"github.com/cheld/miniprow/pkg/boskos/storage"
-	"github.com/cheld/miniprow/pkg/piper/config"
-	piperhandler "github.com/cheld/miniprow/pkg/piper/handlers"
+	boskosServer "github.com/cheld/miniprow/pkg/boskos/server"
+	piperServer "github.com/cheld/miniprow/pkg/piper/server"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 func main() {
@@ -48,12 +45,6 @@ for automation tasks are job execution, GitHub/Gitlab policy enforcement,
 chat-ops via /foo style commands and Slack notifications.`,
 }
 
-const (
-	defaultDynamicResourceUpdatePeriod = 10 * time.Minute
-	defaultRequestTTL                  = 30 * time.Second
-	defaultRequestGCPeriod             = time.Minute
-)
-
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
@@ -66,47 +57,40 @@ http://<localhost:port>/webhook/gitlab
 http://<localhost:port>/webhook/http`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// parse cli
-		cfgFile, _ := cmd.Flags().GetString("config")
+		// read cli flags
+		piperCfg, _ := cmd.Flags().GetString("piper-config")
+		boskosCfg, _ := cmd.Flags().GetString("boskos-config")
 		secret, _ := cmd.Flags().GetString("secret")
-		//bindaddr, _ := cmd.Flags().GetString("bind-addr")
-		//port, _ := cmd.Flags().GetInt("port")
-		overrideVariables, _ := cmd.Flags().GetStringToString("env")
+		bindaddr, _ := cmd.Flags().GetString("bind-addr")
+		port, _ := cmd.Flags().GetInt("port")
+		envSettings, _ := cmd.Flags().GetStringToString("env")
 
-		// Setup piper
-		cfg, err := config.Load(cfgFile)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+		// read environment variables
+		for _, entry := range os.Environ() {
+			keyValue := strings.Split(entry, "=")
+			if keyValue[0] == "PORT" {
+				p, _ := strconv.Atoi(keyValue[0])
+				if p != 0 {
+					port = p
+				}
+			}
 		}
-		env := config.Environ(overrideVariables)
-		// if env["PORT"] != "" {
-		// 	p, _ := strconv.Atoi(env["PORT"])
-		// 	if p != 0 {
-		// 		port = p
-		// 	}
-		// }
 
-		// Setup boskos
-		storage := ranch.NewStorage(storage.NewMemoryStorage())
-		r, err := ranch.NewRanch("boskos.yaml", storage, defaultRequestTTL)
-		if err != nil {
-			fmt.Println(err)
-		}
-		r.StartRequestGC(defaultRequestGCPeriod)
-		r.StartDynamicResourceUpdater(defaultDynamicResourceUpdatePeriod)
+		// find config files
+		piperCfg = findFile(piperCfg, "piper.yaml")
+		boskosCfg = findFile(boskosCfg, "boskos.yaml")
 
-		// Register endpoints
+		// Register http endpoints
 		mux := http.NewServeMux()
-		boskoshandler.Register(mux, r)
-		piperhandler.Register(mux, cfg, env, secret)
+		boskosServer.Register(mux, boskosCfg)
+		piperServer.Register(mux, piperCfg, envSettings, secret)
 
 		// Start server
 		server := &http.Server{
 			Handler: mux,
-			Addr:    ":8080",
+			Addr:    fmt.Sprintf("%s:%d", bindaddr, port),
 		}
-		err = server.ListenAndServe()
+		err := server.ListenAndServe()
 		fmt.Println(err)
 	},
 }
@@ -114,14 +98,41 @@ http://<localhost:port>/webhook/http`,
 func command() *cobra.Command {
 	rootCmd.AddCommand(serveCmd)
 	serveCmd.Flags().IntP("port", "p", 3000, "Port for the HTTP endpoint")
-	serveCmd.Flags().StringP("bind-addr", "", "127.0.0.1", "the bind addr of the server")
+	serveCmd.Flags().StringP("bind-addr", "", "0.0.0.0", "the bind addr of the server")
 	serveCmd.Flags().StringP("secret", "s", "", "Protect access to the webhook")
 	serveCmd.Flags().StringToStringP("env", "e", nil, "Provide environment variables that can be accessed by event handlers")
-	serveCmd.Flags().StringP("config", "c", "", "config file (default is $HOME/.piper.yaml)")
+	serveCmd.Flags().StringP("piper-config", "", "", "config file (default is $HOME/.piper.yaml)")
+	serveCmd.Flags().StringP("boskos-config", "", "", "config file (default is $HOME/.boskos.yaml)")
 	return rootCmd
 }
 
-func init() {
-	pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
-	goflag.Parse()
+func findFile(filename, defaultFileName string) string {
+	if filename != "" {
+		if fileExists(filename) {
+			return filename
+		}
+	}
+	etcPath := fmt.Sprintf("/etc/%s", defaultFileName)
+	if fileExists(etcPath) {
+		return filename
+	}
+	home, _ := homedir.Dir()
+	homepath := fmt.Sprintf("%s/.%s", home, defaultFileName)
+	if fileExists(homepath) {
+		return homepath
+	}
+	if fileExists(defaultFileName) {
+		return defaultFileName
+	}
+	fmt.Printf("No config file found for %s", defaultFileName)
+	os.Exit(1)
+	return ""
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }

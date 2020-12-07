@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/cheld/miniprow/pkg/piper/config"
@@ -14,7 +15,15 @@ import (
 )
 
 //Register the piper endpoints to the http server
-func Register(mux *http.ServeMux, cfg config.Configuration, env map[string]string, secret string) {
+func Register(mux *http.ServeMux, piperCfg string, settings map[string]string, secret string) {
+
+	cfg, err := config.Load(piperCfg)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	env := config.Environ(settings)
+
 	handler := event.NewHandler(cfg, env)
 	dispatcher := trigger.NewDispatcher(cfg)
 	githubWebhook, _ := github.New(github.Options.Secret(secret))
