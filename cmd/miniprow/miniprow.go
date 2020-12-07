@@ -40,9 +40,9 @@ func main() {
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "cicd-bot",
-	Short: "CI/CD bot helps to automate tasks for typical development projects.",
-	Long: `CI/CD bot helps to automate tasks for typical development projects. 
+	Use:   "miniprow",
+	Short: "Mini Prow helps to automate tasks for typical development projects.",
+	Long: `Mini Prow helps to automate tasks for typical development projects. 
 Tools are integrated using webhooks, flexible rules and triggers. Examples
 for automation tasks are job execution, GitHub/Gitlab policy enforcement,
 chat-ops via /foo style commands and Slack notifications.`,
