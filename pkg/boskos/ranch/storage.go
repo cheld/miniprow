@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cheld/cicd-bot/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/boskos/common"
 
-	"github.com/cheld/cicd-bot/pkg/boskos/storage"
+	"github.com/cheld/miniprow/pkg/boskos/storage"
 )
 
 // Storage is used to decouple ranch functionality with the resource persistence layer

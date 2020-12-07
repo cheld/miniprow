@@ -26,8 +26,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cheld/cicd-bot/pkg/boskos/common"
-	"github.com/cheld/cicd-bot/pkg/boskos/ranch"
+	"github.com/cheld/miniprow/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/boskos/ranch"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )

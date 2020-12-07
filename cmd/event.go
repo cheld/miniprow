@@ -23,9 +23,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cheld/cicd-bot/pkg/piper/config"
-	"github.com/cheld/cicd-bot/pkg/piper/event"
-	"github.com/cheld/cicd-bot/pkg/piper/trigger"
+	"github.com/cheld/miniprow/pkg/piper/config"
+	"github.com/cheld/miniprow/pkg/piper/event"
+	"github.com/cheld/miniprow/pkg/piper/trigger"
 	"github.com/spf13/cobra"
 )
 
@@ -94,7 +94,7 @@ func readFile(filename string) string {
 func init() {
 	rootCmd.AddCommand(eventCmd)
 	eventCmd.Flags().StringToStringP("env", "e", nil, "provide environment variables that can be accessed by event handlers")
-	eventCmd.Flags().StringP("config", "c", "", "config file (default is $HOME/.cicd-bot.yaml)")
+	eventCmd.Flags().StringP("config", "c", "", "config file (default is $HOME/.piper.yaml)")
 	eventCmd.Flags().StringP("file", "f", "", "read event payload from a file (use \"-f -\" for stdin)")
 	eventCmd.Flags().StringP("type", "t", "", "The type of event. It must match the event configuration")
 	eventCmd.MarkFlagRequired("type")

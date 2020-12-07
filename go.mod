@@ -1,4 +1,4 @@
-module github.com/cheld/cicd-bot
+module github.com/cheld/miniprow
 
 go 1.13
 

@@ -23,8 +23,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cheld/cicd-bot/pkg/boskos/client"
-	"github.com/cheld/cicd-bot/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/boskos/client"
+	"github.com/cheld/miniprow/pkg/boskos/common"
 	"github.com/spf13/cobra"
 )
 

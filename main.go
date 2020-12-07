@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/cheld/cicd-bot/cmd"
+import "github.com/cheld/miniprow/cmd"
 
 func main() {
 	cmd.Execute()

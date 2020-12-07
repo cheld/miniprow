@@ -21,11 +21,11 @@ import (
 	"os"
 	"time"
 
-	boskoshandler "github.com/cheld/cicd-bot/pkg/boskos/handlers"
-	"github.com/cheld/cicd-bot/pkg/boskos/ranch"
-	"github.com/cheld/cicd-bot/pkg/boskos/storage"
-	"github.com/cheld/cicd-bot/pkg/piper/config"
-	piperhandler "github.com/cheld/cicd-bot/pkg/piper/handlers"
+	boskoshandler "github.com/cheld/miniprow/pkg/boskos/handlers"
+	"github.com/cheld/miniprow/pkg/boskos/ranch"
+	"github.com/cheld/miniprow/pkg/boskos/storage"
+	"github.com/cheld/miniprow/pkg/piper/config"
+	piperhandler "github.com/cheld/miniprow/pkg/piper/handlers"
 	"github.com/spf13/cobra"
 )
 
@@ -98,5 +98,5 @@ func init() {
 	serveCmd.Flags().StringP("bind-addr", "", "127.0.0.1", "the bind addr of the server")
 	serveCmd.Flags().StringP("secret", "s", "", "Protect access to the webhook")
 	serveCmd.Flags().StringToStringP("env", "e", nil, "Provide environment variables that can be accessed by event handlers")
-	serveCmd.Flags().StringP("config", "c", "", "config file (default is $HOME/.cicd-bot.yaml)")
+	serveCmd.Flags().StringP("config", "c", "", "config file (default is $HOME/.piper.yaml)")
 }

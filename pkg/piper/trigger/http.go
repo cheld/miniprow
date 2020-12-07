@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/cheld/cicd-bot/pkg/piper/config"
+	"github.com/cheld/miniprow/pkg/piper/config"
 )
 
 func ExecuteHttp(trigger *config.Trigger, task config.Task) error {

@@ -3,7 +3,7 @@ package trigger
 import (
 	"fmt"
 
-	"github.com/cheld/cicd-bot/pkg/piper/config"
+	"github.com/cheld/miniprow/pkg/piper/config"
 )
 
 func ExecuteDebug(trigger *config.Trigger, task config.Task) error {

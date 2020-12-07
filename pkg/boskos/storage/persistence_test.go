@@ -24,7 +24,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/cheld/cicd-bot/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/boskos/common"
 )
 
 func createStorages() []PersistenceLayer {

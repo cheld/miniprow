@@ -24,7 +24,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/cheld/cicd-bot/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/boskos/common"
 )
 
 // Ranch is the place which all of the Resource objects lives.

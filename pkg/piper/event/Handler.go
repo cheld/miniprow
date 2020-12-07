@@ -1,7 +1,7 @@
 package event
 
 import (
-	"github.com/cheld/cicd-bot/pkg/piper/config"
+	"github.com/cheld/miniprow/pkg/piper/config"
 )
 
 type Handler struct {

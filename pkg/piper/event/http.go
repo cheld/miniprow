@@ -3,7 +3,7 @@ package event
 import (
 	"encoding/json"
 
-	"github.com/cheld/cicd-bot/pkg/piper/config"
+	"github.com/cheld/miniprow/pkg/piper/config"
 	"github.com/golang/glog"
 )
 

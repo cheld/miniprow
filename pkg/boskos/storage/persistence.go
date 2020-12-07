@@ -21,7 +21,7 @@ import (
 
 	"fmt"
 
-	"github.com/cheld/cicd-bot/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/boskos/common"
 )
 
 // PersistenceLayer defines a simple interface to persists Boskos Information

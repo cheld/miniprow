@@ -1,2 +1,2 @@
-# cicd-bot
-Robot for CI/CD Pipelines
+# Mini Prow
+Prow like CI/CD automation
