@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	boskosServer "github.com/cheld/miniprow/pkg/boskos/server"
+	commonServer "github.com/cheld/miniprow/pkg/common/server"
 	piperServer "github.com/cheld/miniprow/pkg/piper/server"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -84,6 +85,7 @@ http://<localhost:port>/webhook/http`,
 		mux := http.NewServeMux()
 		boskosServer.Register(mux, boskosCfg)
 		piperServer.Register(mux, piperCfg, envSettings, secret)
+		commonServer.Register(mux)
 
 		// Start server
 		server := &http.Server{
