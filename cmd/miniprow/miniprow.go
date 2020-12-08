@@ -23,9 +23,9 @@ import (
 	"strings"
 
 	boskosServer "github.com/cheld/miniprow/pkg/boskos/server"
+	"github.com/cheld/miniprow/pkg/common/config"
 	commonServer "github.com/cheld/miniprow/pkg/common/server"
 	piperServer "github.com/cheld/miniprow/pkg/piper/server"
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
@@ -78,8 +78,8 @@ http://<localhost:port>/webhook/http`,
 		}
 
 		// find config files
-		piperCfg = findFile(piperCfg, "piper.yaml")
-		boskosCfg = findFile(boskosCfg, "boskos.yaml")
+		piperCfg = config.FindFile(piperCfg, "piper.yaml")
+		boskosCfg = config.FindFile(boskosCfg, "boskos.yaml")
 
 		// Register http endpoints
 		mux := http.NewServeMux()
@@ -106,35 +106,4 @@ func command() *cobra.Command {
 	serveCmd.Flags().StringP("piper-config", "", "", "config file (default is $HOME/.piper.yaml)")
 	serveCmd.Flags().StringP("boskos-config", "", "", "config file (default is $HOME/.boskos.yaml)")
 	return rootCmd
-}
-
-func findFile(filename, defaultFileName string) string {
-	if filename != "" {
-		if fileExists(filename) {
-			return filename
-		}
-	}
-	etcPath := fmt.Sprintf("/etc/%s", defaultFileName)
-	if fileExists(etcPath) {
-		return filename
-	}
-	home, _ := homedir.Dir()
-	homepath := fmt.Sprintf("%s/.%s", home, defaultFileName)
-	if fileExists(homepath) {
-		return homepath
-	}
-	if fileExists(defaultFileName) {
-		return defaultFileName
-	}
-	fmt.Printf("No config file found for %s", defaultFileName)
-	os.Exit(1)
-	return ""
-}
-
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return !info.IsDir()
 }

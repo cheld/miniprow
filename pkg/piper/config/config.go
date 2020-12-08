@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cheld/miniprow/pkg/common/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -118,7 +119,11 @@ func Load(filename string) (Configuration, error) {
 }
 
 func readFile(filename string) ([]byte, error) {
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := config.ReadEnvironment().Base64("PIPER_CONFIG")
+	if err == nil {
+		return yamlFile, nil
+	}
+	yamlFile, err = ioutil.ReadFile(filename)
 	if err == nil {
 		return yamlFile, nil
 	}

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/cheld/miniprow/pkg/common/config"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/yaml"
@@ -95,14 +96,26 @@ func ValidateConfig(config *BoskosConfig) error {
 // ParseConfig reads in configPath and returns a list of resource objects
 // on success.
 func ParseConfig(configPath string) (*BoskosConfig, error) {
-	file, err := ioutil.ReadFile(configPath)
+	file, err := readFile(configPath)
 	if err != nil {
 		return nil, err
 	}
-
 	var data BoskosConfig
 	if err := yaml.Unmarshal(file, &data); err != nil {
 		return nil, err
 	}
 	return &data, nil
+}
+
+func readFile(filename string) ([]byte, error) {
+	yamlFile, err := config.ReadEnvironment().Base64("BOSKOS_CONFIG")
+	if err == nil {
+		return yamlFile, nil
+	}
+	yamlFile, err = ioutil.ReadFile(filename)
+	if err == nil {
+		return yamlFile, nil
+	}
+	return yamlFile, fmt.Errorf("Cound not reading config file from %s", filename)
+
 }
