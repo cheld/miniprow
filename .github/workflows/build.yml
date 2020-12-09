@@ -47,6 +47,11 @@ jobs:
     - name: Test
       run: go test ./pkg/**/*
 
+    - uses: actions/upload-artifact@v2
+      with:
+        name: my-artifact
+        path: miniprow
+
     - name: Build images
       run: |
         docker build . --file Dockerfile --tag cheld/miniprow:latest
