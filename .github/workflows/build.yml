@@ -41,16 +41,16 @@ jobs:
 
     - name: Build
       run: |
-        go build -v -ldflags="-X github.com/cheld/miniprow/pkg/piper/server.version=${GITHUB_SHA::5}" cmd/miniprow/miniprow.go
-        go build -v cmd/boskosctl/boskosctl.go
+        go build -v -ldflags="-X github.com/cheld/miniprow/pkg/piper/server.version=${GITHUB_SHA::5}" -o ./bin/miniprow cmd/miniprow/miniprow.go
+        go build -v cmd/boskosctl/boskosctl.go ./bin/boskosctl
 
     - name: Test
       run: go test ./pkg/**/*
 
     - uses: actions/upload-artifact@v2
       with:
-        name: my-artifact
-        path: miniprow
+        name: binaries
+        path: ./bin/
 
     - name: Build images
       run: |
