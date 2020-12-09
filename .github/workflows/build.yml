@@ -39,13 +39,9 @@ jobs:
     - name: Echo Sha
       run: echo ${GITHUB_SHA::5}
 
-    #- name: Get dependencies
-    #  run: |
-    #    go get -v -t -d ./...
-
     - name: Build
       run: |
-        go build -v cmd/miniprow/miniprow.go
+        go build -v -ldflags="-X github.com/cheld/miniprow/pkg/piper/server.version=${GITHUB_SHA::5}" cmd/miniprow/miniprow.go
         go build -v cmd/boskosctl/boskosctl.go
 
     - name: Test
