@@ -49,16 +49,16 @@ jobs:
         go build -v cmd/boskosctl/boskosctl.go
 
     - name: Test
-      run: go test ./pkg/config
+      run: go test ./pkg/**/*
 
     - name: Build images
       run: |
-        docker build . --file Dockerfile --tag cheld/cicd-bot:latest
+        docker build . --file Dockerfile --tag cheld/miniprow:latest
         docker build examples/hello --file examples/hello/Dockerfile --tag eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest
     
     - name: Push images
       run: |
-        docker push cheld/cicd-bot:latest
+        docker push cheld/miniprow:latest
         docker push eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest
 
     - name: Deploy on cloud run

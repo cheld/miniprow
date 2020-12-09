@@ -1,10 +1,10 @@
 FROM golang:1.14.3-alpine AS build
 WORKDIR /src
 COPY . .
-RUN go build -o /out/cicd-bot .
+RUN go build -v -o /out/miniprow cmd/miniprow/miniprow.go
 
 FROM golang:1.14.3-alpine AS bin
-COPY --from=build /out/cicd-bot /
-ENTRYPOINT [ "/cicd-bot" ]
+COPY --from=build /out/miniprow /
+ENTRYPOINT [ "/miniprow" ]
 CMD [ "serve"]
 
