@@ -39,12 +39,14 @@ jobs:
     - name: Echo Sha
       run: echo ${GITHUB_SHA::5}
 
-    - name: Get dependencies
-      run: |
-        go get -v -t -d ./...
+    #- name: Get dependencies
+    #  run: |
+    #    go get -v -t -d ./...
 
     - name: Build
-      run: go build -v .
+      run: |
+        go build -v cmd/miniprow/miniprow.go
+        go build -v cmd/boskosctl/boskosctl.go
 
     - name: Test
       run: go test ./pkg/config
