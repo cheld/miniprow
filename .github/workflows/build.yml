@@ -44,12 +44,7 @@ jobs:
 
     - name: Build
       run: |
-        make docker
-    
-    - name: Push images
-      run: |
-        docker push cheld/miniprow:latest
-        docker push eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest
+        make docker-push
     
     #- uses: actions/upload-artifact@v2
     #    with:
