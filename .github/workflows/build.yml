@@ -51,13 +51,3 @@ jobs:
     #      name: binaries
     #      path: ./bin/
 
-    - name: Deploy on cloud run
-      run: |-
-        gcloud run deploy "cicdbot" \
-          --quiet \
-          --region "europe-west3" \
-          --image "eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest" \
-          --platform "managed" \
-          --allow-unauthenticated
-
-
