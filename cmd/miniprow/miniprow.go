@@ -79,7 +79,9 @@ http://<localhost:port>/webhook/http`,
 
 		// find config files
 		piperCfg = config.FindFile(piperCfg, "piper.yaml")
+		fmt.Printf("Piper config found at path %s\n", piperCfg)
 		boskosCfg = config.FindFile(boskosCfg, "boskos.yaml")
+		fmt.Printf("Boskos config found at path %s\n", boskosCfg)
 
 		// Register http endpoints
 		mux := http.NewServeMux()
