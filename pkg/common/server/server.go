@@ -7,8 +7,6 @@ import (
 	"github.com/cheld/miniprow/pkg/common/config"
 )
 
-var version = "undefined"
-
 func Register(mux *http.ServeMux) {
 	mux.Handle("/health", handleHealth())
 	mux.Handle("/version", handleVersion())
