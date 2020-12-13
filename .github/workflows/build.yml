@@ -50,6 +50,11 @@ jobs:
       run: |
         docker push cheld/miniprow:latest
         docker push eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest
+    
+    - uses: actions/upload-artifact@v2
+        with:
+          name: binaries
+          path: ./bin/
 
     - name: Deploy on cloud run
       run: |-
@@ -60,7 +65,4 @@ jobs:
           --platform "managed" \
           --allow-unauthenticated
 
-   - uses: actions/upload-artifact@v2
-          with:
-            name: binaries
-            path: ./bin/
+
