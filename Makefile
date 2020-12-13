@@ -31,3 +31,5 @@ deploy:
 		--image "eu.gcr.io/${GCP_PROJECT}/cicd-bot:latest" \
 		--platform "managed" \
 		--allow-unauthenticated
+
+all: docker docker-push
