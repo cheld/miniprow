@@ -57,6 +57,7 @@ http://<localhost:port>/webhook/github
 http://<localhost:port>/webhook/gitlab
 http://<localhost:port>/webhook/http`,
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("Running version %s\n", config.Version)
 
 		// read cli flags
 		piperCfg, _ := cmd.Flags().GetString("piper-config")

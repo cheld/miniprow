@@ -9,7 +9,7 @@ clean:
 	rm -Rf ./bin
 	
 build: clean
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./bin/miniprow -ldflags="-X github.com/cheld/miniprow/pkg/piper/server.version=${GITHUB_SHA}" cmd/miniprow/miniprow.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./bin/miniprow -ldflags="-X github.com/cheld/miniprow/pkg/common.Version=${GITHUB_SHA}" cmd/miniprow/miniprow.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./bin/boskosctl cmd/boskosctl/boskosctl.go 
 
 docker-clean:
@@ -20,7 +20,7 @@ docker: docker-clean build
 	docker build . --file Dockerfile --tag cheld/miniprow:latest
 	docker build examples/hello --file examples/hello/Dockerfile --tag eu.gcr.io/${GCP_PROJECT}/cicd-bot:latest
 
-docker-push: 
+push: 
 	docker push cheld/miniprow:latest
 	docker push eu.gcr.io/${GCP_PROJECT}/cicd-bot:latest
 
@@ -32,4 +32,4 @@ deploy:
 		--platform "managed" \
 		--allow-unauthenticated
 
-all: docker docker-push
+all: docker push deploy

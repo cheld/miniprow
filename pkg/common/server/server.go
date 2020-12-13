@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/cheld/miniprow/pkg/common/config"
 )
 
 var version = "undefined"
@@ -20,6 +22,6 @@ func handleHealth() http.HandlerFunc {
 
 func handleVersion() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		fmt.Fprintf(res, "Version %v\n", version)
+		fmt.Fprintf(res, "Version %v\n", config.Version)
 	}
 }

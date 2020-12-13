@@ -10,6 +10,8 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
+var Version = "undefined"
+
 type Environment struct {
 	env map[string]string
 }
