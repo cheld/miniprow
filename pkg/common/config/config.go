@@ -65,7 +65,7 @@ func FindFile(filename, defaultFileName string) string {
 	if fileExists(defaultFileName) {
 		return defaultFileName
 	}
-	fmt.Printf("No config file found for %s", defaultFileName)
+	fmt.Printf("Config file %s not found", defaultFileName)
 	os.Exit(1)
 	return ""
 }
