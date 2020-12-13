@@ -39,23 +39,12 @@ jobs:
     - name: Echo Sha
       run: echo ${GITHUB_SHA::5}
 
-    - name: Build
-      run: |
-        go build -v -o ./bin/miniprow -ldflags="-X github.com/cheld/miniprow/pkg/piper/server.version=${GITHUB_SHA::5}" cmd/miniprow/miniprow.go
-        go build -v -o ./bin/boskosctl cmd/boskosctl/boskosctl.go 
-
     - name: Test
       run: go test ./pkg/**/*
 
-    - uses: actions/upload-artifact@v2
-      with:
-        name: binaries
-        path: ./bin/
-
-    - name: Build images
+    - name: Build
       run: |
-        docker build . --file Dockerfile --tag cheld/miniprow:latest
-        docker build examples/hello --file examples/hello/Dockerfile --tag eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest
+        make docker
     
     - name: Push images
       run: |
@@ -70,3 +59,8 @@ jobs:
           --image "eu.gcr.io/${{secrets.GCP_PROJECT}}/cicd-bot:latest" \
           --platform "managed" \
           --allow-unauthenticated
+
+   - uses: actions/upload-artifact@v2
+          with:
+            name: binaries
+            path: ./bin/

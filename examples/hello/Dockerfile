@@ -1,4 +1,4 @@
-FROM cheld/cicd-bot:latest
-COPY ./cicd-bot.yaml /etc
+FROM cheld/miniprow:latest
+COPY ./piper.yaml /etc
 
 
