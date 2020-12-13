@@ -46,8 +46,8 @@ jobs:
       run: |
         make all
     
-    #- uses: actions/upload-artifact@v2
-    #    with:
-    #      name: binaries
-    #      path: ./bin/
+  - uses: actions/upload-artifact@v2
+      with:
+        name: binaries
+        path: ./bin/
 
