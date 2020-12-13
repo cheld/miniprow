@@ -55,7 +55,7 @@ func FindFile(filename, defaultFileName string) string {
 	}
 	etcPath := fmt.Sprintf("/etc/%s", defaultFileName)
 	if fileExists(etcPath) {
-		return filename
+		return etcPath
 	}
 	home, _ := homedir.Dir()
 	homepath := fmt.Sprintf("%s/.%s", home, defaultFileName)
