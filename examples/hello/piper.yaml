@@ -11,7 +11,7 @@ events:
 
   - source: github
       type: comment
-      if_contains: /needs-performance-tests
+      if_contains: /needs-preview-environment
       trigger: Github_Comment
       values:
         number: ${{ .Payload.Issue.Number }}
