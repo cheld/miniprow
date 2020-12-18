@@ -1,5 +1,4 @@
 
-
 events:
   - source: github
     type: comment
@@ -10,15 +9,13 @@ events:
       comment: Performance tests are scheduled
 
   - source: github
-      type: comment
-      if_contains: /needs-preview-environment
-      trigger: Github_Comment
-      values:
-        number: ${{ .Payload.Issue.Number }}
-        comment: This is your preview environment https://www.sample.org
+    type: comment
+    if_contains: /needs-preview-environment
+    trigger: Github_Comment
+    values:
+      number: ${{ .Payload.Issue.Number }}
+      comment: This is your preview environment https://www.myapp.com
 
-      
-      
   - source: gitlab
     type: comment
     if_true:  ${{ eq .Payload.Branch "test" }}
@@ -76,11 +73,11 @@ triggers:
     ############################################################
     #    github_comment - Write a comment to a Github PR or issue
     #
-    #    Input:
+    #    Values:
     #    - number: the id of the issue or pull request
     #    - comment: the Github comment
     #
-    #    Environment:
+    #    Environ:
     #    - SECRET_GITHUB: oauth token used in the authorization header
     #
     ############################################################
