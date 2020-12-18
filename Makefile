@@ -9,8 +9,8 @@ clean:
 	rm -Rf ./bin
 	
 build: clean
-	GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/miniprow -ldflags="-X github.com/cheld/miniprow/pkg/common/config.Version=${GITHUB_SHA}" cmd/miniprow/miniprow.go
-	GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/boskosctl cmd/boskosctl/boskosctl.go 
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./bin/miniprow -ldflags="-X github.com/cheld/miniprow/pkg/common/config.Version=${GITHUB_SHA}" cmd/miniprow/miniprow.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./bin/boskosctl cmd/boskosctl/boskosctl.go 
 
 docker-clean:
 	docker rmi -f cheld/miniprow:latest 2>/dev/null 
