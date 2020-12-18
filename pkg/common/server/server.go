@@ -3,9 +3,9 @@ package server
 import (
 	"fmt"
 	"net/http"
-)
 
-var version = "undefined"
+	"github.com/cheld/miniprow/pkg/common/config"
+)
 
 func Register(mux *http.ServeMux) {
 	mux.Handle("/health", handleHealth())
@@ -20,6 +20,6 @@ func handleHealth() http.HandlerFunc {
 
 func handleVersion() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		fmt.Fprintf(res, "Version %v\n", version)
+		fmt.Fprintf(res, "Version %v\n", config.Version)
 	}
 }

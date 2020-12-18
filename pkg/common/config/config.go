@@ -10,6 +10,8 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
+var Version = "undefined"
+
 type Environment struct {
 	env map[string]string
 }
@@ -55,7 +57,7 @@ func FindFile(filename, defaultFileName string) string {
 	}
 	etcPath := fmt.Sprintf("/etc/%s", defaultFileName)
 	if fileExists(etcPath) {
-		return filename
+		return etcPath
 	}
 	home, _ := homedir.Dir()
 	homepath := fmt.Sprintf("%s/.%s", home, defaultFileName)
@@ -65,7 +67,7 @@ func FindFile(filename, defaultFileName string) string {
 	if fileExists(defaultFileName) {
 		return defaultFileName
 	}
-	fmt.Printf("No config file found for %s", defaultFileName)
+	fmt.Printf("Config file %s not found", defaultFileName)
 	os.Exit(1)
 	return ""
 }

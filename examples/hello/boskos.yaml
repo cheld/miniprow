@@ -1,0 +1,21 @@
+resources:
+    # Static
+    - type: "aws-account"
+      state: free
+      names:
+      - "account1"
+      - "account2"
+      - "account3"
+      - "account4"
+      - "account5"
+  # Dynamic
+    - type: "aws-cluster"
+      state: free
+      min-count: 1
+      max-count: 2
+      lifespan: 48h
+      needs:
+        aws-account: 1
+      config:
+        type: AWSClusterCreator
+        content: "..."

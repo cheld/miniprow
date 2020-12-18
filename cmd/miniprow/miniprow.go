@@ -57,6 +57,7 @@ http://<localhost:port>/webhook/github
 http://<localhost:port>/webhook/gitlab
 http://<localhost:port>/webhook/http`,
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("Running version %s\n", config.Version)
 
 		// read cli flags
 		piperCfg, _ := cmd.Flags().GetString("piper-config")
@@ -79,7 +80,9 @@ http://<localhost:port>/webhook/http`,
 
 		// find config files
 		piperCfg = config.FindFile(piperCfg, "piper.yaml")
+		fmt.Printf("Piper config found at path %s\n", piperCfg)
 		boskosCfg = config.FindFile(boskosCfg, "boskos.yaml")
+		fmt.Printf("Boskos config found at path %s\n", boskosCfg)
 
 		// Register http endpoints
 		mux := http.NewServeMux()
