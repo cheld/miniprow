@@ -45,7 +45,7 @@ func handleGithub(handler *event.Handler, dispatcher trigger.Dispatcher, githubW
 			}
 			return
 		}
-		go dispatcher.Execute(handler.HandleGithub(payload))
+		dispatcher.Execute(handler.HandleGithub(payload))
 	}
 }
 

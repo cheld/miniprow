@@ -19,13 +19,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
 
 	boskosServer "github.com/cheld/miniprow/pkg/boskos/server"
 	"github.com/cheld/miniprow/pkg/common/config"
 	commonServer "github.com/cheld/miniprow/pkg/common/server"
 	piperServer "github.com/cheld/miniprow/pkg/piper/server"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -44,45 +43,33 @@ var rootCmd = &cobra.Command{
 Tools are integrated using webhooks, flexible rules and triggers. Examples
 for automation tasks are job execution, GitHub/Gitlab policy enforcement,
 chat-ops via /foo style commands and Slack notifications.`,
-}
 
-// serveCmd represents the serve command
-var serveCmd = &cobra.Command{
-	Use:   "serve",
-	Short: "Launch a HTTP server to provide a webhook integration endpoint",
-	Long: `Launch a HTTP server to provide a webhook integration endpoint.
-
-The following endpoints are available:
-http://<localhost:port>/webhook/github
-http://<localhost:port>/webhook/gitlab
-http://<localhost:port>/webhook/http`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Running version %s\n", config.Version)
 
 		// read cli flags
-		piperCfg, _ := cmd.Flags().GetString("piper-config")
-		boskosCfg, _ := cmd.Flags().GetString("boskos-config")
+		piperCfg, _ := cmd.Flags().GetString("config-piper")
+		boskosCfg, _ := cmd.Flags().GetString("config-boskos")
 		secret, _ := cmd.Flags().GetString("secret")
 		bindaddr, _ := cmd.Flags().GetString("bind-addr")
 		port, _ := cmd.Flags().GetInt("port")
 		envSettings, _ := cmd.Flags().GetStringToString("env")
+		logSetting, _ := cmd.Flags().GetString("log-level")
+		setLogLevel(logSetting)
 
-		// read environment variables
-		for _, entry := range os.Environ() {
-			keyValue := strings.Split(entry, "=")
-			if keyValue[0] == "PORT" {
-				p, _ := strconv.Atoi(keyValue[0])
-				if p != 0 {
-					port = p
-				}
-			}
+		// print version info
+		logrus.Infof("Version: %s, commit %s\n", config.Version, config.Commit)
+
+		// read environment flags
+		p, _ := config.ReadEnvironment().Int("PORT")
+		if p > 0 {
+			port = p
 		}
 
 		// find config files
 		piperCfg = config.FindFile(piperCfg, "piper.yaml")
-		fmt.Printf("Piper config found at path %s\n", piperCfg)
+		logrus.Infof("Piper config found at path %s\n", piperCfg)
 		boskosCfg = config.FindFile(boskosCfg, "boskos.yaml")
-		fmt.Printf("Boskos config found at path %s\n", boskosCfg)
+		logrus.Infof("Boskos config found at path %s\n", boskosCfg)
 
 		// Register http endpoints
 		mux := http.NewServeMux()
@@ -91,9 +78,11 @@ http://<localhost:port>/webhook/http`,
 		commonServer.Register(mux)
 
 		// Start server
+		addr := fmt.Sprintf("%s:%d", bindaddr, port)
+		logrus.Infof("Starting server with %s\n", addr)
 		server := &http.Server{
 			Handler: mux,
-			Addr:    fmt.Sprintf("%s:%d", bindaddr, port),
+			Addr:    addr,
 		}
 		err := server.ListenAndServe()
 		fmt.Println(err)
@@ -101,12 +90,21 @@ http://<localhost:port>/webhook/http`,
 }
 
 func command() *cobra.Command {
-	rootCmd.AddCommand(serveCmd)
-	serveCmd.Flags().IntP("port", "p", 3000, "Port for the HTTP endpoint")
-	serveCmd.Flags().StringP("bind-addr", "", "0.0.0.0", "the bind addr of the server")
-	serveCmd.Flags().StringP("secret", "s", "", "Protect access to the webhook")
-	serveCmd.Flags().StringToStringP("env", "e", nil, "Provide environment variables that can be accessed by event handlers")
-	serveCmd.Flags().StringP("piper-config", "", "", "config file (default is $HOME/.piper.yaml)")
-	serveCmd.Flags().StringP("boskos-config", "", "", "config file (default is $HOME/.boskos.yaml)")
+	rootCmd.Flags().IntP("port", "p", 3000, "Port for the HTTP endpoint")
+	rootCmd.Flags().StringP("bind-addr", "", "0.0.0.0", "the bind addr of the server")
+	rootCmd.Flags().StringP("secret", "s", "", "Protect access to the webhook")
+	rootCmd.Flags().StringToStringP("env", "e", nil, "Provide environment variables that can be accessed by event handlers")
+	rootCmd.Flags().StringP("config-boskos", "", "", "config file for boskos (default is $HOME/.piper.yaml)")
+	rootCmd.Flags().StringP("config-piper", "", "", "config file for piper (default is $HOME/.boskos.yaml)")
+	rootCmd.PersistentFlags().StringP("log-level", "l", "DEBUG", "set debug log level")
 	return rootCmd
+}
+
+func setLogLevel(logSetting string) {
+	logLevel, err := logrus.ParseLevel(logSetting)
+	if err != nil {
+		fmt.Printf("Log level %s cannot be set\n", logSetting)
+		os.Exit(1)
+	}
+	logrus.SetLevel(logLevel)
 }
