@@ -6,14 +6,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/mitchellh/go-homedir"
 )
 
 var Version = "0.1"
 var Commit = "undefined"
-var Date = time.Now()
 
 type Environment struct {
 	env map[string]string
