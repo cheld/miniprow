@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cheld/miniprow/pkg/common/config"
+	"github.com/cheld/miniprow/pkg/common/info"
 )
 
 func Register(mux *http.ServeMux) {
@@ -20,6 +20,6 @@ func handleHealth() http.HandlerFunc {
 
 func handleVersion() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		fmt.Fprintf(res, "Version %v\n", config.Version)
+		fmt.Fprintf(res, "Version %v\n", info.Version)
 	}
 }

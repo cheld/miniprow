@@ -22,7 +22,9 @@ import (
 
 	boskosServer "github.com/cheld/miniprow/pkg/boskos/server"
 	"github.com/cheld/miniprow/pkg/common/config"
+	"github.com/cheld/miniprow/pkg/common/info"
 	commonServer "github.com/cheld/miniprow/pkg/common/server"
+	"github.com/cheld/miniprow/pkg/common/util"
 	piperServer "github.com/cheld/miniprow/pkg/piper/server"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -57,13 +59,10 @@ chat-ops via /foo style commands and Slack notifications.`,
 		setLogLevel(logSetting)
 
 		// print version info
-		logrus.Infof("Version: %s, commit %s\n", config.Version, config.Commit)
+		logrus.Infof("Version: %s, commit %s\n", info.Version, info.Commit)
 
 		// read environment flags
-		p, _ := config.ReadEnvironment().Int("PORT")
-		if p > 0 {
-			port = p
-		}
+		util.Environment.Value("PORT").Update(&port)
 
 		// find config files
 		piperCfg = config.FindFile(piperCfg, "piper.yaml")

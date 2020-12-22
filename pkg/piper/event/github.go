@@ -1,6 +1,7 @@
 package event
 
 import (
+	"github.com/cheld/miniprow/pkg/common/util"
 	"github.com/cheld/miniprow/pkg/piper/config"
 	"github.com/golang/glog"
 	"gopkg.in/go-playground/webhooks.v5/github"
@@ -18,7 +19,7 @@ func (handler *Handler) HandleGithub(payload interface{}) []config.Task {
 	// parse payload
 	source := config.Source{
 		Payload: payload,
-		Environ: handler.env,
+		Environ: *util.Environment.Map(),
 	}
 	switch payload.(type) {
 	case github.IssueCommentPayload:
