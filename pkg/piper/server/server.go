@@ -15,7 +15,7 @@ import (
 )
 
 //Register the piper endpoints to the http server
-func Register(mux *http.ServeMux, piperCfg string, settings map[string]string, secret string) {
+func Register(mux *http.ServeMux, piperCfg *[]byte, settings map[string]string, secret string) {
 
 	cfg, err := config.Load(piperCfg)
 	if err != nil {

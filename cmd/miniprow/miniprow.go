@@ -21,7 +21,6 @@ import (
 	"os"
 
 	boskosServer "github.com/cheld/miniprow/pkg/boskos/server"
-	"github.com/cheld/miniprow/pkg/common/config"
 	"github.com/cheld/miniprow/pkg/common/info"
 	commonServer "github.com/cheld/miniprow/pkg/common/server"
 	"github.com/cheld/miniprow/pkg/common/util"
@@ -49,8 +48,8 @@ chat-ops via /foo style commands and Slack notifications.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// read cli flags
-		piperCfg, _ := cmd.Flags().GetString("config-piper")
-		boskosCfg, _ := cmd.Flags().GetString("config-boskos")
+		piperFileName, _ := cmd.Flags().GetString("config-piper")
+		boskosFileName, _ := cmd.Flags().GetString("config-boskos")
 		secret, _ := cmd.Flags().GetString("secret")
 		bindaddr, _ := cmd.Flags().GetString("bind-addr")
 		port, _ := cmd.Flags().GetInt("port")
@@ -64,11 +63,11 @@ chat-ops via /foo style commands and Slack notifications.`,
 		// read environment flags
 		util.Environment.Value("PORT").Update(&port)
 
-		// find config files
-		piperCfg = config.FindFile(piperCfg, "piper.yaml")
-		logrus.Infof("Piper config found at path %s\n", piperCfg)
-		boskosCfg = config.FindFile(boskosCfg, "boskos.yaml")
-		logrus.Infof("Boskos config found at path %s\n", boskosCfg)
+		// read config files
+		piperCfg := util.ReadConfigFile(piperFileName, "PIPER_CONFIG")
+		logrus.Infof("Piper config found at path %s\n", piperFileName)
+		boskosCfg := util.ReadConfigFile(boskosFileName, "BOSKOS_CONFIG")
+		logrus.Infof("Boskos config found at path %s\n", boskosFileName)
 
 		// Register http endpoints
 		mux := http.NewServeMux()
@@ -93,8 +92,8 @@ func command() *cobra.Command {
 	rootCmd.Flags().StringP("bind-addr", "", "0.0.0.0", "the bind addr of the server")
 	rootCmd.Flags().StringP("secret", "s", "", "Protect access to the webhook")
 	rootCmd.Flags().StringToStringP("env", "e", nil, "Provide environment variables that can be accessed by event handlers")
-	rootCmd.Flags().StringP("config-boskos", "", "", "config file for boskos (default is $HOME/.piper.yaml)")
-	rootCmd.Flags().StringP("config-piper", "", "", "config file for piper (default is $HOME/.boskos.yaml)")
+	rootCmd.Flags().StringP("config-boskos", "", "boskos.yaml", "config file for boskos")
+	rootCmd.Flags().StringP("config-piper", "", "piper.yaml", "config file for piper")
 	rootCmd.PersistentFlags().StringP("log-level", "l", "DEBUG", "set debug log level")
 	return rootCmd
 }

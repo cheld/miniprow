@@ -79,18 +79,16 @@ func (s StateNotMatch) Error() string {
 // In: config - path to resource file
 //     storage - path to where to save/restore the state data
 // Out: A Ranch object, loaded from config/storage, or error
-func NewRanch(config string, s *Storage, ttl time.Duration) (*Ranch, error) {
+func NewRanch(config *[]byte, s *Storage, ttl time.Duration) (*Ranch, error) {
 	newRanch := &Ranch{
 		Storage:    s,
 		requestMgr: NewRequestManager(ttl),
 		now:        time.Now,
 	}
-	if config != "" {
-		if err := newRanch.SyncConfig(config); err != nil {
-			return nil, err
-		}
-		logrus.Infof("Loaded Boskos configuration successfully")
+	if err := newRanch.SyncConfig(config); err != nil {
+		return nil, err
 	}
+	logrus.Infof("Loaded Boskos configuration successfully")
 	return newRanch, nil
 }
 
@@ -397,8 +395,8 @@ func (r *Ranch) Reset(rtype, state string, expire time.Duration, dest string) (m
 }
 
 // SyncConfig updates resource list from a file
-func (r *Ranch) SyncConfig(configPath string) error {
-	config, err := common.ParseConfig(configPath)
+func (r *Ranch) SyncConfig(cfg *[]byte) error {
+	config, err := common.ParseConfig(cfg)
 	if err != nil {
 		return err
 	}

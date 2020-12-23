@@ -57,7 +57,7 @@ const (
 )
 
 //Adds the boskos endpoints to the handler
-func Register(mux *http.ServeMux, boskosCfg string) {
+func Register(mux *http.ServeMux, boskosCfg *[]byte) {
 	storage := ranch.NewStorage(storage.NewMemoryStorage())
 	r, err := ranch.NewRanch(boskosCfg, storage, defaultRequestTTL)
 	if err != nil {

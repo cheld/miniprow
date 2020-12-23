@@ -2,12 +2,10 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"strconv"
 	"strings"
 
-	"github.com/cheld/miniprow/pkg/common/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -101,13 +99,9 @@ func (config *Configuration) FindTrigger(name string) *Trigger {
 	return nil
 }
 
-func Load(filename string) (Configuration, error) {
-	yamlFile, err := readFile(filename)
-	if err != nil {
-		return Configuration{}, fmt.Errorf("Error reading YAML file: %s", err)
-	}
+func Load(cfg *[]byte) (Configuration, error) {
 	var yamlConfig Configuration
-	err = yaml.Unmarshal(yamlFile, &yamlConfig)
+	err := yaml.Unmarshal(*cfg, &yamlConfig)
 	if err != nil {
 		return Configuration{}, fmt.Errorf("Error parsing YAML file: %s", err)
 	}
@@ -116,17 +110,4 @@ func Load(filename string) (Configuration, error) {
 		return Configuration{}, fmt.Errorf("Error validating YAML file: %s", err)
 	}
 	return yamlConfig, nil
-}
-
-func readFile(filename string) ([]byte, error) {
-	yamlFile, err := config.ReadEnvironment().Base64("PIPER_CONFIG")
-	if err == nil {
-		return yamlFile, nil
-	}
-	yamlFile, err = ioutil.ReadFile(filename)
-	if err == nil {
-		return yamlFile, nil
-	}
-	return yamlFile, fmt.Errorf("Cound not reading config file from %s", filename)
-
 }
