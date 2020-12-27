@@ -64,10 +64,18 @@ chat-ops via /foo style commands and Slack notifications.`,
 		util.Environment.Value("PORT").Update(&port)
 
 		// read config files
-		piperCfg := util.ReadConfigFile(piperFileName, "PIPER_CONFIG")
-		logrus.Infof("Piper config found at path %s\n", piperFileName)
-		boskosCfg := util.ReadConfigFile(boskosFileName, "BOSKOS_CONFIG")
-		logrus.Infof("Boskos config found at path %s\n", boskosFileName)
+		piperCfgFile := util.FindExistingFile(util.DefaultConfigLocations(piperFileName))
+		piperCfg, err := util.ReadConfiguration(piperCfgFile, "PIPER_CONFIG")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		boskosCfgFile := util.FindExistingFile(util.DefaultConfigLocations(boskosFileName))
+		boskosCfg, err := util.ReadConfiguration(boskosCfgFile, "BOSKOS_CONFIG")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 
 		// Register http endpoints
 		mux := http.NewServeMux()
@@ -82,7 +90,7 @@ chat-ops via /foo style commands and Slack notifications.`,
 			Handler: mux,
 			Addr:    addr,
 		}
-		err := server.ListenAndServe()
+		err = server.ListenAndServe()
 		fmt.Println(err)
 	},
 }

@@ -10,21 +10,23 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func ReadConfiguration(fileName, environmentKey string) (*[]byte, error) {
+func ReadConfigFile(fileName, environmentKey string) *[]byte {
 	cfg, err := Environment.Value(environmentKey).Base64()
 	if err == nil {
-		logrus.Infof("Configuration loaded from environemnt with key %s\n", environmentKey)
-		return &cfg, nil
+		return &cfg
 	}
-	if fileName == "" {
-		return nil, fmt.Errorf("No configuration found")
+	existingCfgFile := FindExistingFile(DefaultConfigLocations(fileName))
+	if existingCfgFile == "" {
+		fmt.Printf("Config file %s not found\n", fileName)
+		os.Exit(1)
 	}
-	logrus.Infof("Loading configuration from %s\n", fileName)
-	cfg, err = ioutil.ReadFile(fileName)
+	logrus.Infof("Config file %s found at path %s\n", fileName, existingCfgFile)
+	cfg, err = ioutil.ReadFile(existingCfgFile)
 	if err != nil {
-		return nil, fmt.Errorf("Config file %s could not be loaded, %s", fileName, err)
+		fmt.Printf("Config file %s could not be loaded, %s\n", fileName, err)
+		os.Exit(1)
 	}
-	return &cfg, nil
+	return &cfg
 }
 
 func DefaultConfigLocations(fileName string) []string {
@@ -33,8 +35,8 @@ func DefaultConfigLocations(fileName string) []string {
 	if err != nil {
 		log.Fatalf("Cannot access home dir, %s", err)
 	}
-	currentDir := fileName
 	homeDir := fmt.Sprintf("%s/.%s", home, fileName)
+	currentDir := fileName
 	locations := []string{currentDir, homeDir, etcDir}
 	return locations
 }
