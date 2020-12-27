@@ -33,9 +33,22 @@ func TestFindExistingFile(t *testing.T) {
 func TestReadConfiguration(t *testing.T) {
 
 	// test existing file
-	content, _ := ReadConfiguration("/etc/environment", "")
-	if len(*content) == 0 {
+	content, err := ReadConfiguration("/etc/environment", "")
+	if len(*content) == 0 || err != nil {
 		t.Error("File could not be loaded")
+	}
+
+	// test error
+	content, err = ReadConfiguration("/non-existing", "")
+	if err == nil {
+		t.Error("Error expected")
+	}
+
+	// Env key
+	Environment.env["MY_KEY"] = "bXl2YWx1ZQo=" //echo "myvalue" | base64
+	content, err = ReadConfiguration("/non-existing", "MY_KEY")
+	if string(*content) != "myvalue\n" {
+		t.Errorf("Expected 'myvalue', but received '%s'", string(*content))
 	}
 
 }
