@@ -53,12 +53,8 @@ chat-ops via /foo style commands and Slack notifications.`,
 		secret, _ := cmd.Flags().GetString("secret")
 		bindaddr, _ := cmd.Flags().GetString("bind-addr")
 		port, _ := cmd.Flags().GetInt("port")
-		envSettings, _ := cmd.Flags().GetStringToString("env")
 		logSetting, _ := cmd.Flags().GetString("log-level")
 		setLogLevel(logSetting)
-
-		// print version info
-		logrus.Infof("Version: %s, commit %s\n", info.Version, info.Commit)
 
 		// read environment flags
 		util.Environment.Value("PORT").Update(&port)
@@ -77,10 +73,13 @@ chat-ops via /foo style commands and Slack notifications.`,
 			os.Exit(1)
 		}
 
+		// print version info
+		logrus.Infof("Version: %s, commit %s\n", info.Version, info.Commit)
+
 		// Register http endpoints
 		mux := http.NewServeMux()
 		boskosServer.Register(mux, boskosCfg)
-		piperServer.Register(mux, piperCfg, envSettings, secret)
+		piperServer.Register(mux, piperCfg, secret)
 		commonServer.Register(mux)
 
 		// Start server
@@ -99,7 +98,6 @@ func command() *cobra.Command {
 	rootCmd.Flags().IntP("port", "p", 3000, "Port for the HTTP endpoint")
 	rootCmd.Flags().StringP("bind-addr", "", "0.0.0.0", "the bind addr of the server")
 	rootCmd.Flags().StringP("secret", "s", "", "Protect access to the webhook")
-	rootCmd.Flags().StringToStringP("env", "e", nil, "Provide environment variables that can be accessed by event handlers")
 	rootCmd.Flags().StringP("config-boskos", "", "boskos.yaml", "config file for boskos")
 	rootCmd.Flags().StringP("config-piper", "", "piper.yaml", "config file for piper")
 	rootCmd.PersistentFlags().StringP("log-level", "l", "DEBUG", "set debug log level")

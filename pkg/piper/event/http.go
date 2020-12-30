@@ -3,6 +3,7 @@ package event
 import (
 	"encoding/json"
 
+	"github.com/cheld/miniprow/pkg/common/util"
 	"github.com/cheld/miniprow/pkg/piper/config"
 	"github.com/golang/glog"
 )
@@ -23,7 +24,7 @@ func (handler *Handler) HandleHttp(body []byte, path string) []config.Task {
 	source := config.Source{
 		Value:   string(body),
 		Payload: payload,
-		Environ: handler.env,
+		Environ: *util.Environment.Map(),
 	}
 
 	// handle event

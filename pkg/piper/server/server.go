@@ -15,16 +15,15 @@ import (
 )
 
 //Register the piper endpoints to the http server
-func Register(mux *http.ServeMux, piperCfg *[]byte, settings map[string]string, secret string) {
+func Register(mux *http.ServeMux, piperCfg *[]byte, secret string) {
 
 	cfg, err := config.Load(piperCfg)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	env := config.Environ(settings)
 
-	handler := event.NewHandler(cfg, env)
+	handler := event.NewHandler(cfg)
 	dispatcher := trigger.NewDispatcher(cfg)
 	githubWebhook, _ := github.New(github.Options.Secret(secret))
 
