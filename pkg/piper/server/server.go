@@ -14,9 +14,7 @@ import (
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
 
-//Register the piper endpoints to the http server
-func Register(mux *http.ServeMux, piperCfg *[]byte, secret string) {
-
+func NewPiper(piperCfg *[]byte, secret string) *Piper {
 	cfg, err := config.Load(piperCfg)
 	if err != nil {
 		fmt.Println(err)
@@ -27,8 +25,22 @@ func Register(mux *http.ServeMux, piperCfg *[]byte, secret string) {
 	dispatcher := trigger.NewDispatcher(cfg)
 	githubWebhook, _ := github.New(github.Options.Secret(secret))
 
-	mux.Handle("/webhooks/github", handleGithub(handler, dispatcher, githubWebhook))
-	mux.Handle("/webhooks/http/", handleHTTP(handler, dispatcher))
+	piper := &Piper{
+		mux: http.NewServeMux(),
+	}
+
+	piper.mux.Handle("/piper/github", handleGithub(handler, dispatcher, githubWebhook))
+	piper.mux.Handle("/piper/http/", handleHTTP(handler, dispatcher))
+
+	return piper
+}
+
+type Piper struct {
+	mux *http.ServeMux
+}
+
+func (piper *Piper) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	piper.mux.ServeHTTP(writer, request)
 }
 
 func handleGithub(handler *event.Handler, dispatcher trigger.Dispatcher, githubWebhook *github.Webhook) http.HandlerFunc {
