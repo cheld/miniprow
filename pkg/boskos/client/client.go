@@ -50,11 +50,9 @@ var (
 	ErrContextRequired = errors.New("context required")
 )
 
-const {
+const (
 	urlPathPrefix = "/boskos/"
-}
-
-
+)
 
 // Client defines the public Boskos client object
 type Client struct {
