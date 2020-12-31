@@ -27,6 +27,8 @@ import (
 	piperServer "github.com/cheld/miniprow/pkg/piper/server"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -81,6 +83,7 @@ chat-ops via /foo style commands and Slack notifications.`,
 		mux.Handle("/piper/", piperServer.NewPiper(piperCfg, secret))
 		mux.Handle("/boskos/", boskosServer.NewBoskos(boskosCfg))
 		mux.Handle("/common/", commonServer.NewCommon())
+		mux.Handle("/metrics", promhttp.Handler())
 
 		// Start server
 		addr := fmt.Sprintf("%s:%d", bindaddr, port)
