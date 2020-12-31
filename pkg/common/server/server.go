@@ -7,9 +7,21 @@ import (
 	"github.com/cheld/miniprow/pkg/common/info"
 )
 
-func Register(mux *http.ServeMux) {
-	mux.Handle("/health", handleHealth())
-	mux.Handle("/version", handleVersion())
+type CommonServer struct {
+	mux *http.ServeMux
+}
+
+func NewCommon() *CommonServer {
+	server := CommonServer{
+		mux: http.NewServeMux(),
+	}
+	server.mux.Handle("/common/health", handleHealth())
+	server.mux.Handle("/common/version", handleVersion())
+	return &server
+}
+
+func (s *CommonServer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	s.mux.ServeHTTP(writer, request)
 }
 
 func handleHealth() http.HandlerFunc {

@@ -56,8 +56,12 @@ const (
 	defaultRequestGCPeriod             = time.Minute
 )
 
+type Boskos struct {
+	mux *http.ServeMux
+}
+
 //Adds the boskos endpoints to the handler
-func Register(mux *http.ServeMux, boskosCfg *[]byte) {
+func NewBoskos(boskosCfg *[]byte) *Boskos {
 	storage := ranch.NewStorage(storage.NewMemoryStorage())
 	r, err := ranch.NewRanch(boskosCfg, storage, defaultRequestTTL)
 	if err != nil {
@@ -66,12 +70,20 @@ func Register(mux *http.ServeMux, boskosCfg *[]byte) {
 	r.StartRequestGC(defaultRequestGCPeriod)
 	r.StartDynamicResourceUpdater(defaultDynamicResourceUpdatePeriod)
 
-	mux.Handle("/acquire", handleAcquire(r))
-	mux.Handle("/acquirebystate", handleAcquireByState(r))
-	mux.Handle("/release", handleRelease(r))
-	mux.Handle("/reset", handleReset(r))
-	mux.Handle("/update", handleUpdate(r))
-	mux.Handle("/metric", handleMetric(r))
+	mux := http.NewServeMux()
+	mux.Handle("/boskos/acquire", handleAcquire(r))
+	mux.Handle("/boskos/acquirebystate", handleAcquireByState(r))
+	mux.Handle("/boskos/release", handleRelease(r))
+	mux.Handle("/boskos/reset", handleReset(r))
+	mux.Handle("/boskos/update", handleUpdate(r))
+	mux.Handle("/boskos/metric", handleMetric(r))
+	return &Boskos{
+		mux: mux,
+	}
+}
+
+func (b *Boskos) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	b.mux.ServeHTTP(writer, request)
 }
 
 type badRequestError string

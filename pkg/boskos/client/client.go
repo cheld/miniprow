@@ -50,6 +50,12 @@ var (
 	ErrContextRequired = errors.New("context required")
 )
 
+const {
+	urlPathPrefix = "/boskos/"
+}
+
+
+
 // Client defines the public Boskos client object
 type Client struct {
 	// Dialer is the net.Dialer used to establish connections to the remote
@@ -580,9 +586,10 @@ func (c *Client) metric(rtype string) (common.Metric, error) {
 
 func (c *Client) httpGet(action string, values url.Values) (*http.Response, error) {
 	u, _ := url.ParseRequestURI(c.url)
-	u.Path = action
+	u.Path = urlPathPrefix + action
 	u.RawQuery = values.Encode()
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	fmt.Println(u.String())
 	if err != nil {
 		return nil, err
 	}
@@ -594,9 +601,10 @@ func (c *Client) httpGet(action string, values url.Values) (*http.Response, erro
 
 func (c *Client) httpPost(action string, values url.Values, contentType string, body io.Reader) (*http.Response, error) {
 	u, _ := url.ParseRequestURI(c.url)
-	u.Path = action
+	u.Path = urlPathPrefix + action
 	u.RawQuery = values.Encode()
 	req, err := http.NewRequest(http.MethodPost, u.String(), body)
+	fmt.Println(u.String())
 	if err != nil {
 		return nil, err
 	}

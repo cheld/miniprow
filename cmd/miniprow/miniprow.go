@@ -79,8 +79,8 @@ chat-ops via /foo style commands and Slack notifications.`,
 		// Register http endpoints
 		mux := http.NewServeMux()
 		mux.Handle("/piper/", piperServer.NewPiper(piperCfg, secret))
-		boskosServer.Register(mux, boskosCfg)
-		commonServer.Register(mux)
+		mux.Handle("/boskos/", boskosServer.NewBoskos(boskosCfg))
+		mux.Handle("/common/", commonServer.NewCommon())
 
 		// Start server
 		addr := fmt.Sprintf("%s:%d", bindaddr, port)
