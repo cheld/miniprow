@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/boskos/metrics"
 	"github.com/cheld/miniprow/pkg/boskos/ranch"
 	"github.com/cheld/miniprow/pkg/boskos/storage"
 	"github.com/prometheus/client_golang/prometheus"
@@ -61,7 +62,7 @@ type Boskos struct {
 }
 
 //Adds the boskos endpoints to the handler
-func NewBoskos(boskosCfg *[]byte) *Boskos {
+func NewHandler(boskosCfg *[]byte) *Boskos {
 	storage := ranch.NewStorage(storage.NewMemoryStorage())
 	r, err := ranch.NewRanch(boskosCfg, storage, defaultRequestTTL)
 	if err != nil {
@@ -69,6 +70,8 @@ func NewBoskos(boskosCfg *[]byte) *Boskos {
 	}
 	r.StartRequestGC(defaultRequestGCPeriod)
 	r.StartDynamicResourceUpdater(defaultDynamicResourceUpdatePeriod)
+
+	prometheus.MustRegister(metrics.NewResourcesCollector(r))
 
 	mux := http.NewServeMux()
 	mux.Handle("/boskos/acquire", handleAcquire(r))

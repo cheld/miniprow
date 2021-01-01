@@ -80,9 +80,9 @@ chat-ops via /foo style commands and Slack notifications.`,
 
 		// Register http endpoints
 		mux := http.NewServeMux()
-		mux.Handle("/piper/", piperServer.NewPiper(piperCfg, secret))
-		mux.Handle("/boskos/", boskosServer.NewBoskos(boskosCfg))
-		mux.Handle("/common/", commonServer.NewCommon())
+		mux.Handle("/piper/", piperServer.NewHandler(piperCfg, secret))
+		mux.Handle("/boskos/", boskosServer.NewHandler(boskosCfg))
+		mux.Handle("/common/", commonServer.NewHandler())
 		mux.Handle("/metrics", promhttp.Handler())
 
 		// Start server

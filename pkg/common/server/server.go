@@ -11,7 +11,7 @@ type CommonServer struct {
 	mux *http.ServeMux
 }
 
-func NewCommon() *CommonServer {
+func NewHandler() *CommonServer {
 	server := CommonServer{
 		mux: http.NewServeMux(),
 	}

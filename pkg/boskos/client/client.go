@@ -51,7 +51,7 @@ var (
 )
 
 const (
-	urlPathPrefix = "/boskos/"
+	urlPathPrefix = "/boskos"
 )
 
 // Client defines the public Boskos client object

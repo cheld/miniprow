@@ -14,7 +14,7 @@ import (
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
 
-func NewPiper(piperCfg *[]byte, secret string) *Piper {
+func NewHandler(piperCfg *[]byte, secret string) *Piper {
 	cfg, err := config.Load(piperCfg)
 	if err != nil {
 		fmt.Println(err)
