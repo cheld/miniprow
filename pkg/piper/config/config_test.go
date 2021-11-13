@@ -136,7 +136,7 @@ func TestIsMatching(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			event := Event{
+			event := Rule{
 				If_contains: tc.ifContains,
 				If_equals:   tc.ifEquals,
 				If_true:     tc.ifTrue,
@@ -196,47 +196,41 @@ func TestFindTrigger(t *testing.T) {
 
 func TestFindEvent(t *testing.T) {
 	cfg := Configuration{}
-	cfg.Events = []Event{
+	cfg.Rules = []Rule{
 		{
-			Source:    "github",
-			Type:      "comment",
+			Event:     "github",
 			If_equals: "/test",
 		},
 	}
 	type testcase struct {
 		Name string
 
-		Source string
-		Type   string
-		Value  string
+		Event string
+		Value string
 
 		Found bool
 	}
 	testcases := []testcase{
 		{
-			Name:   "Simple match",
-			Source: "github",
-			Type:   "comment",
-			Value:  "/test",
-			Found:  true,
+			Name:  "Simple match",
+			Event: "github",
+			Value: "/test",
+			Found: true,
 		},
 		{
-			Name:   "Ignore case",
-			Source: "GithuB",
-			Type:   "COmmEnt",
-			Value:  "/test",
-			Found:  true,
+			Name:  "Ignore case",
+			Event: "GithuB",
+			Value: "/test",
+			Found: true,
 		},
 		{
-			Name:   "No match",
-			Source: "github",
-			Type:   "comment",
-			Value:  "/not-equals",
-			Found:  false,
+			Name:  "No match",
+			Event: "github",
+			Value: "/not-equals",
+			Found: false,
 		},
 		{
-			Name:  "Empty source",
-			Type:  "comment",
+			Name:  "Empty",
 			Value: "/test",
 			Found: false,
 		},
@@ -244,7 +238,7 @@ func TestFindEvent(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
 			source := Source{Value: tc.Value}
-			event := cfg.FindEvent(tc.Source, tc.Type, source)
+			event := cfg.GetMatchingRule(tc.Event, source)
 			if event == nil && tc.Found {
 				t.Fatalf("Event not found")
 			}
@@ -256,9 +250,9 @@ func TestFindEvent(t *testing.T) {
 }
 
 func TestBuildTask(t *testing.T) {
-	event := Event{
-		Trigger: "mytrigger",
-		Values: map[string]interface{}{
+	event := Rule{
+		Trigger: map[string]interface{}{
+			"action": "mytrigger",
 			"simple": "test",
 			"nested": map[string]string{
 				"nestedkey": "nestedvalue",

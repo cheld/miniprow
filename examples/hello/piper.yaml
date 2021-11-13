@@ -42,7 +42,7 @@ rules:
   - event: github_comment
     if-contains: /needs-performance-tests
     trigger: 
-      type: github_comment_response
+      action: github_comment_response
       comment: Performance tests are scheduled
 
 

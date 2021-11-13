@@ -28,7 +28,7 @@ func (handler *Handler) HandleHttp(body []byte, path string) []config.Task {
 	}
 
 	// handle event
-	event := handler.config.FindEvent("http", path, source)
+	event := handler.config.GetMatchingRule("http", source)
 	if event == nil {
 		glog.V(5).Infof("No event found for value %s\n", source.Value)
 		return []config.Task{}

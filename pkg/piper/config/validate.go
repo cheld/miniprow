@@ -7,24 +7,21 @@ import (
 )
 
 func Validate(cfg Configuration) error {
-	if len(cfg.Events) == 0 {
-		return errors.New("No events defined in configuration")
+	if len(cfg.Rules) == 0 {
+		return errors.New("No rules defined in configuration")
 	}
-	for i, event := range cfg.Events {
-		if event.Source == "" {
-			return fmt.Errorf("Event[%d] has no source defined", i)
+	for i, rule := range cfg.Rules {
+		if rule.Event == "" {
+			return fmt.Errorf("Rule[%d] has no event defined", i)
 		}
-		if event.Type == "" {
-			return fmt.Errorf("Event[%d] has no type defined", i)
+		if rule.If_contains == "" && rule.If_equals == "" && rule.If_true == "" {
+			return fmt.Errorf("Event (%s) must define a matching rule", rule.Event)
 		}
-		if event.If_contains == "" && event.If_equals == "" && event.If_true == "" {
-			return fmt.Errorf("Event (%s,%s) must define a matching rule", event.Source, event.Type)
+		if len(rule.Trigger) == 0 {
+			return fmt.Errorf("Event (%s) has no trigger definition", rule.Event)
 		}
-		if event.Trigger == "" {
-			return fmt.Errorf("Event (%s,%s) has no trigger definition", event.Source, event.Type)
-		}
-		if event.Trigger != "" && cfg.FindTrigger(event.Trigger) == nil {
-			return fmt.Errorf("Event (%s,%s) references a trigger that does not exist", event.Source, event.Type)
+		if len(rule.Trigger) > 0 && cfg.FindTrigger(rule.Trigger["action"].(string)) == nil {
+			return fmt.Errorf("Event (%s) references a trigger that does not exist", rule.Event)
 		}
 
 	}

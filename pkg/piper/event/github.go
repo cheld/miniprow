@@ -13,8 +13,7 @@ const (
 )
 
 func (handler *Handler) HandleGithub(payload interface{}) []config.Task {
-	var sourceName string
-	var sourceType string
+	var eventName string
 
 	// parse payload
 	source := config.Source{
@@ -24,15 +23,14 @@ func (handler *Handler) HandleGithub(payload interface{}) []config.Task {
 	switch payload.(type) {
 	case github.IssueCommentPayload:
 		source.Value = payload.(github.IssueCommentPayload).Comment.Body
-		sourceName = Github
-		sourceType = Comment
+		eventName = "github_comment"
 	default:
 		glog.Infof("Github event not implemented: %v\n", payload)
 		return []config.Task{}
 	}
 
 	// handle event
-	event := handler.config.FindEvent(sourceName, sourceType, source)
+	event := handler.config.GetMatchingRule(eventName, source)
 	if event == nil {
 		glog.Infof("No event found for value %s", source.Value)
 		return []config.Task{}

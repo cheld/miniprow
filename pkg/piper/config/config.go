@@ -14,49 +14,52 @@ type Configuration struct {
 		Secret string
 		Port   int
 	}
-	Events   []Event
+	Rules    []Rule
 	Triggers []Trigger
 }
 
-type Source struct {
-	Value   string
-	Payload interface{}
+type Ctx struct {
+	Request Request
 	Environ map[string]string
+	Trigger map[string]string
 }
 
-type Event struct {
-	Source      string
-	Type        string
+type Request struct {
+	Event   string
+	Value   string
+	Payload interface{}
+}
+
+type Rule struct {
+	Event       string
 	If_contains string
 	If_equals   string
 	If_true     string
-	Trigger     string
-	Values      map[string]interface{}
+	Trigger     map[string]interface{}
 }
 
-func (config *Configuration) FindEvent(source, eventType string, sourceData Source) *Event {
-	for _, event := range config.Events {
-		if strings.EqualFold(event.Source, source) &&
-			strings.EqualFold(event.Type, eventType) &&
-			event.IsMatching(sourceData) {
-			return &event
+func (config *Configuration) GetMatchingRule(event string, sourceData Ctx) *Rule {
+	for _, rule := range config.Rules {
+		if strings.EqualFold(rule.Event, event) &&
+			rule.IsMatching(sourceData) {
+			return &rule
 		}
 	}
 	return nil
 }
 
-func (event *Event) IsMatching(source Source) bool {
+func (event *Rule) IsMatching(ctx Ctx) bool {
 	contains := true
 	if event.If_contains != "" {
-		contains = strings.Contains(strings.ToUpper(source.Value), strings.ToUpper(event.If_contains))
+		contains = strings.Contains(strings.ToUpper(ctx.Request.Value), strings.ToUpper(event.If_contains))
 	}
 	equals := true
 	if event.If_equals != "" {
-		equals = strings.EqualFold(source.Value, event.If_equals)
+		equals = strings.EqualFold(ctx.Request.Value, event.If_equals)
 	}
 	condition := true
 	if event.If_true != "" {
-		result, err := ProcessTemplate(event.If_true, source)
+		result, err := ProcessTemplate(event.If_true, ctx)
 		if err != nil {
 			result = "false"
 			log.Println(err)
@@ -66,10 +69,10 @@ func (event *Event) IsMatching(source Source) bool {
 	return contains && equals && condition
 }
 
-func (event *Event) BuildTask(source Source) (Task, error) {
+func (event *Rule) BuildTask(source Source) (Task, error) {
 	task := Task{}
-	task.Trigger = event.Trigger
-	result, err := ProcessAllTemplates(event.Values, source)
+	task.Trigger = event.Trigger["action"].(string)
+	result, err := ProcessAllTemplates(event, source)
 	if err != nil {
 		return task, fmt.Errorf("Cannot process: %v. Error: %v", task.Trigger, err)
 	}
