@@ -47,14 +47,11 @@ rules:
 
 
 rules:
-  - source: github
-    type: comment
+  - on: github_comment
     if-contains: /needs-performance-tests
-    trigger:
-      action: Github_Comment
-      values:
-        number: ${{ .Payload.Issue.Number }}
-        comment: Performance tests are scheduled
+    execute: 
+      action: github_comment_response
+      comment: Performance tests are scheduled
 
 
 
