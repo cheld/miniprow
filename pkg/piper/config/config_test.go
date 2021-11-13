@@ -136,15 +136,18 @@ func TestIsMatching(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			event := Rule{
+			rule := Rule{
 				If_contains: tc.ifContains,
 				If_equals:   tc.ifEquals,
 				If_true:     tc.ifTrue,
 			}
-			source := Source{
+			request := Request{
 				Value: tc.input,
 			}
-			result := event.IsMatching(source)
+			ctx := Ctx{
+				Request: request,
+			}
+			result := rule.IsMatching(ctx)
 			if result != tc.expected {
 				t.Fatalf("Error expected %v, got %v.", tc.expected, result)
 			}
@@ -237,7 +240,8 @@ func TestFindEvent(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
-			source := Source{Value: tc.Value}
+			request := Request{Value: tc.Value}
+			source := Ctx{Request: request}
 			event := cfg.GetMatchingRule(tc.Event, source)
 			if event == nil && tc.Found {
 				t.Fatalf("Event not found")
@@ -289,10 +293,10 @@ func TestBuildTask(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
-			source := Source{}
-			source.Payload = tc.Payload
+			ctx := Ctx{}
+			ctx.Request.Payload = tc.Payload
 
-			task, err := event.BuildTask(source)
+			task, err := event.BuildTask(ctx)
 			if err != nil {
 				t.Errorf("Error not exptected: %v", err)
 			}

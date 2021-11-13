@@ -21,21 +21,24 @@ func (handler *Handler) HandleHttp(body []byte, path string) []config.Task {
 	} else {
 		payload = ""
 	}
-	source := config.Source{
+	request := config.Request{
 		Value:   string(body),
 		Payload: payload,
+	}
+	ctx := config.Ctx{
+		Request: request,
 		Environ: *util.Environment.Map(),
 	}
 
 	// handle event
-	event := handler.config.GetMatchingRule("http", source)
+	event := handler.config.GetMatchingRule("http", ctx)
 	if event == nil {
-		glog.V(5).Infof("No event found for value %s\n", source.Value)
+		glog.V(5).Infof("No event found for value %s\n", ctx.Request.Value)
 		return []config.Task{}
 	}
 
 	// build execution task
-	task, err := event.BuildTask(source)
+	task, err := event.BuildTask(ctx)
 	if err != nil {
 		glog.Errorf("Cannot handle event: %v. Error: %v", event.Trigger, err)
 		return []config.Task{}

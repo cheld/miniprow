@@ -48,18 +48,18 @@ func (config *Configuration) GetMatchingRule(event string, sourceData Ctx) *Rule
 	return nil
 }
 
-func (event *Rule) IsMatching(ctx Ctx) bool {
+func (rule *Rule) IsMatching(ctx Ctx) bool {
 	contains := true
-	if event.If_contains != "" {
-		contains = strings.Contains(strings.ToUpper(ctx.Request.Value), strings.ToUpper(event.If_contains))
+	if rule.If_contains != "" {
+		contains = strings.Contains(strings.ToUpper(ctx.Request.Value), strings.ToUpper(rule.If_contains))
 	}
 	equals := true
-	if event.If_equals != "" {
-		equals = strings.EqualFold(ctx.Request.Value, event.If_equals)
+	if rule.If_equals != "" {
+		equals = strings.EqualFold(ctx.Request.Value, rule.If_equals)
 	}
 	condition := true
-	if event.If_true != "" {
-		result, err := ProcessTemplate(event.If_true, ctx)
+	if rule.If_true != "" {
+		result, err := ProcessTemplate(rule.If_true, ctx)
 		if err != nil {
 			result = "false"
 			log.Println(err)
@@ -69,15 +69,15 @@ func (event *Rule) IsMatching(ctx Ctx) bool {
 	return contains && equals && condition
 }
 
-func (event *Rule) BuildTask(source Source) (Task, error) {
+func (event *Rule) BuildTask(ctx Ctx) (Task, error) {
 	task := Task{}
 	task.Trigger = event.Trigger["action"].(string)
-	result, err := ProcessAllTemplates(event, source)
+	result, err := ProcessAllTemplates(event, ctx)
 	if err != nil {
 		return task, fmt.Errorf("Cannot process: %v. Error: %v", task.Trigger, err)
 	}
 	task.Values = result.(map[string]interface{})
-	task.Environ = source.Environ
+	task.Environ = ctx.Environ
 	return task, nil
 }
 

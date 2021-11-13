@@ -16,13 +16,16 @@ func (handler *Handler) HandleGithub(payload interface{}) []config.Task {
 	var eventName string
 
 	// parse payload
-	source := config.Source{
+	request := config.Request{
 		Payload: payload,
+	}
+	ctx := config.Ctx{
+		Request: request,
 		Environ: *util.Environment.Map(),
 	}
 	switch payload.(type) {
 	case github.IssueCommentPayload:
-		source.Value = payload.(github.IssueCommentPayload).Comment.Body
+		ctx.Request.Value = payload.(github.IssueCommentPayload).Comment.Body
 		eventName = "github_comment"
 	default:
 		glog.Infof("Github event not implemented: %v\n", payload)
@@ -30,14 +33,14 @@ func (handler *Handler) HandleGithub(payload interface{}) []config.Task {
 	}
 
 	// handle event
-	event := handler.config.GetMatchingRule(eventName, source)
+	event := handler.config.GetMatchingRule(eventName, ctx)
 	if event == nil {
-		glog.Infof("No event found for value %s", source.Value)
+		glog.Infof("No event found for value %s", ctx.Request.Value)
 		return []config.Task{}
 	}
 
 	// build execution task
-	task, err := event.BuildTask(source)
+	task, err := event.BuildTask(ctx)
 	if err != nil {
 		glog.Errorf("Cannot handle event: %v. Error: %v", event.Trigger, err)
 		return []config.Task{}
