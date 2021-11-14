@@ -53,6 +53,21 @@ rules:
       action: github_comment_response
       comment: Performance tests are scheduled
 
+rules:
+  - on: github_comment
+    if-contains: /needs-performance-tests
+    then: 
+     - execute: github_comment_response
+       with:
+         comment: Performance tests are scheduled
+     - execute: jenkins-job
+       with:
+         host: localhost
+         port: 8080
+         user: admin
+         pwd: ${{.Environ.jenkins_secret}}
+         job: performance 
+
 
 
 events:
