@@ -117,8 +117,8 @@ triggers:
     ############################################################
   - name: jenkins_job
     type: http
-    spec:
-      url:  http://admin:{{.Env.SECRET_JENKINS}}@localhost:8080/job/{{.Values.jobname}}/build
+    parms:
+      url:  http://admin:{{.Env.SECRET_JENKINS}}@localhost:8080/job/{{.jobname}}/build
 
   - name: Test
     type: http
