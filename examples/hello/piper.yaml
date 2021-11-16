@@ -103,7 +103,7 @@ events:
       number: 2
 
 
-triggers:
+actions:
 
     ############################################################
     #    jenkins_job - Trigger job on Jenkins
