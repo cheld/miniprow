@@ -120,6 +120,12 @@ actions:
     parms:
       url:  http://admin:{{.Env.SECRET_JENKINS}}@localhost:8080/job/{{.execution.input.jobname}}/build
 
+  - name: jenkins_job
+    type: http
+    parms:
+      url:  http://admin:{{.Env.SECRET_JENKINS}}@localhost:8080/job/{{.action.jenkins_job.input.jobname}}/build
+
+
   - name: Test
     type: http
     spec:
