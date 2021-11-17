@@ -126,7 +126,7 @@ events:
       number: 2
 
 
-actions:
+triggers:
 
     ############################################################
     #    jenkins_job - Trigger job on Jenkins
@@ -141,12 +141,12 @@ actions:
   - name: jenkins_job
     type: http
     parms:
-      url:  http://admin:{{.Env.SECRET_JENKINS}}@localhost:8080/job/{{.execution.input.jobname}}/build
+      url:  http://admin:{{.Env.SECRET_JENKINS}}@localhost:8080/job/{{.exekution.input.jobname}}/build
 
   - name: jenkins_job
     type: http
     parms:
-      url:  http://admin:{{.Env.SECRET_JENKINS}}@localhost:8080/job/{{.action.jenkins_job.input.jobname}}/build
+      url:  http://admin:{{.Env.SECRET_JENKINS}}@localhost:8080/job/{{.trigger.jenkins_job.input.jobname}}/build
 
 
   - name: Test
