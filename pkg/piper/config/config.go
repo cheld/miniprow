@@ -19,15 +19,15 @@ type Configuration struct {
 }
 
 type Ctx struct {
-	Request Request
+	Request struct {
+	    Event   string
+	    Value   string
+	    Payload interface{}
+        }
 	Environ map[string]string
-	Trigger map[string]string
-}
-
-type Request struct {
-	Event   string
-	Value   string
-	Payload interface{}
+	Trigger map[string]struct {
+            Input map[string]string
+        }
 }
 
 type Rule struct {
