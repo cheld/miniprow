@@ -8,7 +8,7 @@ import (
 	"github.com/golang/glog"
 )
 
-func (handler *Handler) HandleHttp(body []byte, path string) []config.Task {
+func (handler *Handler) HandleHttp(body []byte, path string) config.Ctx {
 
 	// parse body
 	var payload interface{}
@@ -16,12 +16,13 @@ func (handler *Handler) HandleHttp(body []byte, path string) []config.Task {
 		err := json.Unmarshal(body, &payload)
 		if err != nil {
 			glog.Errorf("Not possible to parse request body %s, %v", string(body), err)
-			return []config.Task{}
+			return config.Ctx{}
 		}
 	} else {
 		payload = ""
 	}
-	request := config.Request{
+	request := config.RequestCtx{
+		Event:   "http",
 		Value:   string(body),
 		Payload: payload,
 	}
@@ -31,17 +32,6 @@ func (handler *Handler) HandleHttp(body []byte, path string) []config.Task {
 	}
 
 	// handle event
-	event := handler.config.GetMatchingRule("http", ctx)
-	if event == nil {
-		glog.V(5).Infof("No event found for value %s\n", ctx.Request.Value)
-		return []config.Task{}
-	}
-
-	// build execution task
-	task, err := event.BuildTask(ctx)
-	if err != nil {
-		glog.Errorf("Cannot handle event: %v. Error: %v", event.Trigger, err)
-		return []config.Task{}
-	}
-	return []config.Task{task}
+	handler.config.ApplyRule(&ctx)
+	return ctx
 }

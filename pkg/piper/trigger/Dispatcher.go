@@ -17,21 +17,21 @@ func NewDispatcher(cfg config.Configuration) Dispatcher {
 	return dispatcher
 }
 
-func (dispatcher *Dispatcher) Execute(tasks []config.Task) {
-	for _, task := range tasks {
-		trigger := dispatcher.config.FindTrigger(task.Trigger)
+func (dispatcher *Dispatcher) Execute(ctx config.Ctx) {
+	for triggerName, _ := range ctx.Trigger{
+		trigger := dispatcher.config.GetTrigger(triggerName)
 		if trigger == nil {
-			glog.Errorf("No trigger definition with name '%s' found\n", task.Trigger)
+			glog.Errorf("No trigger definition with name '%s' found\n", triggerName)
 			break
 		}
 		switch strings.ToLower(trigger.Type) {
 		case "debug":
-			err := ExecuteDebug(trigger, task)
+			err := ExecuteDebug(trigger, ctx)
 			if err != nil {
 				glog.Errorln(err)
 			}
 		case "http":
-			err := ExecuteHttp(trigger, task)
+			err := ExecuteHttp(trigger, ctx)
 			if err != nil {
 				glog.Errorln(err)
 			}

@@ -11,11 +11,11 @@ import (
 	"github.com/cheld/miniprow/pkg/piper/config"
 )
 
-func ExecuteHttp(trigger *config.Trigger, task config.Task) error {
+func ExecuteHttp(trigger *config.Trigger, ctx config.Ctx) error {
 	glog.Infof("Executing http trigger '%s'\n", trigger.Name)
 
 	// Get http parameters
-	params, err := config.ProcessAllTemplates(trigger.Spec, task)
+	params, err := config.ProcessAllTemplates(trigger.Spec, ctx.Trigger[trigger.Name].Input)
 	if err != nil {
 		return fmt.Errorf("Error occured when processing trigger '%s'. %s", trigger.Name, err)
 	}

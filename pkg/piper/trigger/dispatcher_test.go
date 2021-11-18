@@ -54,13 +54,8 @@ func TestExecute_errorhandling(t *testing.T) {
 	// Test error
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			tasks := []config.Task{
-				config.Task{
-					Trigger: tc.trigger,
-				},
-			}
-			dispatcher.Execute(tasks)
-
+			ctx := config.Ctx{}
+			dispatcher.Execute(ctx)
 		})
 	}
 }

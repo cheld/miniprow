@@ -12,11 +12,10 @@ const (
 	Comment = "Comment"
 )
 
-func (handler *Handler) HandleGithub(payload interface{}) []config.Task {
-	var eventName string
+func (handler *Handler) HandleGithub(payload interface{}) config.Ctx {
 
 	// parse payload
-	request := config.Request{
+	request := config.RequestCtx{
 		Payload: payload,
 	}
 	ctx := config.Ctx{
@@ -26,24 +25,14 @@ func (handler *Handler) HandleGithub(payload interface{}) []config.Task {
 	switch payload.(type) {
 	case github.IssueCommentPayload:
 		ctx.Request.Value = payload.(github.IssueCommentPayload).Comment.Body
-		eventName = "github_comment"
+		ctx.Request.Event = "github_comment"
 	default:
 		glog.Infof("Github event not implemented: %v\n", payload)
-		return []config.Task{}
+		return ctx
 	}
 
-	// handle event
-	event := handler.config.GetMatchingRule(eventName, ctx)
-	if event == nil {
-		glog.Infof("No event found for value %s", ctx.Request.Value)
-		return []config.Task{}
-	}
+	// handle rule
+	handler.config.ApplyRule(&ctx)
 
-	// build execution task
-	task, err := event.BuildTask(ctx)
-	if err != nil {
-		glog.Errorf("Cannot handle event: %v. Error: %v", event.Trigger, err)
-		return []config.Task{}
-	}
-	return []config.Task{task}
+	return ctx
 }

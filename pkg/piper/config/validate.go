@@ -17,10 +17,10 @@ func Validate(cfg Configuration) error {
 		if rule.If_contains == "" && rule.If_equals == "" && rule.If_true == "" {
 			return fmt.Errorf("Event (%s) must define a matching rule", rule.Event)
 		}
-		if len(rule.Trigger) == 0 {
+		if len(rule.Then) == 0 {
 			return fmt.Errorf("Event (%s) has no trigger definition", rule.Event)
 		}
-		if len(rule.Trigger) > 0 && cfg.FindTrigger(rule.Trigger["action"].(string)) == nil {
+		if len(rule.Then) > 0 && cfg.GetTrigger(rule.Then[0].Apply) == nil {
 			return fmt.Errorf("Event (%s) references a trigger that does not exist", rule.Event)
 		}
 

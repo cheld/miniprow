@@ -109,7 +109,7 @@ func TestIsMatching(t *testing.T) {
 		},
 		{
 			name:     "IfTrue: Condition",
-			ifTrue:   "${{ eq .Value \"test\" }}",
+			ifTrue:   "${{ eq .Request.Value \"test\" }}",
 			input:    "test",
 			expected: true,
 		},
@@ -141,10 +141,10 @@ func TestIsMatching(t *testing.T) {
 				If_equals:   tc.ifEquals,
 				If_true:     tc.ifTrue,
 			}
-			request := Request{
+			request := RequestCtx{
 				Value: tc.input,
 			}
-			ctx := Ctx{
+			ctx := &Ctx{
 				Request: request,
 			}
 			result := rule.IsMatching(ctx)
@@ -155,7 +155,7 @@ func TestIsMatching(t *testing.T) {
 	}
 }
 
-func TestFindTrigger(t *testing.T) {
+func TestGetTrigger(t *testing.T) {
 	cfg := Configuration{}
 	cfg.Triggers = []Trigger{
 		{
@@ -186,7 +186,7 @@ func TestFindTrigger(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
-			trigger := cfg.FindTrigger(tc.Trigger)
+			trigger := cfg.GetTrigger(tc.Trigger)
 			if trigger == nil && tc.Found {
 				t.Fatalf("Trigger not found")
 			}
@@ -197,7 +197,7 @@ func TestFindTrigger(t *testing.T) {
 	}
 }
 
-func TestFindEvent(t *testing.T) {
+func TestGetRule(t *testing.T) {
 	cfg := Configuration{}
 	cfg.Rules = []Rule{
 		{
@@ -240,52 +240,47 @@ func TestFindEvent(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
-			request := Request{Value: tc.Value}
-			source := Ctx{Request: request}
-			event := cfg.GetMatchingRule(tc.Event, source)
-			if event == nil && tc.Found {
+			request := RequestCtx{
+				Event: tc.Event,
+				Value: tc.Value,
+			}
+			ctx := &Ctx{Request: request}
+			rule := cfg.GetFirstMatchingRule(ctx)
+			if rule == nil && tc.Found {
 				t.Fatalf("Event not found")
 			}
-			if event != nil && !tc.Found {
+			if rule != nil && !tc.Found {
 				t.Fatalf("Trigger found, but not expected")
 			}
 		})
 	}
 }
 
-func TestBuildTask(t *testing.T) {
-	event := Rule{
-		Trigger: map[string]interface{}{
-			"action": "mytrigger",
-			"simple": "test",
-			"nested": map[string]string{
-				"nestedkey": "nestedvalue",
+func TestApply(t *testing.T) {
+	rule := Rule{
+		Then: []Then{{
+			Apply: "mytrigger",
+			With: map[string]string{
+				"param":   "value",
+				"template": "Hello {{ .Request.Payload.sourcekey }}",
 			},
-			"template": "Hello {{ .Payload.sourcekey }}",
+		},
 		},
 	}
 	type testcase struct {
-		Name string
-
-		Payload map[string]string
-
-		Expected Task
+		Name     string
+		Payload  map[string]string
+		Expected TriggerCtx
 	}
 	testcases := []testcase{
 		{
 			Name: "Simple",
-
 			Payload: map[string]string{
 				"sourcekey": "World",
 			},
-
-			Expected: Task{
-				Trigger: "mytrigger",
-				Values: map[string]interface{}{
-					"simple": "test",
-					"nested": map[string]string{
-						"nestedkey": "nestedvalue",
-					},
+			Expected: TriggerCtx{
+				Input: map[string]string{
+					"param":   "value",
 					"template": "Hello World",
 				},
 			},
@@ -293,30 +288,19 @@ func TestBuildTask(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
-			ctx := Ctx{}
+			ctx := &Ctx{}
 			ctx.Request.Payload = tc.Payload
-
-			task, err := event.BuildTask(ctx)
+			err := rule.Apply(ctx)
 			if err != nil {
 				t.Errorf("Error not exptected: %v", err)
 			}
-			if task.Trigger != tc.Expected.Trigger {
-				t.Errorf("got %s, want %s", task.Trigger, tc.Expected.Trigger)
+			if ctx.Trigger["mytrigger"].Input["simple"] != tc.Expected.Input["simple"] {
+				t.Errorf("got %s, want %s", ctx.Trigger["mytrigger"].Input["simple"], tc.Expected.Input["simple"])
 			}
-			if task.Values["simple"] != tc.Expected.Values["simple"] {
-				t.Errorf("got %s, want %s", task.Values["simple"], tc.Expected.Values["simple"])
+			if ctx.Trigger["mytrigger"].Input["template"] != tc.Expected.Input["template"] {
+				t.Errorf("got %s, want %s", ctx.Trigger["mytrigger"].Input["template"], tc.Expected.Input["template"])
 			}
-			if task.Values["template"] != tc.Expected.Values["template"] {
-				t.Errorf("got %s, want %s", task.Values["template"], tc.Expected.Values["template"])
-			}
-			if task.Values["template"] != tc.Expected.Values["template"] {
-				t.Errorf("got %s, want %s", task.Values["template"], tc.Expected.Values["template"])
-			}
-			nestedValue := task.Values["nested"].(map[string]string)["nestedkey"]
-			expectedNestedValue := tc.Expected.Values["nested"].(map[string]string)["nestedkey"]
-			if nestedValue != expectedNestedValue {
-				t.Errorf("got %s, want %s", nestedValue, expectedNestedValue)
-			}
+
 		})
 	}
 }

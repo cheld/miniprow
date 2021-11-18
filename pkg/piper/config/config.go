@@ -19,15 +19,19 @@ type Configuration struct {
 }
 
 type Ctx struct {
-	Request struct {
-	    Event   string
-	    Value   string
-	    Payload interface{}
-        }
+	Request RequestCtx
 	Environ map[string]string
-	Trigger map[string]struct {
-            Input map[string]string
-        }
+	Trigger map[string]TriggerCtx
+}
+
+type RequestCtx struct {
+	Event   string
+	Value   string
+	Payload interface{}
+}
+
+type TriggerCtx struct {
+	Input map[string]string
 }
 
 type Rule struct {
@@ -35,20 +39,27 @@ type Rule struct {
 	If_contains string
 	If_equals   string
 	If_true     string
-	Trigger     map[string]interface{}
+	Then        []Then
 }
 
-func (config *Configuration) GetMatchingRule(event string, sourceData Ctx) *Rule {
+type Then struct {
+	Apply string
+	With  map[string]string
+}
+
+func (config *Configuration) GetFirstMatchingRule(ctx *Ctx) *Rule {
 	for _, rule := range config.Rules {
-		if strings.EqualFold(rule.Event, event) &&
-			rule.IsMatching(sourceData) {
+		if rule.IsMatching(ctx) {
 			return &rule
 		}
 	}
 	return nil
 }
 
-func (rule *Rule) IsMatching(ctx Ctx) bool {
+func (rule *Rule) IsMatching(ctx *Ctx) bool {
+	if !strings.EqualFold(rule.Event, ctx.Request.Event) {
+		return false
+	}
 	contains := true
 	if rule.If_contains != "" {
 		contains = strings.Contains(strings.ToUpper(ctx.Request.Value), strings.ToUpper(rule.If_contains))
@@ -69,22 +80,29 @@ func (rule *Rule) IsMatching(ctx Ctx) bool {
 	return contains && equals && condition
 }
 
-func (event *Rule) BuildTask(ctx Ctx) (Task, error) {
-	task := Task{}
-	task.Trigger = event.Trigger["action"].(string)
-	result, err := ProcessAllTemplates(event, ctx)
-	if err != nil {
-		return task, fmt.Errorf("Cannot process: %v. Error: %v", task.Trigger, err)
+func (config *Configuration) ApplyRule(ctx *Ctx) error {
+	rule := config.GetFirstMatchingRule(ctx)
+	if rule == nil {
+		return fmt.Errorf("No rule defined for %v", rule.Event)
 	}
-	task.Values = result.(map[string]interface{})
-	task.Environ = ctx.Environ
-	return task, nil
+	return rule.Apply(ctx)
 }
 
-type Task struct {
-	Trigger string
-	Values  map[string]interface{}
-	Environ map[string]string
+func (rule *Rule) Apply(ctx *Ctx) error {
+	for _, then := range rule.Then {
+		result, err := ProcessAllTemplates(then.With, ctx)
+		if err != nil {
+			return fmt.Errorf("Cannot process: %v. Error: %v", rule.Event, err)
+		}
+		if ctx.Trigger == nil {
+			ctx.Trigger = make(map[string]TriggerCtx)
+		}
+		triggerCtx := TriggerCtx{
+			Input: result.(map[string]string),
+		}
+		ctx.Trigger[then.Apply] = triggerCtx
+	}
+	return nil
 }
 
 type Trigger struct {
@@ -93,7 +111,7 @@ type Trigger struct {
 	Spec map[string]interface{}
 }
 
-func (config *Configuration) FindTrigger(name string) *Trigger {
+func (config *Configuration) GetTrigger(name string) *Trigger {
 	for _, trigger := range config.Triggers {
 		if strings.EqualFold(trigger.Name, name) {
 			return &trigger
