@@ -80,6 +80,9 @@ func (rule *Rule) IsMatching(ctx *Ctx) bool {
 	return contains && equals && condition
 }
 
+
+//ProcessRuleTemplates(ctx)
+
 func (config *Configuration) ApplyRule(ctx *Ctx) error {
 	rule := config.GetFirstMatchingRule(ctx)
 	if rule == nil {
@@ -110,6 +113,8 @@ type Trigger struct {
 	Type string
 	Spec map[string]interface{}
 }
+
+//ProcessTriggerTemplates(ctx)
 
 func (config *Configuration) GetTrigger(name string) *Trigger {
 	for _, trigger := range config.Triggers {
