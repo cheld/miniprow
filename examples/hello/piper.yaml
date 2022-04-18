@@ -1,6 +1,20 @@
 
 
 rules:
+  - if:
+      trigger: github_comment 
+      when:
+        contains: /needs-performance-tests
+    then:
+      action: github_comment
+      values:
+        number: ${{ .Payload.Issue.Number }}
+        comment: Performance tests are scheduled
+
+
+
+
+rules:
   - event:
       source: github
       type: comment
