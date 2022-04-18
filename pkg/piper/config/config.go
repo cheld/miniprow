@@ -10,41 +10,12 @@ import (
 )
 
 type Configuration struct {
-	Serve struct {
-		Secret string
-		Port   int
-	}
-	Rules    []Rule
-	Triggers []Trigger
+	Rules []Rule
 }
 
-type Ctx struct {
-	Request RequestCtx
-	Environ map[string]string
-	Trigger map[string]TriggerCtx
-}
-
-type RequestCtx struct {
-	Event   string
-	Value   string
-	Payload interface{}
-}
-
-type TriggerCtx struct {
-	Input map[string]string
-}
-
-type Rule struct {
-	Event       string
-	If_contains string
-	If_equals   string
-	If_true     string
-	Then        []Then
-}
-
-type Then struct {
-	Apply string
-	With  map[string]string
+func (config *Configuration) ProcessAllTemplates(ctx *Ctx) (Configuration, error) {
+	result, err := ProcessAllTemplates(config, ctx)
+	return result.(Configuration), err
 }
 
 func (config *Configuration) GetFirstMatchingRule(ctx *Ctx) *Rule {
@@ -55,6 +26,28 @@ func (config *Configuration) GetFirstMatchingRule(ctx *Ctx) *Rule {
 	}
 	return nil
 }
+
+type Ctx struct {
+	Event   interface{}
+	Environ map[string]string
+}
+
+type Rule struct {
+	If   Trigger
+	Then Action
+}
+
+type Trigger struct {
+	Name string
+	When map[string]string
+}
+
+type Action struct {
+	Name string
+	With map[string]string
+}
+
+
 
 func (rule *Rule) IsMatching(ctx *Ctx) bool {
 	if !strings.EqualFold(rule.Event, ctx.Request.Event) {
@@ -79,7 +72,6 @@ func (rule *Rule) IsMatching(ctx *Ctx) bool {
 	}
 	return contains && equals && condition
 }
-
 
 //ProcessRuleTemplates(ctx)
 
@@ -106,12 +98,6 @@ func (rule *Rule) Apply(ctx *Ctx) error {
 		ctx.Trigger[then.Apply] = triggerCtx
 	}
 	return nil
-}
-
-type Trigger struct {
-	Name string
-	Type string
-	Spec map[string]interface{}
 }
 
 //ProcessTriggerTemplates(ctx)
