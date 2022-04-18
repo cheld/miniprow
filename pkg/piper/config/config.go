@@ -27,27 +27,28 @@ func (config *Configuration) GetFirstMatchingRule(ctx *Ctx) *Rule {
 	return nil
 }
 
-type Ctx struct {
-	Event   interface{}
+type Event struct {
+	Type    string
+	Data    interface{}
+	Rule    Rule
 	Environ map[string]string
+	Logs    []string
 }
 
 type Rule struct {
-	If   Trigger
-	Then Action
+	If   Condition
+	Then Task
 }
 
-type Trigger struct {
-	Name string
-	When map[string]string
+type Condition struct {
+	Tigger string
+	When   map[string]string
 }
 
-type Action struct {
-	Name string
-	With map[string]string
+type Task struct {
+	Action string
+	With   map[string]string
 }
-
-
 
 func (rule *Rule) IsMatching(ctx *Ctx) bool {
 	if !strings.EqualFold(rule.Event, ctx.Request.Event) {
