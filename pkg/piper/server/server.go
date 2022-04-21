@@ -7,9 +7,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cheld/miniprow/pkg/piper/action/actions"
 	"github.com/cheld/miniprow/pkg/piper/config"
 	"github.com/cheld/miniprow/pkg/piper/event"
 	"github.com/cheld/miniprow/pkg/piper/trigger"
+	"github.com/cheld/miniprow/pkg/piper/triggers"
 	"github.com/golang/glog"
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
@@ -43,7 +45,7 @@ func (piper *Piper) ServeHTTP(writer http.ResponseWriter, request *http.Request)
 	piper.mux.ServeHTTP(writer, request)
 }
 
-func handleGithub(handler *event.Handler, dispatcher trigger.Dispatcher, githubWebhook *github.Webhook) http.HandlerFunc {
+func handleGithub(githubWebhook *github.Webhook) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		fmt.Println("Gihub event received")
 		payload, err := githubWebhook.Parse(req, github.IssueCommentEvent)
@@ -56,7 +58,11 @@ func handleGithub(handler *event.Handler, dispatcher trigger.Dispatcher, githubW
 			}
 			return
 		}
-		dispatcher.Execute(handler.HandleGithub(payload))
+		event := config.Event{}
+		event.Data = payload
+		tenant := config.Tenant{}
+		triggeredRules := triggers.Handle(event, tenant)
+		actions.Handle(triggeredRules, event, tenant)
 	}
 }
 

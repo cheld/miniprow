@@ -28,11 +28,14 @@ func (config *Configuration) GetFirstMatchingRule(ctx *Ctx) *Rule {
 }
 
 type Event struct {
-	Type    string
-	Data    interface{}
-	Rule    Rule
+	Type string
+	Data interface{}
+	Logs []string
+}
+
+type Tenant struct {
+	Config  Configuration
 	Environ map[string]string
-	Logs    []string
 }
 
 type Rule struct {
@@ -48,6 +51,10 @@ type Condition struct {
 type Task struct {
 	Action string
 	With   map[string]string
+}
+
+func (config *Configuration) Filter(eventType string) []Rule {
+	return nil
 }
 
 func (rule *Rule) IsMatching(ctx *Ctx) bool {

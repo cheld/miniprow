@@ -3,16 +3,24 @@ package triggers
 import "github.com/cheld/miniprow/pkg/piper/config"
 
 var (
-	githubHandlers = map[string]GithubHandler{}
+	handlers = map[string]TriggerHandler{}
 )
 
-// GithubHandler defines the function contract for a github handler.
-type GithubHandler func(config.Configuration, config.Event) config.Rule
+// TriggerHandler defines the function contract for all triggers.
+type TriggerHandler func(config.Event, config.Rule) bool
 
-func RegisterGithubHandler(name string, fn GithubHandler) {
-	githubHandlers[name] = fn
+func RegisterHandler(name string, fn TriggerHandler) {
+	handlers[name] = fn
 }
 
-func Handle(event config.Event) {
-
+func Handle(event config.Event, tenant config.Tenant) []config.Rule {
+	handler := handlers[event.Type]
+	rules := tenant.Config.Filter(event.Type)
+	triggeredRules := []config.Rule{}
+	for _, rule := range rules {
+		if handler(event, rule) {
+			triggeredRules = append(triggeredRules, rule)
+		}
+	}
+	return triggeredRules
 }
