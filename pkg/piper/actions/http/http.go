@@ -6,13 +6,18 @@ import (
 )
 
 const (
-	actionName = "http"
+	HANDLER_ID   = "http"
+	PARAM_URL    = "url"
+	PARAM_METHOD = "method"
+	PARAM_BODY   = "body"
+
+	VALUE_POST = "post"
 )
 
 func init() {
-	actions.RegisterHandler(actionName, handleAction)
+	actions.RegisterHandler(HANDLER_ID, handleAction)
 }
 
-func handleAction(rule config.Rule, event config.Event) {
+func handleAction(params map[string]string, event config.Event) {
 
 }
