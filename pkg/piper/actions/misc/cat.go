@@ -14,7 +14,7 @@ func init() {
 	actions.RegisterHandler(actionName, handleAction)
 }
 
-func handleAction(params map[string]string, event config.Event) {
+func handleAction(params map[string]interface{}, event config.Event) {
 	params[github.PARAM_COMMENT] = "here is the cat"
 	commentHandler := actions.GetHandler(github.HANDLER_ID)
 	commentHandler(params, event)

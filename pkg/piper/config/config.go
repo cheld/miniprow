@@ -2,10 +2,8 @@ package config
 
 import (
 	"fmt"
-	"log"
-	"strconv"
-	"strings"
 
+	"github.com/cheld/miniprow/pkg/common/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -13,24 +11,10 @@ type Configuration struct {
 	Rules []Rule
 }
 
-func (config *Configuration) ProcessAllTemplates(ctx *Ctx) (Configuration, error) {
-	result, err := ProcessAllTemplates(config, ctx)
-	return result.(Configuration), err
-}
-
-func (config *Configuration) GetFirstMatchingRule(ctx *Ctx) *Rule {
-	for _, rule := range config.Rules {
-		if rule.IsMatching(ctx) {
-			return &rule
-		}
-	}
-	return nil
-}
-
 type Event struct {
 	Type string
 	Data interface{}
-	Logs []string
+	Log  []string
 }
 
 type Tenant struct {
@@ -39,84 +23,29 @@ type Tenant struct {
 }
 
 type Rule struct {
-	If   Condition
-	Then Task
+	If   Trigger
+	Then Action
 }
 
-type Condition struct {
+type Trigger struct {
 	Tigger string
 	When   map[string]string
 }
 
-type Task struct {
+type Action struct {
 	Action string
-	With   map[string]string
+	With   map[string]interface{}
 }
 
-func (config *Configuration) Filter(eventType string) []Rule {
-	return nil
-}
-
-func (rule *Rule) IsMatching(ctx *Ctx) bool {
-	if !strings.EqualFold(rule.Event, ctx.Request.Event) {
-		return false
-	}
-	contains := true
-	if rule.If_contains != "" {
-		contains = strings.Contains(strings.ToUpper(ctx.Request.Value), strings.ToUpper(rule.If_contains))
-	}
-	equals := true
-	if rule.If_equals != "" {
-		equals = strings.EqualFold(ctx.Request.Value, rule.If_equals)
-	}
-	condition := true
-	if rule.If_true != "" {
-		result, err := ProcessTemplate(rule.If_true, ctx)
-		if err != nil {
-			result = "false"
-			log.Println(err)
-		}
-		condition, _ = strconv.ParseBool(result)
-	}
-	return contains && equals && condition
-}
-
-//ProcessRuleTemplates(ctx)
-
-func (config *Configuration) ApplyRule(ctx *Ctx) error {
-	rule := config.GetFirstMatchingRule(ctx)
-	if rule == nil {
-		return fmt.Errorf("No rule defined for %v", rule.Event)
-	}
-	return rule.Apply(ctx)
-}
-
-func (rule *Rule) Apply(ctx *Ctx) error {
-	for _, then := range rule.Then {
-		result, err := ProcessAllTemplates(then.With, ctx)
-		if err != nil {
-			return fmt.Errorf("Cannot process: %v. Error: %v", rule.Event, err)
-		}
-		if ctx.Trigger == nil {
-			ctx.Trigger = make(map[string]TriggerCtx)
-		}
-		triggerCtx := TriggerCtx{
-			Input: result.(map[string]string),
-		}
-		ctx.Trigger[then.Apply] = triggerCtx
-	}
-	return nil
-}
-
-//ProcessTriggerTemplates(ctx)
-
-func (config *Configuration) GetTrigger(name string) *Trigger {
-	for _, trigger := range config.Triggers {
-		if strings.EqualFold(trigger.Name, name) {
-			return &trigger
+func (config *Configuration) Filter(event Event) []Rule {
+	matchingRules := []Rule{}
+	for _, rule := range config.Rules {
+		if rule.If.Tigger == event.Type {
+			resolved, _ := util.ProcessAllTemplates(rule, event)
+			matchingRules = append(matchingRules, resolved.(Rule))
 		}
 	}
-	return nil
+	return matchingRules
 }
 
 func Load(cfg *[]byte) (Configuration, error) {

@@ -7,32 +7,28 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cheld/miniprow/pkg/piper/action/actions"
+	"github.com/cheld/miniprow/pkg/piper/actions"
 	"github.com/cheld/miniprow/pkg/piper/config"
-	"github.com/cheld/miniprow/pkg/piper/event"
-	"github.com/cheld/miniprow/pkg/piper/trigger"
 	"github.com/cheld/miniprow/pkg/piper/triggers"
 	"github.com/golang/glog"
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
 
 func NewHandler(piperCfg *[]byte, secret string) *Piper {
-	cfg, err := config.Load(piperCfg)
+	_, err := config.Load(piperCfg)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	handler := event.NewHandler(cfg)
-	dispatcher := trigger.NewDispatcher(cfg)
 	githubWebhook, _ := github.New(github.Options.Secret(secret))
 
 	piper := &Piper{
 		mux: http.NewServeMux(),
 	}
 
-	piper.mux.Handle("/piper/github", handleGithub(handler, dispatcher, githubWebhook))
-	piper.mux.Handle("/piper/http/", handleHTTP(handler, dispatcher))
+	piper.mux.Handle("/piper/github", handleGithub(githubWebhook))
+	piper.mux.Handle("/piper/http/", handleHTTP())
 
 	return piper
 }
@@ -66,7 +62,7 @@ func handleGithub(githubWebhook *github.Webhook) http.HandlerFunc {
 	}
 }
 
-func handleHTTP(handler *event.Handler, dispatcher trigger.Dispatcher) http.HandlerFunc {
+func handleHTTP() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		fmt.Println("Http event received")
 		path := strings.TrimPrefix(req.URL.Path, "/webhooks/http/")
@@ -81,6 +77,10 @@ func handleHTTP(handler *event.Handler, dispatcher trigger.Dispatcher) http.Hand
 			http.Error(res, "can't read body", http.StatusBadRequest)
 			return
 		}
-		go dispatcher.Execute(handler.HandleHttp(body, path))
+		event := config.Event{}
+		event.Data = body
+		tenant := config.Tenant{}
+		triggeredRules := triggers.Handle(event, tenant)
+		actions.Handle(triggeredRules, event, tenant)
 	}
 }
