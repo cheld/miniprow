@@ -21,10 +21,10 @@ import (
 	"os"
 
 	boskosServer "github.com/cheld/miniprow/pkg/boskos/server"
+	hookServer "github.com/cheld/miniprow/pkg/hook/server"
 	"github.com/cheld/miniprow/pkg/common/info"
 	commonServer "github.com/cheld/miniprow/pkg/common/server"
 	"github.com/cheld/miniprow/pkg/common/util"
-	piperServer "github.com/cheld/miniprow/pkg/piper/server"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -50,7 +50,7 @@ chat-ops via /foo style commands and Slack notifications.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// read cli flags
-		piperFileName, _ := cmd.Flags().GetString("config-piper")
+		hookFileName, _ := cmd.Flags().GetString("config-hook")
 		boskosFileName, _ := cmd.Flags().GetString("config-boskos")
 		secret, _ := cmd.Flags().GetString("secret")
 		bindaddr, _ := cmd.Flags().GetString("bind-addr")
@@ -62,8 +62,8 @@ chat-ops via /foo style commands and Slack notifications.`,
 		util.Environment.Value("PORT").Update(&port)
 
 		// read config files
-		piperCfgFile := util.FindExistingFile(util.DefaultConfigLocations(piperFileName))
-		piperCfg, err := util.ReadConfiguration(piperCfgFile, "PIPER_CONFIG")
+		hookCfgFile := util.FindExistingFile(util.DefaultConfigLocations(hookFileName))
+		hookCfg, err := util.ReadConfiguration(hookCfgFile, "HOOK_CONFIG")
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -80,10 +80,10 @@ chat-ops via /foo style commands and Slack notifications.`,
 
 		// Register http endpoints
 		mux := http.NewServeMux()
-		mux.Handle("/piper/", piperServer.NewHandler(piperCfg, secret))
+		mux.Handle("/hook/", hookServer.NewHandler(hookCfg, secret))
 		mux.Handle("/boskos/", boskosServer.NewHandler(boskosCfg))
-		mux.Handle("/common/", commonServer.NewHandler())
 		mux.Handle("/metrics", promhttp.Handler())
+		mux.Handle("/", commonServer.NewHandler())
 
 		// Start server
 		addr := fmt.Sprintf("%s:%d", bindaddr, port)
@@ -102,7 +102,7 @@ func command() *cobra.Command {
 	rootCmd.Flags().StringP("bind-addr", "", "0.0.0.0", "the bind addr of the server")
 	rootCmd.Flags().StringP("secret", "s", "", "Protect access to the webhook")
 	rootCmd.Flags().StringP("config-boskos", "", "boskos.yaml", "config file for boskos")
-	rootCmd.Flags().StringP("config-piper", "", "piper.yaml", "config file for piper")
+	rootCmd.Flags().StringP("config-hook", "", "hook.yaml", "config file for hook")
 	rootCmd.PersistentFlags().StringP("log-level", "l", "DEBUG", "set debug log level")
 	return rootCmd
 }

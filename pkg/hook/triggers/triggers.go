@@ -1,6 +1,10 @@
 package triggers
 
-import "github.com/cheld/miniprow/pkg/piper/config"
+import (
+	"fmt"
+
+	"github.com/cheld/miniprow/pkg/hook/config"
+)
 
 var (
 	handlers = map[string]TriggerHandler{}
@@ -13,12 +17,18 @@ func RegisterHandler(name string, fn TriggerHandler) {
 	handlers[name] = fn
 }
 
-func Handle(event config.Event, tenant config.Tenant) []config.Rule {
-	handler := handlers[event.Type]
-	rules := tenant.Config.Filter(event)
+func Handle(event *config.Event, tenant config.Tenant) []config.Rule {
 	triggeredRules := []config.Rule{}
+	handler := handlers[event.Type]
+	fmt.Println(handlers)
+	if handler == nil {
+		event.Log("No trigger handler implementation for %v", event.Type)
+		return triggeredRules
+	}
+	rules := tenant.Config.Filter(event)
 	for _, rule := range rules {
-		if handler(event, rule) {
+		event.Log("Trigger ", rule.If.Trigger)
+		if handler(*event, rule) {
 			triggeredRules = append(triggeredRules, rule)
 		}
 	}

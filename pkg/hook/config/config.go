@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/cheld/miniprow/pkg/common/util"
@@ -14,7 +15,17 @@ type Configuration struct {
 type Event struct {
 	Type string
 	Data interface{}
-	Log  []string
+	logs []string
+}
+
+func (event *Event) Log(message string, params ...interface{}) {
+	line := fmt.Sprintf(message, params...)
+	event.logs = append(event.logs, line)
+}
+
+func (event *Event) Trail() string {
+	s, _ := json.MarshalIndent(event.logs, "", "\t")
+	return string(s)
 }
 
 type Tenant struct {
@@ -28,8 +39,8 @@ type Rule struct {
 }
 
 type Trigger struct {
-	Tigger string
-	When   map[string]string
+	Trigger string
+	When    map[string]string
 }
 
 type Action struct {
@@ -37,13 +48,18 @@ type Action struct {
 	With   map[string]interface{}
 }
 
-func (config *Configuration) Filter(event Event) []Rule {
+func (config *Configuration) Filter(event *Event) []Rule {
 	matchingRules := []Rule{}
 	for _, rule := range config.Rules {
-		if rule.If.Tigger == event.Type {
+		event.Log(rule.If.Trigger)
+		if rule.If.Trigger == event.Type {
 			resolved, _ := util.ProcessAllTemplates(rule, event)
 			matchingRules = append(matchingRules, resolved.(Rule))
+			event.Log("Matching rule %v", rule.If.Trigger)
 		}
+	}
+	if len(matchingRules) == 0 {
+		event.Log("No matching rule found")
 	}
 	return matchingRules
 }

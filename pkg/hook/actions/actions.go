@@ -1,6 +1,6 @@
 package actions
 
-import "github.com/cheld/miniprow/pkg/piper/config"
+import "github.com/cheld/miniprow/pkg/hook/config"
 
 var (
 	handlers = map[string]ActionHandler{}
@@ -17,10 +17,9 @@ func GetHandler(name string) ActionHandler {
 	return handlers[name]
 }
 
-func Handle(triggeredRules []config.Rule, event config.Event, tenant config.Tenant) {
-	rules := tenant.Config.Filter(event)
-	for _, rule := range rules {
+func Handle(triggeredRules []config.Rule, event *config.Event, tenant config.Tenant) {
+	for _, rule := range triggeredRules {
 		handler := handlers[rule.Then.Action]
-		handler(rule.Then.With, event)
+		handler(rule.Then.With, *event)
 	}
 }

@@ -3,8 +3,8 @@ package github
 import (
 	"strings"
 
-	"github.com/cheld/miniprow/pkg/piper/config"
-	"github.com/cheld/miniprow/pkg/piper/triggers"
+	"github.com/cheld/miniprow/pkg/hook/config"
+	"github.com/cheld/miniprow/pkg/hook/triggers"
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
 

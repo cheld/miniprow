@@ -3,9 +3,9 @@ package github
 import (
 	"fmt"
 
-	"github.com/cheld/miniprow/pkg/piper/actions"
-	"github.com/cheld/miniprow/pkg/piper/actions/http"
-	"github.com/cheld/miniprow/pkg/piper/config"
+	"github.com/cheld/miniprow/pkg/hook/actions"
+	"github.com/cheld/miniprow/pkg/hook/actions/http"
+	"github.com/cheld/miniprow/pkg/hook/config"
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
 
