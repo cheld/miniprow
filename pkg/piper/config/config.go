@@ -54,9 +54,5 @@ func Load(cfg *[]byte) (Configuration, error) {
 	if err != nil {
 		return Configuration{}, fmt.Errorf("Error parsing YAML file: %s", err)
 	}
-	err = Validate(yamlConfig)
-	if err != nil {
-		return Configuration{}, fmt.Errorf("Error validating YAML file: %s", err)
-	}
 	return yamlConfig, nil
 }

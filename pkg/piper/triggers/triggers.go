@@ -15,7 +15,7 @@ func RegisterHandler(name string, fn TriggerHandler) {
 
 func Handle(event config.Event, tenant config.Tenant) []config.Rule {
 	handler := handlers[event.Type]
-	rules := tenant.Config.Filter(event.Type)
+	rules := tenant.Config.Filter(event)
 	triggeredRules := []config.Rule{}
 	for _, rule := range rules {
 		if handler(event, rule) {
