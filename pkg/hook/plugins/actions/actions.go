@@ -7,7 +7,7 @@ var (
 )
 
 // TriggerHandler defines the function contract for all triggers.
-type ActionHandler func(map[string]interface{}, config.Event)
+type ActionHandler func(map[string]interface{}, *config.Event)
 
 func RegisterHandler(name string, fn ActionHandler) {
 	handlers[name] = fn
@@ -24,6 +24,6 @@ func Handle(triggeredRules []config.Rule, event *config.Event, tenant config.Ten
 			event.Log("No action handler implementation for %v", rule.Then.Action)
 			return
 		}
-		handler(rule.Then.With, *event)
+		handler(rule.Then.With, event)
 	}
 }

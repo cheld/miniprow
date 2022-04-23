@@ -22,7 +22,7 @@ func init() {
 	actions.RegisterHandler(HANDLER_ID, handleAction)
 }
 
-func handleAction(params map[string]interface{}, event config.Event) {
+func handleAction(params map[string]interface{}, event *config.Event) {
 
 	url := params[PARAM_URL].(string)
 	method := params[PARAM_METHOD].(string)

@@ -3,9 +3,10 @@ package github
 import (
 	"fmt"
 
-	"github.com/cheld/miniprow/pkg/hook/actions"
-	"github.com/cheld/miniprow/pkg/hook/actions/http"
-	"github.com/cheld/miniprow/pkg/hook/config"
+	"github.com/cheld/miniprow/pkg/hook/model"
+	"github.com/cheld/miniprow/pkg/hook/plugins/actions"
+	"github.com/cheld/miniprow/pkg/hook/plugins/actions/http"
+	trigger "github.com/cheld/miniprow/pkg/hook/plugins/triggers/github"
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
 
@@ -18,7 +19,11 @@ func init() {
 	actions.RegisterHandler(HANDLER_ID, handleAction)
 }
 
-func handleAction(params map[string]interface{}, event config.Event) {
+func handleAction(params map[string]interface{}, event *model.Event) {
+	if _, ok := event.Data.(github.IssueCommentPayload); !ok {
+		event.Err("Action %v can only be combined with Trigger %v", HANDLER_ID, trigger.HANDLER_ID)
+		return
+	}
 	issueNumber := event.Data.(github.IssueCommentPayload).Issue.Number
 	comment := params[PARAM_COMMENT]
 
