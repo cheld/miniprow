@@ -5,7 +5,7 @@ import (
 
 	config "github.com/cheld/miniprow/pkg/hook/model"
 	"github.com/cheld/miniprow/pkg/hook/plugins/triggers"
-	"gopkg.in/go-playground/webhooks.v5/github"
+	"github.com/go-playground/webhooks/v6/github"
 )
 
 const (

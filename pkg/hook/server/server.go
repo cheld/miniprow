@@ -12,9 +12,8 @@ import (
 	_ "github.com/cheld/miniprow/pkg/hook/plugins-imports"
 	"github.com/cheld/miniprow/pkg/hook/plugins/actions"
 	"github.com/cheld/miniprow/pkg/hook/plugins/triggers"
-	"github.com/golang/glog"
+	"github.com/go-playground/webhooks/v6/github"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/go-playground/webhooks.v5/github"
 )
 
 func NewHandler(hookCfg *[]byte, secret string) *Hook {
@@ -26,7 +25,8 @@ func NewHandler(hookCfg *[]byte, secret string) *Hook {
 	s, _ := json.MarshalIndent(cfg, "", "\t")
 	fmt.Println(string(s))
 
-	githubWebhook, _ := github.New(github.Options.Secret(secret))
+	//githubWebhook, _ := github.New(github.Options.Secret(""))
+	githubWebhook, _ := github.New(github.Options.Secret("asdf"))
 
 	hook := &Hook{
 		mux: http.NewServeMux(),
@@ -51,20 +51,23 @@ func handleGithub(githubWebhook *github.Webhook, cfg config.Configuration) http.
 		logrus.Infof("Github event received")
 		tenant := config.Tenant{}
 		tenant.Config = cfg
+		event := config.Event{}
 		payload, err := githubWebhook.Parse(req, github.IssueCommentEvent)
 		if err != nil {
 			if err == github.ErrEventNotFound {
-				glog.Infof("Github event not implemented.")
+				logrus.Infof("Github event not implemented.")
 			} else {
-				glog.Errorf("Error reading body: %s", err)
-				http.Error(res, "can't read body", http.StatusBadRequest)
+				logrus.Errorf("Error reading body: %s", err)
+				logrus.Error(res, "can't read body", http.StatusBadRequest)
 			}
 			return
 		}
-		event := config.Event{}
 		event.Data = payload
+		event.Type = "github_comment"
 		triggeredRules := triggers.Handle(&event, tenant)
 		actions.Handle(triggeredRules, &event, tenant)
+
+		fmt.Printf("%s", event.Trail())
 	}
 }
 

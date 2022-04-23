@@ -11,7 +11,6 @@ type Configuration struct {
 	Rules []Rule
 }
 
-
 type Rule struct {
 	If   Trigger
 	Then Action
@@ -31,7 +30,11 @@ func (config *Configuration) Filter(event *Event) []Rule {
 	matchingRules := []Rule{}
 	for _, rule := range config.Rules {
 		if rule.If.Trigger == event.Type {
-			resolved, _ := util.ProcessAllTemplates(rule, event)
+			resolved, err := util.ProcessAllTemplates(rule, event)
+			if err != nil {
+				event.Err("Template for rule %v cannot be processed: %v", rule.If.Trigger, err)
+				return matchingRules
+			}
 			matchingRules = append(matchingRules, resolved.(Rule))
 			event.Log("Rule configuration %v found", rule.If.Trigger)
 		}

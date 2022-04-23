@@ -4,16 +4,15 @@ rules:
       when:
         contains: /needs-performance-tests
     then:
-      action: github_comment
-      values:
-        number: ${{ .Payload.Issue.Number }}
+      action: debug
+      with:
         comment: Performance tests are scheduled
 
   - if:
-      trigger: http_request 
+      trigger: github_comment
       when:
         contains: asdfs
     then:
       action: debug
-      values:
+      with:
         comment: Performance tests are scheduled
