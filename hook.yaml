@@ -2,17 +2,9 @@ rules:
   - if:
       trigger: github_comment 
       when:
-        contains: /needs-performance-tests
+        contains: /cat
     then:
-      action: debug
+      action: github_comment
       with:
-        comment: Performance tests are scheduled
+        comment: Grumpy cat
 
-  - if:
-      trigger: github_comment
-      when:
-        contains: asdfs
-    then:
-      action: debug
-      with:
-        comment: Performance tests are scheduled

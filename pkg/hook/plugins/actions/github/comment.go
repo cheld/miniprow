@@ -7,7 +7,7 @@ import (
 	"github.com/cheld/miniprow/pkg/hook/plugins/actions"
 	"github.com/cheld/miniprow/pkg/hook/plugins/actions/http"
 	trigger "github.com/cheld/miniprow/pkg/hook/plugins/triggers/github"
-	"gopkg.in/go-playground/webhooks.v5/github"
+	"github.com/go-playground/webhooks/v6/github"
 )
 
 const (
@@ -25,7 +25,9 @@ func handleAction(params map[string]interface{}, event *model.Event) {
 		return
 	}
 	issueNumber := event.Data.(github.IssueCommentPayload).Issue.Number
+	event.Log("Commenting on Github issue %d", issueNumber)
 	comment := params[PARAM_COMMENT]
+	event.Log("Comment: %v", comment)
 
 	headers := map[string]string{}
 	headers["Authorization"] = "token xxxx"

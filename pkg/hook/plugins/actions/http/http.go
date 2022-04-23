@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"io/ioutil"
 	"net/http"
 
 	config "github.com/cheld/miniprow/pkg/hook/model"
@@ -23,7 +24,6 @@ func init() {
 }
 
 func handleAction(params map[string]interface{}, event *config.Event) {
-
 	url := params[PARAM_URL].(string)
 	method := params[PARAM_METHOD].(string)
 	body := params[PARAM_BODY].(string)
@@ -31,22 +31,26 @@ func handleAction(params map[string]interface{}, event *config.Event) {
 
 	// create http request
 	httpClient := &http.Client{}
-	req, _ := http.NewRequest(method, url, bytes.NewBufferString(body))
-	//if err != nil {
-	//	return fmt.Errorf("Error occured when creating http trigger '%s'. %s", trigger.Name, err)
-	//}
+	req, err := http.NewRequest(method, url, bytes.NewBufferString(body))
+	if err != nil {
+		event.Err("http request failed for action %v, error: %v", HANDLER_ID, err)
+		return
+	}
 	for key, val := range headers {
 		req.Header.Add(key, val)
 	}
 
 	// execute request
-	resp, _ := httpClient.Do(req)
-	//if err != nil {
-	//	return fmt.Errorf("Error occured when executing trigger %s, with error %s", trigger.Name, err)
-	//}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		event.Err("http request failed for action %v, error: %v", HANDLER_ID, err)
+		return
+	}
 	defer resp.Body.Close()
-	//respBody, err := ioutil.ReadAll(resp.Body)
-	//if err != nil {
-	//	return fmt.Errorf("Trigger %s failed, error %s", trigger.Name, err)
-	//}
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		event.Err("http request failed for action %v, error: %v", HANDLER_ID, err)
+		return
+	}
+	event.Log("Github response: %v", string(respBody))
 }

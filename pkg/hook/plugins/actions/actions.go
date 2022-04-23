@@ -19,7 +19,9 @@ func GetHandler(name string) ActionHandler {
 
 func Handle(triggeredRules []config.Rule, event *config.Event, tenant config.Tenant) {
 	for _, rule := range triggeredRules {
-		handler := handlers[rule.Then.Action]
+		actionName := rule.Then.Action
+		event.Log("Action is %v", actionName)
+		handler := handlers[actionName]
 		if handler == nil {
 			event.Log("No action handler implementation for %v", rule.Then.Action)
 			return
