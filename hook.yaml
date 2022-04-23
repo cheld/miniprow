@@ -14,6 +14,6 @@ rules:
       when:
         contains: asdfs
     then:
-      action: github_comment
+      action: debug
       values:
         comment: Performance tests are scheduled

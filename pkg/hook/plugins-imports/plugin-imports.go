@@ -9,6 +9,7 @@ import (
 	_ "github.com/cheld/miniprow/pkg/hook/plugins/triggers/http"
 
 	// actions
+	_ "github.com/cheld/miniprow/pkg/hook/plugins/actions/debug"
 	_ "github.com/cheld/miniprow/pkg/hook/plugins/actions/github"
 	_ "github.com/cheld/miniprow/pkg/hook/plugins/actions/http"
 	_ "github.com/cheld/miniprow/pkg/hook/plugins/actions/misc"

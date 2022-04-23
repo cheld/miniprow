@@ -32,7 +32,7 @@ func NewHandler(hookCfg *[]byte, secret string) *Hook {
 		mux: http.NewServeMux(),
 	}
 
-	hook.mux.Handle("/hook/github", handleGithub(githubWebhook))
+	hook.mux.Handle("/hook/github", handleGithub(githubWebhook, cfg))
 	hook.mux.Handle("/hook/http/", handleHTTP(cfg))
 
 	return hook
@@ -46,9 +46,11 @@ func (piper *Hook) ServeHTTP(writer http.ResponseWriter, request *http.Request) 
 	piper.mux.ServeHTTP(writer, request)
 }
 
-func handleGithub(githubWebhook *github.Webhook) http.HandlerFunc {
+func handleGithub(githubWebhook *github.Webhook, cfg config.Configuration) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		fmt.Println("Gihub event received")
+		logrus.Infof("Github event received")
+		tenant := config.Tenant{}
+		tenant.Config = cfg
 		payload, err := githubWebhook.Parse(req, github.IssueCommentEvent)
 		if err != nil {
 			if err == github.ErrEventNotFound {
@@ -61,7 +63,6 @@ func handleGithub(githubWebhook *github.Webhook) http.HandlerFunc {
 		}
 		event := config.Event{}
 		event.Data = payload
-		tenant := config.Tenant{}
 		triggeredRules := triggers.Handle(&event, tenant)
 		actions.Handle(triggeredRules, &event, tenant)
 	}
