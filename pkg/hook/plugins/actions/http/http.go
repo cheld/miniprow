@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"net/http"
 
-	"github.com/cheld/miniprow/pkg/hook/actions"
-	"github.com/cheld/miniprow/pkg/hook/config"
+	config "github.com/cheld/miniprow/pkg/hook/model"
+	"github.com/cheld/miniprow/pkg/hook/plugins/actions"
 )
 
 const (

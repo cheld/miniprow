@@ -1,9 +1,7 @@
 package triggers
 
 import (
-	"fmt"
-
-	"github.com/cheld/miniprow/pkg/hook/config"
+	config "github.com/cheld/miniprow/pkg/hook/model"
 )
 
 var (
@@ -20,15 +18,14 @@ func RegisterHandler(name string, fn TriggerHandler) {
 func Handle(event *config.Event, tenant config.Tenant) []config.Rule {
 	triggeredRules := []config.Rule{}
 	handler := handlers[event.Type]
-	fmt.Println(handlers)
 	if handler == nil {
 		event.Log("No trigger handler implementation for %v", event.Type)
 		return triggeredRules
 	}
 	rules := tenant.Config.Filter(event)
 	for _, rule := range rules {
-		event.Log("Trigger ", rule.If.Trigger)
 		if handler(*event, rule) {
+			event.Log("Trigger %v fired with %v", rule.If.Trigger, rule.If.When)
 			triggeredRules = append(triggeredRules, rule)
 		}
 	}

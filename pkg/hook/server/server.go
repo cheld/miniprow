@@ -8,9 +8,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cheld/miniprow/pkg/hook/actions"
-	"github.com/cheld/miniprow/pkg/hook/config"
-	"github.com/cheld/miniprow/pkg/hook/triggers"
+	config "github.com/cheld/miniprow/pkg/hook/model"
+	_ "github.com/cheld/miniprow/pkg/hook/plugins-imports"
+	"github.com/cheld/miniprow/pkg/hook/plugins/actions"
+	"github.com/cheld/miniprow/pkg/hook/plugins/triggers"
 	"github.com/golang/glog"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/go-playground/webhooks.v5/github"

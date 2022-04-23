@@ -1,6 +1,6 @@
 package actions
 
-import "github.com/cheld/miniprow/pkg/hook/config"
+import config "github.com/cheld/miniprow/pkg/hook/model"
 
 var (
 	handlers = map[string]ActionHandler{}
@@ -20,6 +20,10 @@ func GetHandler(name string) ActionHandler {
 func Handle(triggeredRules []config.Rule, event *config.Event, tenant config.Tenant) {
 	for _, rule := range triggeredRules {
 		handler := handlers[rule.Then.Action]
+		if handler == nil {
+			event.Log("No action handler implementation for %v", rule.Then.Action)
+			return
+		}
 		handler(rule.Then.With, *event)
 	}
 }

@@ -3,17 +3,17 @@ package github
 import (
 	"strings"
 
-	"github.com/cheld/miniprow/pkg/hook/config"
-	"github.com/cheld/miniprow/pkg/hook/triggers"
+	config "github.com/cheld/miniprow/pkg/hook/model"
+	"github.com/cheld/miniprow/pkg/hook/plugins/triggers"
 	"gopkg.in/go-playground/webhooks.v5/github"
 )
 
 const (
-	triggerName = "github_comment"
+	HANDLER_ID = "github_comment"
 )
 
 func init() {
-	triggers.RegisterHandler(triggerName, handleEvent)
+	triggers.RegisterHandler(HANDLER_ID, handleEvent)
 }
 
 func handleEvent(event config.Event, rule config.Rule) bool {

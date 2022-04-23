@@ -21,10 +21,10 @@ import (
 	"os"
 
 	boskosServer "github.com/cheld/miniprow/pkg/boskos/server"
-	hookServer "github.com/cheld/miniprow/pkg/hook/server"
 	"github.com/cheld/miniprow/pkg/common/info"
 	commonServer "github.com/cheld/miniprow/pkg/common/server"
 	"github.com/cheld/miniprow/pkg/common/util"
+	hookServer "github.com/cheld/miniprow/pkg/hook/server"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
