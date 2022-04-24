@@ -25,9 +25,12 @@ func init() {
 
 func handleAction(params map[string]interface{}, event *config.Event) {
 	url := params[PARAM_URL].(string)
+	event.Log("URL: %v", url)
 	method := params[PARAM_METHOD].(string)
 	body := params[PARAM_BODY].(string)
+	event.Log("BODY: %v", body)
 	headers := params[PARAM_HEADERS].(map[string]string)
+	event.Log("HEADERS: %v", headers)
 
 	// create http request
 	httpClient := &http.Client{}

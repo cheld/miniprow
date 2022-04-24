@@ -3,6 +3,7 @@ package github
 import (
 	"fmt"
 
+	"github.com/cheld/miniprow/pkg/common/util"
 	"github.com/cheld/miniprow/pkg/hook/model"
 	"github.com/cheld/miniprow/pkg/hook/plugins/actions"
 	"github.com/cheld/miniprow/pkg/hook/plugins/actions/http"
@@ -30,11 +31,12 @@ func handleAction(params map[string]interface{}, event *model.Event) {
 	event.Log("Comment: %v", comment)
 
 	headers := map[string]string{}
-	headers["Authorization"] = "token xxxx"
+	headers["Authorization"] = "token " + util.Environment.Value("GITHUB_TOKEN").String()
+	headers["Content-Type"] = "application/json"
 
-	params[http.PARAM_URL] = fmt.Sprintf("https://api.github.com/repos/cheld/code-snippets/issues/%v/comments", issueNumber)
-	params[http.PARAM_METHOD] = http.VALUE_POST
-	params[http.PARAM_BODY] = fmt.Sprintf("{ \"body\": \"%v\" }", comment)
+	params[http.PARAM_URL] = fmt.Sprintf("https://api.github.com/repos/cheld/testpython/issues/%v/comments", issueNumber)
+	params[http.PARAM_METHOD] = "POST" //http.VALUE_POST
+	params[http.PARAM_BODY] = fmt.Sprintf("{\"body\": \"![cat](https://static.elle.de/1200x630/smart/images/2016-03/15325082_523f72f18b.jpg)\"}")
 	params[http.PARAM_HEADERS] = headers
 	httptHandler := actions.GetHandler(http.HANDLER_ID)
 	httptHandler(params, event)
