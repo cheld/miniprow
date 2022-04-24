@@ -1,6 +1,66 @@
 
 
 rules:
+  - if:
+      trigger: github_comment 
+      when:
+        contains: /needs-performance-tests
+    then:
+      action: github_comment
+      values:
+        number: ${{ .Payload.Issue.Number }}
+        comment: Performance tests are scheduled
+
+
+
+
+rules:
+  - event:
+      source: github
+      type: comment
+      if-contains: /needs-performance-tests
+    trigger:
+      action: Github_Comment
+      values:
+        number: ${{ .Payload.Issue.Number }}
+        comment: Performance tests are scheduled
+
+rules:
+  - event: 
+       source: github
+       type: comment
+    if-contains: /needs-performance-tests
+    trigger:
+      action: Github_Comment
+      values:
+        number: ${{ .Payload.Issue.Number }}
+        comment: Performance tests are scheduled
+
+
+rules:
+  - event: github_comment
+    if-contains: /needs-performance-tests
+    action: Github_Comment_Response 
+      comment: Performance tests are scheduled
+
+rules:
+  - event: github_comment
+    if-contains: /needs-performance-tests
+    action: Jenkins_Job
+      user:
+      secret:
+      host:
+      job:
+    
+rules:
+  - event: github_comment
+    if-contains: /needs-performance-tests
+    trigger: 
+      type: github_comment_response
+      comment: Performance tests are scheduled
+
+
+rules:
   - on: github_comment
     if-contains: /needs-performance-tests
     then: 
@@ -8,6 +68,21 @@ rules:
        with:
          comment: Performance tests are scheduled
      - trigger: jenkins-job
+       with:
+         host: localhost
+         port: 8080
+         user: admin
+         pwd: ${{.Environ.jenkins_secret}}
+         job: performance 
+
+rules:
+  - on: github_comment
+    if-contains: /needs-performance-tests
+    then: 
+     - execute: github_comment_response
+       with:
+         comment: Performance tests are scheduled
+     - execute: jenkins-job
        with:
          host: localhost
          port: 8080
