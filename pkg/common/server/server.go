@@ -15,8 +15,8 @@ func NewHandler() *CommonServer {
 	server := CommonServer{
 		mux: http.NewServeMux(),
 	}
-	server.mux.Handle("/common/health", handleHealth())
-	server.mux.Handle("/common/version", handleVersion())
+	server.mux.Handle("/health", handleHealth())
+	server.mux.Handle("/version", handleVersion())
 	return &server
 }
 

@@ -63,9 +63,17 @@ rules:
 rules:
   - on: github_comment
     if-contains: /needs-performance-tests
-    execute: 
-      action: github_comment_response
-      comment: Performance tests are scheduled
+    then: 
+     - trigger: github_comment_response
+       with:
+         comment: Performance tests are scheduled
+     - trigger: jenkins-job
+       with:
+         host: localhost
+         port: 8080
+         user: admin
+         pwd: ${{.Environ.jenkins_secret}}
+         job: performance 
 
 rules:
   - on: github_comment
@@ -84,52 +92,6 @@ rules:
 
 
 
-events:
-  - source: github
-    type: comment
-    if_contains: /needs-performance-tests
-    trigger: Github_Comment
-    values:
-      number: ${{ .Payload.Issue.Number }}
-      comment: Performance tests are scheduled
-
-  - source: github
-    type: comment
-    if_contains: /needs-preview-environment
-    trigger: Github_Comment
-    values:
-      number: ${{ .Payload.Issue.Number }}
-      comment: This is your preview environment https://www.myapp.com
-
-  - source: gitlab
-    type: comment
-    if_true:  ${{ eq .Payload.Branch "test" }}
-    trigger: jenkins_job
-    values:
-      target: preview
-
-  - source: http
-    type: get
-    if_contains: action
-    trigger: Debug
-    values:
-      message: '{{ .Payload }}'
-
-
-  - source: cli
-    type: stdin
-    if_contains: go
-    trigger: Debug
-    values:
-      message: 'Files: {{.Payload}}'
-
-  - source: cli
-    type: headers
-    if_true: true
-    trigger: github_comment
-    values:
-      comment: hello
-      number: 2
 
 
 triggers:
@@ -146,8 +108,9 @@ triggers:
     ############################################################
   - name: jenkins_job
     type: http
-    spec:
-      url:  http://admin:{{.Env.SECRET_JENKINS}}@localhost:8080/job/{{.Values.jobname}}/build
+    parms:
+      url:  http://admin:{{.Env.SECRET_JENKINS}}@localhost:8080/job/{{.trigger.jenkins_job.input.jobname}}/build
+
 
   - name: Test
     type: http

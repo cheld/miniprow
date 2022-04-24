@@ -1,0 +1,10 @@
+rules:
+  - if:
+      trigger: github_comment 
+      when:
+        contains: /cat
+    then:
+      action: github_comment
+      with:
+        comment: Grumpy cat
+

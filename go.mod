@@ -3,6 +3,7 @@ module github.com/cheld/miniprow
 go 1.13
 
 require (
+	github.com/go-playground/webhooks/v6 v6.0.0-rc.1 // indirect
 	github.com/go-test/deep v1.0.4
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/go-cmp v0.4.0
