@@ -58,11 +58,14 @@ func handleGithub(githubWebhook *github.Webhook, cfg config.Configuration) http.
 				logrus.Infof("Github event not implemented.")
 			} else {
 				logrus.Errorf("Error reading body: %s", err)
-				logrus.Error(res, "can't read body", http.StatusBadRequest)
+				//logrus.Error(res, "can't read body", http.StatusBadRequest)
 			}
 			return
 		}
 		event.Data = payload
+		//fmt.Println(event.Data.(github.IssueCommentPayload).Repository.FullName)
+		//fmt.Println(event.Data.(github.IssueCommentPayload).Repository.Owner.SiteAdmin)
+		//fmt.Println(event.Data.(github.IssueCommentPayload).Repository.Name)
 		event.Type = "github_comment"
 		triggeredRules := triggers.Handle(&event, tenant)
 		actions.Handle(triggeredRules, &event, tenant)
