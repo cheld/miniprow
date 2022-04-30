@@ -52,10 +52,10 @@ func handleGithub(githubWebhook *github.Webhook, cfg config.Configuration) http.
 		tenant := config.Tenant{}
 		tenant.Config = cfg
 		event := config.Event{}
-		payload, err := githubWebhook.Parse(req, github.IssueCommentEvent)
+		payload, err := githubWebhook.Parse(req, github.IssueCommentEvent, github.InstallationEvent)
 		if err != nil {
 			if err == github.ErrEventNotFound {
-				logrus.Infof("Github event not implemented.")
+				logrus.Infof("Github event not implemented: %s", err)
 			} else {
 				logrus.Errorf("Error reading body: %s", err)
 				//logrus.Error(res, "can't read body", http.StatusBadRequest)
@@ -63,6 +63,11 @@ func handleGithub(githubWebhook *github.Webhook, cfg config.Configuration) http.
 			return
 		}
 		event.Data = payload
+		//fmt.Println(event.Data.(github.InstallationPayload).Installation.Account.ReposURL)
+		//fmt.Println(event.Data.(github.InstallationPayload).Installation.RepositorySelection)
+		//fmt.Println(event.Data.(github.InstallationPayload).Repositories[0].FullName)
+		//fmt.Println(event.Data.(github.InstallationPayload).Installation.Account.URL)
+		//fmt.Println(event.Data.(github.InstallationPayload).Installation.Account.Login)
 		//fmt.Println(event.Data.(github.IssueCommentPayload).Repository.FullName)
 		//fmt.Println(event.Data.(github.IssueCommentPayload).Repository.Owner.SiteAdmin)
 		//fmt.Println(event.Data.(github.IssueCommentPayload).Repository.Name)
