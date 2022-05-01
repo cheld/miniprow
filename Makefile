@@ -5,10 +5,13 @@ ifeq (,$(GCP_PROJECT))
 	GCP_PROJECT=$(shell gcloud config get-value project 2> /dev/null)
 endif
 
-clean: 
+verify:
+	go test ./pkg/**/*
+
+build-clean: 
 	rm -Rf ./bin
 	
-build: clean
+build: build-clean
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./bin/miniprow -ldflags="-X github.com/cheld/miniprow/pkg/common/info.Commit=${GITHUB_SHA}" cmd/miniprow/miniprow.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o ./bin/boskosctl cmd/boskosctl/boskosctl.go 
 
