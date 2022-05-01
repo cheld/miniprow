@@ -1,0 +1,21 @@
+rules:
+  - if:
+      trigger: github_comment 
+      when:
+        contains: /cat
+    then:
+      action: github_comment
+      with:
+        comment: Grumpy cat
+
+
+#curl -f -k -H 'Content-Type: application/json' -XPOST --user login:secret https://ansible.dzbank.vrnet:443/api/v2/job_templates/197/launch/
+
+#name: set gitlab merge url set_fact: gitlab_merge_url: "https://git.dzbank.vrnet/api/v4/projects/{{ tower_webhook_status_api.split("/")[6] }}/merge_requests/{{ tower_webhook_payload.object_attributes.iid }}/notes"
+
+#name: set microservice url set_fact: microservice_url: "https://dfvvp01ciops.dzbank.vrnet/artifactory/helm-unstable-local/harissa/{{ tower_webhook_payload.object_attributes.source.path_with_namespace.split("/")[3] }}/{{ tower_webhook_payload.object_attributes.source.path_with_namespace.split("/")[3] }}-9.9.9-{{ tower_webhook_payload.object_attributes.last_commit.id }}-{{ tower_webhook_payload.object_attributes.source_branch.split("/")[1] }}-SNAPSHOT.tgz"
+#name: set microservice version set_fact: microservice_version: "9.9.9-{{ tower_webhook_payload.object_attributes.last_commit.id }}-{{ tower_webhook_payload.object_attributes.source_branch.split("/")[1] }}-SNAPSHOT"
+#name: set service name set_fact: microservice_name: "{{ tower_webhook_payload.object_attributes.source.path_with_namespace.split("/")[3] }}"
+#name: set workspace set_fact: workspace: "{{ tower_webhook_payload.object_attributes.source_branch.split("/")[1] | lower}}" 08:50 Uhr
+#name: curl gitlab merge request uri: url: "{{ gitlab_merge_url }}" method: POST status_code: 201 body: "body=Ansible Pipeline pending" headers: PRIVATE-TOKEN: "xxx"
+

@@ -4,6 +4,9 @@ endif
 ifeq (,$(GCP_PROJECT))
 	GCP_PROJECT=$(shell gcloud config get-value project 2> /dev/null)
 endif
+ifeq (,$(GCP_PROJECT))
+	GCP_PROJECT=local
+endif
 
 verify:
 	go test ./pkg/**/*
