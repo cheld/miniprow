@@ -1,4 +1,4 @@
 FROM cheld/miniprow:latest
-COPY ./piper.yaml /etc
+COPY ./hook.yaml /etc
 COPY ./boskos.yaml /etc
 
