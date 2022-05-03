@@ -25,6 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/common/util"
 )
 
 // Ranch is the place which all of the Resource objects lives.
@@ -231,7 +232,7 @@ func (r *Ranch) AcquireByState(state, dest, owner string, names []string) ([]*co
 
 	var returnRes []*common.Resource
 	if err := retryOnConflict(func() error {
-		rNames := NewString(names...)
+		rNames := util.NewSet(names...)
 
 		allResources, err := r.Storage.GetResources()
 		if err != nil {
@@ -508,63 +509,4 @@ func newResourceFromNewDynamicResourceLifeCycle(name string, now time.Time, life
 
 func retryOnConflict(fn func() error) error {
 	return fn()
-}
-
-type Empty struct{}
-
-// sets.String is a set of strings, implemented via map[string]struct{} for minimal memory consumption.
-type String map[string]Empty
-
-// NewString creates a String from a list of values.
-func NewString(items ...string) String {
-	ss := String{}
-	ss.Insert(items...)
-	return ss
-}
-
-// Insert adds items to the set.
-func (s String) Insert(items ...string) String {
-	for _, item := range items {
-		s[item] = Empty{}
-	}
-	return s
-}
-
-// Delete removes all items from the set.
-func (s String) Delete(items ...string) String {
-	for _, item := range items {
-		delete(s, item)
-	}
-	return s
-}
-
-// Has returns true if and only if item is contained in the set.
-func (s String) Has(item string) bool {
-	_, contained := s[item]
-	return contained
-}
-
-// Len returns the size of the set.
-func (s String) Len() int {
-	return len(s)
-}
-
-type sortableSliceOfString []string
-
-func (s sortableSliceOfString) Len() int           { return len(s) }
-func (s sortableSliceOfString) Less(i, j int) bool { return lessString(s[i], s[j]) }
-func (s sortableSliceOfString) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-
-// List returns the contents as a sorted string slice.
-func (s String) List() []string {
-	res := make(sortableSliceOfString, 0, len(s))
-	for key := range s {
-		res = append(res, key)
-	}
-	sort.Sort(res)
-	return []string(res)
-}
-
-func lessString(lhs, rhs string) bool {
-	return lhs < rhs
 }
