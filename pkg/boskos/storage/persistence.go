@@ -34,54 +34,56 @@ type PersistenceLayer interface {
 }
 
 type inMemoryStore struct {
-	resources map[string]common.Resource
+	resources map[string]map[string]common.Resource
 	lock      sync.RWMutex
 }
 
 // NewMemoryStorage creates an in memory persistence layer
 func NewMemoryStorage() PersistenceLayer {
+	mem := map[string]map[string]common.Resource{}
+	mem["default"] = map[string]common.Resource{}
 	return &inMemoryStore{
-		resources: map[string]common.Resource{},
+		resources: mem,
 	}
 }
 
 func (im *inMemoryStore) Add(r common.Resource) error {
 	im.lock.Lock()
 	defer im.lock.Unlock()
-	_, ok := im.resources[r.Name]
+	_, ok := im.resources["default"][r.Name]
 	if ok {
 		return fmt.Errorf("resource %s already exists", r.Name)
 	}
-	im.resources[r.Name] = r
+	im.resources["default"][r.Name] = r
 	return nil
 }
 
 func (im *inMemoryStore) Delete(name string) error {
 	im.lock.Lock()
 	defer im.lock.Unlock()
-	_, ok := im.resources[name]
+	_, ok := im.resources["default"][name]
 	if !ok {
 		return fmt.Errorf("cannot find item %s", name)
 	}
-	delete(im.resources, name)
+	delete(im.resources["default"], name)
 	return nil
 }
 
 func (im *inMemoryStore) Update(r common.Resource) (common.Resource, error) {
 	im.lock.Lock()
 	defer im.lock.Unlock()
-	_, ok := im.resources[r.Name]
+	_, ok := im.resources["default"][r.Name]
 	if !ok {
 		return common.Resource{}, fmt.Errorf("cannot find item %s", r.Name)
 	}
-	im.resources[r.Name] = r
+	im.resources["default"][r.Name] = r
 	return r, nil
 }
 
 func (im *inMemoryStore) Get(name string) (common.Resource, error) {
 	im.lock.RLock()
 	defer im.lock.RUnlock()
-	r, ok := im.resources[name]
+	r, ok := im.resources["default"][name]
 	if !ok {
 		return common.Resource{}, fmt.Errorf("cannot find item %s", name)
 	}
@@ -92,7 +94,7 @@ func (im *inMemoryStore) List() ([]common.Resource, error) {
 	im.lock.RLock()
 	defer im.lock.RUnlock()
 	var resources []common.Resource
-	for _, r := range im.resources {
+	for _, r := range im.resources["default"] {
 		resources = append(resources, r)
 	}
 	return resources, nil
