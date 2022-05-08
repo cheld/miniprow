@@ -40,7 +40,7 @@ func MakeTestRanch(resources []common.Resource) *Ranch {
 	}
 	ranch.requestMgr = NewRequestManager(100000)
 	for _, res := range resources {
-		persistence.Add(res)
+		persistence.Add(res, "org", "proj")
 	}
 	return ranch
 }
