@@ -17,7 +17,9 @@ limitations under the License.
 package ranch
 
 import (
+	"fmt"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
@@ -29,6 +31,18 @@ var (
 	startTime = fakeTime(time.Now())
 	fakeNow   = fakeTime(startTime.Add(time.Second))
 )
+
+type nameGenerator struct {
+	lock  sync.Mutex
+	index int
+}
+
+func (g *nameGenerator) name() string {
+	g.lock.Lock()
+	defer g.lock.Unlock()
+	g.index++
+	return fmt.Sprintf("new-dynamic-res-%d", g.index)
+}
 
 func MakeTestRanch(resources []common.Resource) *Ranch {
 	persistence := storage.NewMemoryStorage()
@@ -42,6 +56,9 @@ func MakeTestRanch(resources []common.Resource) *Ranch {
 	for _, res := range resources {
 		persistence.Add(res, "org", "proj")
 	}
+	nameGen := &nameGenerator{}
+	ranch.Storage.generateName = nameGen.name
+
 	return ranch
 }
 
@@ -219,6 +236,38 @@ func TestAcquire(t *testing.T) {
 	}
 }
 
+func TestAcquireRoundRobin(t *testing.T) {
+	var resources []common.Resource
+	for i := 1; i < 5; i++ {
+		resources = append(resources, newResource(fmt.Sprintf("res-%d", i), "t", "s", "", startTime))
+	}
+
+	results := map[string]int{}
+
+	c := MakeTestRanch(resources)
+	for i := 0; i < 4; i++ {
+		res, _, err := c.Acquire("t", "s", "d", "foo", "")
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		_, found := results[res.Name]
+		if found {
+			t.Errorf("resource %s was used more than once", res.Name)
+		}
+		c.Release(res.Name, "s", "foo")
+	}
+}
+
+func newResource(name, t, state, owner string, lastUpdate time.Time) common.Resource {
+	return common.Resource{
+		Name:       name,
+		Type:       t,
+		State:      state,
+		Owner:      owner,
+		LastUpdate: lastUpdate,
+	}
+}
+
 func TestAcquireOrder(t *testing.T) {
 	FakeNow := time.Now()
 	resources := []common.Resource{
@@ -269,6 +318,79 @@ func TestAcquireOrder(t *testing.T) {
 		}
 	}
 
+}
+
+func TestAcquireOnDemand(t *testing.T) {
+	owner := "tester"
+	rType := "dr"
+	requestID1 := "req1234"
+	requestID2 := "req12345"
+	requestID3 := "req123456"
+	duration := time.Second
+	config := &common.BoskosConfig{
+		Resources: []common.ResourceEntry{
+			{
+				Type:     rType,
+				State:    common.Dirty,
+				MinCount: 0,
+				MaxCount: 2,
+				LifeSpan: &common.Duration{&duration},
+			},
+		},
+	}
+
+	// Not adding any resources to start with
+	c := MakeTestRanch([]common.Resource{})
+	c.Storage.SyncResources(config)
+	c.now = fakeNow.Local
+	// First acquire should trigger a creation
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1); err == nil {
+		t.Errorf("should fail since there is not resource yet")
+	}
+	if resources, err := c.Storage.GetResources(); err != nil {
+		t.Fatal(err)
+	} else if len(resources) != 1 {
+		t.Fatal("A resource should have been created")
+	}
+	// Attempting to create another resource
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1); err == nil {
+		t.Errorf("should succeed since the created is dirty")
+	}
+	if resources, err := c.Storage.GetResources(); err != nil {
+		t.Error(err)
+	} else if len(resources) != 1 {
+		t.Errorf("No new resource should have been created")
+	}
+	// Creating another
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID2); err == nil {
+		t.Errorf("should succeed since the created is dirty")
+	}
+	if resources, err := c.Storage.GetResources(); err != nil {
+		t.Error(err)
+	} else if len(resources) != 2 {
+		t.Errorf("Another resource should have been created")
+	}
+	// Attempting to create another
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID3); err == nil {
+		t.Errorf("should fail since there is not resource yet")
+	}
+	resources, err := c.Storage.GetResources()
+	if err != nil {
+		t.Error(err)
+	} else if len(resources) != 2 {
+		t.Errorf("No other resource should have been created")
+	}
+	for _, res := range resources {
+		c.Storage.DeleteResource(res.Name)
+	}
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, ""); err == nil {
+		t.Errorf("should fail since there is not resource yet")
+	}
+	if resources, err := c.Storage.GetResources(); err != nil {
+		t.Error(err)
+	} else if len(resources) != 0 {
+		t.Errorf("No new resource should have been created")
+	}
 }
 
 func TestRelease(t *testing.T) {
