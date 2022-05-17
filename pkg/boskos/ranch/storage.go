@@ -43,30 +43,30 @@ func NewStorage(persistence storage.PersistenceLayer) *Storage {
 
 // AddResource adds a new resource
 func (s *Storage) AddResource(resource *common.Resource) error {
-	return s.persistence.Add(*resource, "org", "proj")
+	return s.persistence.Add(*resource, common.NewTenant())
 }
 
 // DeleteResource deletes a resource if it exists, errors otherwise
 func (s *Storage) DeleteResource(name string) error {
-	return s.persistence.Delete(name, "org", "proj")
+	return s.persistence.Delete(name, common.NewTenant())
 }
 
 // UpdateResource updates a resource if it exists, errors otherwise
 func (s *Storage) UpdateResource(resource *common.Resource) (*common.Resource, error) {
 	resource.LastUpdate = s.now()
-	s.persistence.Update(*resource, "org", "proj")
+	s.persistence.Update(*resource, common.NewTenant())
 	return resource, nil
 }
 
 // GetResource gets an existing resource, errors otherwise
 func (s *Storage) GetResource(name string) (*common.Resource, error) {
-	res, err := s.persistence.Get(name, "org", "proj")
+	res, err := s.persistence.Get(name, common.NewTenant())
 	return &res, err
 }
 
 // GetResources list all resources
 func (s *Storage) GetResources() ([]*common.Resource, error) {
-	r, _ := s.persistence.List("org", "proj")
+	r, _ := s.persistence.List(common.NewTenant())
 	resourceList := make([]*common.Resource, len(r))
 	for i := 0; i < len(r); i++ {
 		resourceList[i] = &r[i]
@@ -109,7 +109,7 @@ func (s *Storage) SyncResources(config *common.BoskosConfig) error {
 			s.DRLCByType[entry.Type] = common.NewDynamicResourceLifeCycleFromConfig(entry)
 		} else {
 			for _, res := range common.NewResourcesFromConfig(entry) {
-				s.persistence.Add(res, "org", "proj")
+				s.persistence.Add(res, common.NewTenant())
 			}
 		}
 	}

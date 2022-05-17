@@ -156,7 +156,7 @@ func (c *Client) AcquireWithPriority(rtype, state, dest, requestID string) (*com
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	if r != nil {
-		c.storage.Add(*r, "default", "default")
+		c.storage.Add(*r, common.NewTenant())
 	}
 
 	return r, nil
@@ -206,7 +206,7 @@ func (c *Client) AcquireByState(state, dest string, names []string) ([]common.Re
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	for _, r := range resources {
-		c.storage.Add(r, "default", "default")
+		c.storage.Add(r, common.NewTenant())
 	}
 	return resources, nil
 }
@@ -241,7 +241,7 @@ func (c *Client) AcquireByStateWait(ctx context.Context, state, dest string, nam
 func (c *Client) ReleaseAll(dest string) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	resources, err := c.storage.List("default", "default")
+	resources, err := c.storage.List(common.NewTenant())
 	if err != nil {
 		return err
 	}
@@ -250,7 +250,7 @@ func (c *Client) ReleaseAll(dest string) error {
 	}
 	var allErrors error
 	for _, r := range resources {
-		c.storage.Delete(r.Name, "default", "default")
+		c.storage.Delete(r.Name, common.NewTenant())
 		err := c.Release(r.Name, dest)
 		if err != nil {
 			allErrors = multierror.Append(allErrors, err)
@@ -264,10 +264,10 @@ func (c *Client) ReleaseOne(name, dest string) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	if _, err := c.storage.Get(name, "default", "default"); err != nil {
+	if _, err := c.storage.Get(name, common.NewTenant()); err != nil {
 		return fmt.Errorf("no resource name %v", name)
 	}
-	c.storage.Delete(name, "default", "default")
+	c.storage.Delete(name, common.NewTenant())
 	if err := c.Release(name, dest); err != nil {
 		return err
 	}
@@ -279,7 +279,7 @@ func (c *Client) UpdateAll(state string) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	resources, err := c.storage.List("default", "default")
+	resources, err := c.storage.List(common.NewTenant())
 	if err != nil {
 		return err
 	}
@@ -304,7 +304,7 @@ func (c *Client) SyncAll() error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	resources, err := c.storage.List("default", "default")
+	resources, err := c.storage.List(common.NewTenant())
 	if err != nil {
 		return err
 	}
@@ -318,7 +318,7 @@ func (c *Client) SyncAll() error {
 			allErrors = multierror.Append(allErrors, err)
 			continue
 		}
-		if _, err := c.storage.Update(r, "default", "default"); err != nil {
+		if _, err := c.storage.Update(r, common.NewTenant()); err != nil {
 			allErrors = multierror.Append(allErrors, err)
 		}
 	}
@@ -330,7 +330,7 @@ func (c *Client) UpdateOne(name, state string, userData *common.UserData) error 
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	r, err := c.storage.Get(name, "default", "default")
+	r, err := c.storage.Get(name, common.NewTenant())
 	if err != nil {
 		return fmt.Errorf("no resource name %v", name)
 	}
@@ -354,7 +354,7 @@ func (c *Client) Metric(rtype string) (common.Metric, error) {
 
 // HasResource tells if current client holds any resources
 func (c *Client) HasResource() bool {
-	resources, _ := c.storage.List("default", "default")
+	resources, _ := c.storage.List(common.NewTenant())
 	return len(resources) > 0
 }
 
@@ -367,7 +367,7 @@ func (c *Client) updateLocalResource(res common.Resource, state string, data *co
 	} else {
 		res.UserData.Update(data)
 	}
-	_, err := c.storage.Update(res, "default", "default")
+	_, err := c.storage.Update(res, common.NewTenant())
 	return err
 }
 

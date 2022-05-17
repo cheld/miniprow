@@ -60,7 +60,7 @@ func MakeTestRanch(resources []common.Resource) *Ranch {
 	}
 	ranch.requestMgr = NewRequestManager(testTTL)
 	for _, res := range resources {
-		persistence.Add(res, "org", "proj")
+		persistence.Add(res, common.NewTenant())
 	}
 
 	return ranch

@@ -17,6 +17,7 @@ limitations under the License.
 package storage
 
 import (
+	"sort"
 	"sync"
 
 	"fmt"
@@ -26,11 +27,11 @@ import (
 
 // PersistenceLayer defines a simple interface to persists Boskos Information
 type PersistenceLayer interface {
-	Add(r common.Resource, organization, project string) error
-	Delete(name string, organization, project string) error
-	Update(r common.Resource, organization, project string) (common.Resource, error)
-	Get(name string, organization, project string) (common.Resource, error)
-	List(organization, project string) ([]common.Resource, error)
+	Add(r common.Resource, tenant common.Tenant) error
+	Delete(name string, tenant common.Tenant) error
+	Update(r common.Resource, tenant common.Tenant) (common.Resource, error)
+	Get(name string, tenant common.Tenant) (common.Resource, error)
+	List(tenant common.Tenant) ([]common.Resource, error)
 }
 
 type inMemoryStore struct {
@@ -47,75 +48,73 @@ func NewMemoryStorage() PersistenceLayer {
 	}
 }
 
-func (im *inMemoryStore) Add(r common.Resource, org, project string) error {
+func (im *inMemoryStore) Add(r common.Resource, tenant common.Tenant) error {
 	im.lock.Lock()
 	defer im.lock.Unlock()
-	tenant := org + project
-	if im.resources[tenant] == nil {
-		im.resources[tenant] = map[string]common.Resource{}
+	if im.resources[tenant.ID()] == nil {
+		im.resources[tenant.ID()] = map[string]common.Resource{}
 	}
-	_, ok := im.resources[tenant][r.Name]
+	_, ok := im.resources[tenant.ID()][r.Name]
 	if ok {
 		return fmt.Errorf("resource %s already exists", r.Name)
 	}
-	im.resources[tenant][r.Name] = r
+	im.resources[tenant.ID()][r.Name] = r
 	return nil
 }
 
-func (im *inMemoryStore) Delete(name string, org, project string) error {
+func (im *inMemoryStore) Delete(name string, tenant common.Tenant) error {
 	im.lock.Lock()
 	defer im.lock.Unlock()
-	tenant := org + project
-	if im.resources[tenant] == nil {
+	if im.resources[tenant.ID()] == nil {
 		return fmt.Errorf("cannot find item %s", name)
 	}
-	_, ok := im.resources[tenant][name]
+	_, ok := im.resources[tenant.ID()][name]
 	if !ok {
 		return fmt.Errorf("cannot find item %s", name)
 	}
-	delete(im.resources[tenant], name)
+	delete(im.resources[tenant.ID()], name)
 	return nil
 }
 
-func (im *inMemoryStore) Update(r common.Resource, org, project string) (common.Resource, error) {
+func (im *inMemoryStore) Update(r common.Resource, tenant common.Tenant) (common.Resource, error) {
 	im.lock.Lock()
 	defer im.lock.Unlock()
-	tenant := org + project
-	if im.resources[tenant] == nil {
+	if im.resources[tenant.ID()] == nil {
 		return common.Resource{}, fmt.Errorf("cannot find item %s", r.Name)
 	}
-	_, ok := im.resources[tenant][r.Name]
+	_, ok := im.resources[tenant.ID()][r.Name]
 	if !ok {
 		return common.Resource{}, fmt.Errorf("cannot find item %s", r.Name)
 	}
-	im.resources[tenant][r.Name] = r
+	im.resources[tenant.ID()][r.Name] = r
 	return r, nil
 }
 
-func (im *inMemoryStore) Get(name, org, project string) (common.Resource, error) {
+func (im *inMemoryStore) Get(name string, tenant common.Tenant) (common.Resource, error) {
 	im.lock.RLock()
 	defer im.lock.RUnlock()
-	tenant := org + project
-	if im.resources[tenant] == nil {
+	if im.resources[tenant.ID()] == nil {
 		return common.Resource{}, fmt.Errorf("cannot find item %s", name)
 	}
-	r, ok := im.resources[tenant][name]
+	r, ok := im.resources[tenant.ID()][name]
 	if !ok {
 		return common.Resource{}, fmt.Errorf("cannot find item %s", name)
 	}
 	return r, nil
 }
 
-func (im *inMemoryStore) List(org, project string) ([]common.Resource, error) {
+func (im *inMemoryStore) List(tenant common.Tenant) ([]common.Resource, error) {
 	im.lock.RLock()
 	defer im.lock.RUnlock()
-	tenant := org + project
-	if im.resources[tenant] == nil {
+	if im.resources[tenant.ID()] == nil {
 		return []common.Resource{}, nil
 	}
 	var resources []common.Resource
-	for _, r := range im.resources[tenant] {
+	for _, r := range im.resources[tenant.ID()] {
 		resources = append(resources, r)
 	}
+	sort.SliceStable(resources, func(i, j int) bool {
+		return resources[i].Name < resources[j].Name
+	})
 	return resources, nil
 }

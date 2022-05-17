@@ -99,6 +99,22 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+type Tenant struct {
+	Organization string
+	Project      string
+}
+
+func (t *Tenant) ID() string {
+	return t.Organization + t.Project
+}
+
+func NewTenant() Tenant {
+	return Tenant{
+		Organization: "org",
+		Project:      "proj",
+	}
+}
+
 // Resource abstracts any resource type that can be tracked by boskos
 type Resource struct {
 	Type       string    `json:"type"`
