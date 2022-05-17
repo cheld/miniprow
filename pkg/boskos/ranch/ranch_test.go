@@ -28,8 +28,8 @@ import (
 )
 
 var (
-	startTime = fakeTime(time.Now())
-	fakeNow   = fakeTime(startTime.Add(time.Second))
+	startTime = fakeTime(time.Now().Truncate(time.Second))
+	fakeNow   = fakeTime(startTime.Add(time.Second).Truncate(time.Second))
 )
 
 type nameGenerator struct {
@@ -46,18 +46,22 @@ func (g *nameGenerator) name() string {
 
 func MakeTestRanch(resources []common.Resource) *Ranch {
 	persistence := storage.NewMemoryStorage()
+	s := NewStorage(persistence)
+	s.now = func() time.Time {
+		return fakeNow
+	}
+	nameGen := &nameGenerator{}
+	s.generateName = nameGen.name
 	ranch := &Ranch{
-		Storage: NewStorage(persistence),
+		Storage: s,
 	}
 	ranch.now = func() time.Time {
 		return fakeNow
 	}
-	ranch.requestMgr = NewRequestManager(100000)
+	ranch.requestMgr = NewRequestManager(testTTL)
 	for _, res := range resources {
 		persistence.Add(res, "org", "proj")
 	}
-	nameGen := &nameGenerator{}
-	ranch.Storage.generateName = nameGen.name
 
 	return ranch
 }
@@ -118,7 +122,7 @@ func TestSimple(t *testing.T) {
 }
 
 func TestAcquire(t *testing.T) {
-	FakeNow := time.Now()
+	FakeNow := startTime
 	var testcases = []struct {
 		name      string
 		resources []common.Resource
@@ -269,7 +273,7 @@ func newResource(name, t, state, owner string, lastUpdate time.Time) common.Reso
 }
 
 func TestAcquireOrder(t *testing.T) {
-	FakeNow := time.Now()
+	FakeNow := startTime
 	resources := []common.Resource{
 		{
 			Name:       "res-1",
@@ -342,7 +346,7 @@ func TestAcquireOnDemand(t *testing.T) {
 	// Not adding any resources to start with
 	c := MakeTestRanch([]common.Resource{})
 	c.Storage.SyncResources(config)
-	c.now = fakeNow.Local
+
 	// First acquire should trigger a creation
 	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1); err == nil {
 		t.Errorf("should fail since there is not resource yet")
@@ -490,7 +494,7 @@ func TestRelease(t *testing.T) {
 }
 
 func TestReset(t *testing.T) {
-	FakeNow := time.Now()
+	FakeNow := startTime
 
 	var testcases = []struct {
 		name       string
@@ -598,6 +602,9 @@ func TestReset(t *testing.T) {
 				t.Errorf("%s - Expect res - user. Got %v", tc.name, rmap)
 			}
 			resources, _ := c.Storage.GetResources()
+			fmt.Println(FakeNow)
+			fmt.Println(fakeTime(fakeNow))
+			fmt.Println(resources[0].LastUpdate)
 			if !resources[0].LastUpdate.After(FakeNow) {
 				t.Errorf("%s - LastUpdate did not update.", tc.name)
 			}
@@ -606,7 +613,7 @@ func TestReset(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	FakeNow := time.Now()
+	FakeNow := startTime
 
 	var testcases = []struct {
 		name      string
