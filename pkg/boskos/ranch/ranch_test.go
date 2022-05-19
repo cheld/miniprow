@@ -117,12 +117,14 @@ func AreErrorsEqual(got error, expect error) bool {
 }
 
 func TestSimple(t *testing.T) {
+	tenant := common.NewTenant()
 	c := MakeTestRanch([]common.Resource{})
-	c.Acquire("tc.rtype", "tc.state", "tc.dest", "tc.owner", "requestID", common.NewTenant())
+	c.Acquire("tc.rtype", "tc.state", "tc.dest", "tc.owner", "requestID", tenant)
 }
 
 func TestAcquire(t *testing.T) {
 	FakeNow := startTime
+	tenant := common.NewTenant()
 	var testcases = []struct {
 		name      string
 		resources []common.Resource
@@ -213,7 +215,7 @@ func TestAcquire(t *testing.T) {
 
 	for _, tc := range testcases {
 		c := MakeTestRanch(tc.resources)
-		res, _, err := c.Acquire(tc.rtype, tc.state, tc.dest, tc.owner, "requestID", common.NewTenant())
+		res, _, err := c.Acquire(tc.rtype, tc.state, tc.dest, tc.owner, "requestID", tenant)
 		if !AreErrorsEqual(err, tc.expectErr) {
 			t.Errorf("%s - Got error %v, expect error %v", tc.name, err, tc.expectErr)
 			continue
@@ -223,14 +225,14 @@ func TestAcquire(t *testing.T) {
 			if res.State != tc.dest {
 				t.Errorf("%s - Wrong final state. Got %v, expect %v", tc.name, res.State, tc.dest)
 			}
-			resources, _ := c.Storage.GetResources(common.NewTenant())
+			resources, _ := c.Storage.GetResources(tenant)
 			if *res != *resources[0] {
 				t.Errorf("%s - Wrong resource. Got %v, expect %v", tc.name, res, resources[0])
 			} else if !res.LastUpdate.After(FakeNow) {
 				t.Errorf("%s - LastUpdate did not update.", tc.name)
 			}
 		} else {
-			resources, _ := c.Storage.GetResources(common.NewTenant())
+			resources, _ := c.Storage.GetResources(tenant)
 			for _, res := range resources {
 				if res.LastUpdate != FakeNow {
 					t.Errorf("%s - LastUpdate should not update. Got %v, expect %v", tc.name, resources[0].LastUpdate, FakeNow)
@@ -241,6 +243,7 @@ func TestAcquire(t *testing.T) {
 }
 
 func TestAcquireRoundRobin(t *testing.T) {
+	tenant := common.NewTenant()
 	var resources []common.Resource
 	for i := 1; i < 5; i++ {
 		resources = append(resources, newResource(fmt.Sprintf("res-%d", i), "t", "s", "", startTime))
@@ -250,7 +253,7 @@ func TestAcquireRoundRobin(t *testing.T) {
 
 	c := MakeTestRanch(resources)
 	for i := 0; i < 4; i++ {
-		res, _, err := c.Acquire("t", "s", "d", "foo", "", common.NewTenant())
+		res, _, err := c.Acquire("t", "s", "d", "foo", "", tenant)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
@@ -258,7 +261,7 @@ func TestAcquireRoundRobin(t *testing.T) {
 		if found {
 			t.Errorf("resource %s was used more than once", res.Name)
 		}
-		c.Release(res.Name, "s", "foo", common.NewTenant())
+		c.Release(res.Name, "s", "foo", tenant)
 	}
 }
 
@@ -273,6 +276,7 @@ func newResource(name, t, state, owner string, lastUpdate time.Time) common.Reso
 }
 
 func TestAcquireOrder(t *testing.T) {
+	tenant := common.NewTenant()
 	FakeNow := startTime
 	resources := []common.Resource{
 		{
@@ -309,13 +313,13 @@ func TestAcquireOrder(t *testing.T) {
 
 	c := MakeTestRanch(resources)
 	for i := 0; i < 2; i++ {
-		_, _, err := c.Acquire("t", "s", "d", "foo", "requestID", common.NewTenant())
+		_, _, err := c.Acquire("t", "s", "d", "foo", "requestID", tenant)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
 	}
 
-	updatedRessources, _ := c.Storage.GetResources(common.NewTenant())
+	updatedRessources, _ := c.Storage.GetResources(tenant)
 	for idx, _ := range updatedRessources {
 		if updatedRessources[idx].Name != expected[idx] {
 			t.Errorf("Resource %d, expected %v, got %v", idx, expected[idx], updatedRessources[idx].Name)
@@ -325,6 +329,7 @@ func TestAcquireOrder(t *testing.T) {
 }
 
 func TestAcquireOnDemand(t *testing.T) {
+	tenant := common.NewTenant()
 	owner := "tester"
 	rType := "dr"
 	requestID1 := "req1234"
@@ -345,52 +350,52 @@ func TestAcquireOnDemand(t *testing.T) {
 
 	// Not adding any resources to start with
 	c := MakeTestRanch([]common.Resource{})
-	c.Storage.SyncResources(config, common.NewTenant())
+	c.Storage.SyncResources(config, tenant)
 
 	// First acquire should trigger a creation
-	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1, common.NewTenant()); err == nil {
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1, tenant); err == nil {
 		t.Errorf("should fail since there is not resource yet")
 	}
-	if resources, err := c.Storage.GetResources(common.NewTenant()); err != nil {
+	if resources, err := c.Storage.GetResources(tenant); err != nil {
 		t.Fatal(err)
 	} else if len(resources) != 1 {
 		t.Fatal("A resource should have been created")
 	}
 	// Attempting to create another resource
-	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1, common.NewTenant()); err == nil {
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1, tenant); err == nil {
 		t.Errorf("should succeed since the created is dirty")
 	}
-	if resources, err := c.Storage.GetResources(common.NewTenant()); err != nil {
+	if resources, err := c.Storage.GetResources(tenant); err != nil {
 		t.Error(err)
 	} else if len(resources) != 1 {
 		t.Errorf("No new resource should have been created")
 	}
 	// Creating another
-	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID2, common.NewTenant()); err == nil {
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID2, tenant); err == nil {
 		t.Errorf("should succeed since the created is dirty")
 	}
-	if resources, err := c.Storage.GetResources(common.NewTenant()); err != nil {
+	if resources, err := c.Storage.GetResources(tenant); err != nil {
 		t.Error(err)
 	} else if len(resources) != 2 {
 		t.Errorf("Another resource should have been created")
 	}
 	// Attempting to create another
-	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID3, common.NewTenant()); err == nil {
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID3, tenant); err == nil {
 		t.Errorf("should fail since there is not resource yet")
 	}
-	resources, err := c.Storage.GetResources(common.NewTenant())
+	resources, err := c.Storage.GetResources(tenant)
 	if err != nil {
 		t.Error(err)
 	} else if len(resources) != 2 {
 		t.Errorf("No other resource should have been created")
 	}
 	for _, res := range resources {
-		c.Storage.DeleteResource(res.Name, common.NewTenant())
+		c.Storage.DeleteResource(res.Name, tenant)
 	}
-	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, "", common.NewTenant()); err == nil {
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, "", tenant); err == nil {
 		t.Errorf("should fail since there is not resource yet")
 	}
-	if resources, err := c.Storage.GetResources(common.NewTenant()); err != nil {
+	if resources, err := c.Storage.GetResources(tenant); err != nil {
 		t.Error(err)
 	} else if len(resources) != 0 {
 		t.Errorf("No new resource should have been created")
@@ -398,6 +403,7 @@ func TestAcquireOnDemand(t *testing.T) {
 }
 
 func TestRelease(t *testing.T) {
+	tenant := common.NewTenant()
 	FakeNow := time.Now()
 	var testcases = []struct {
 		name      string
@@ -467,14 +473,14 @@ func TestRelease(t *testing.T) {
 
 	for _, tc := range testcases {
 		c := MakeTestRanch(tc.resources)
-		err := c.Release(tc.resName, tc.dest, tc.owner, common.NewTenant())
+		err := c.Release(tc.resName, tc.dest, tc.owner, tenant)
 		if !AreErrorsEqual(err, tc.expectErr) {
 			t.Errorf("%s - Got error %v, expect error %v", tc.name, err, tc.expectErr)
 			continue
 		}
 
 		if err == nil {
-			resources, _ := c.Storage.GetResources(common.NewTenant())
+			resources, _ := c.Storage.GetResources(tenant)
 			if resources[0].Owner != "" {
 				t.Errorf("%s - Wrong owner after release. Got %v, expect empty", tc.name, resources[0].Owner)
 			} else if resources[0].State != tc.dest {
@@ -483,7 +489,7 @@ func TestRelease(t *testing.T) {
 				t.Errorf("%s - LastUpdate did not update.", tc.name)
 			}
 		} else {
-			resources, _ := c.Storage.GetResources(common.NewTenant())
+			resources, _ := c.Storage.GetResources(tenant)
 			for _, res := range resources {
 				if res.LastUpdate != FakeNow {
 					t.Errorf("%s - LastUpdate should not update. Got %v, expect %v", tc.name, resources[0].LastUpdate, FakeNow)
@@ -494,6 +500,7 @@ func TestRelease(t *testing.T) {
 }
 
 func TestReset(t *testing.T) {
+	tenant := common.NewTenant()
 	FakeNow := startTime
 
 	var testcases = []struct {
@@ -591,7 +598,7 @@ func TestReset(t *testing.T) {
 
 	for _, tc := range testcases {
 		c := MakeTestRanch(tc.resources)
-		rmap, _ := c.Reset(tc.rtype, tc.state, tc.expire, tc.dest, common.NewTenant())
+		rmap, _ := c.Reset(tc.rtype, tc.state, tc.expire, tc.dest, tenant)
 
 		if !tc.hasContent {
 			if len(rmap) != 0 {
@@ -601,7 +608,7 @@ func TestReset(t *testing.T) {
 			if owner, ok := rmap["res"]; !ok || owner != "user" {
 				t.Errorf("%s - Expect res - user. Got %v", tc.name, rmap)
 			}
-			resources, _ := c.Storage.GetResources(common.NewTenant())
+			resources, _ := c.Storage.GetResources(tenant)
 			fmt.Println(FakeNow)
 			fmt.Println(fakeTime(fakeNow))
 			fmt.Println(resources[0].LastUpdate)
@@ -613,6 +620,7 @@ func TestReset(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	tenant := common.NewTenant()
 	FakeNow := startTime
 
 	var testcases = []struct {
@@ -698,14 +706,14 @@ func TestUpdate(t *testing.T) {
 
 	for _, tc := range testcases {
 		c := MakeTestRanch(tc.resources)
-		err := c.Update(tc.resName, tc.owner, tc.state, nil, common.NewTenant())
+		err := c.Update(tc.resName, tc.owner, tc.state, nil, tenant)
 		if !AreErrorsEqual(err, tc.expectErr) {
 			t.Errorf("%s - Got error %v, expect error %v", tc.name, err, tc.expectErr)
 			continue
 		}
 
 		if err == nil {
-			resources, _ := c.Storage.GetResources(common.NewTenant())
+			resources, _ := c.Storage.GetResources(tenant)
 			if resources[0].Owner != tc.owner {
 				t.Errorf("%s - Wrong owner after release. Got %v, expect %v", tc.name, resources[0].Owner, tc.owner)
 			} else if resources[0].State != tc.state {
@@ -714,7 +722,7 @@ func TestUpdate(t *testing.T) {
 				t.Errorf("%s - LastUpdate did not update.", tc.name)
 			}
 		} else {
-			resources, _ := c.Storage.GetResources(common.NewTenant())
+			resources, _ := c.Storage.GetResources(tenant)
 			for _, res := range resources {
 				if res.LastUpdate != FakeNow {
 					t.Errorf("%s - LastUpdate should not update. Got %v, expect %v", tc.name, resources[0].LastUpdate, FakeNow)
@@ -725,6 +733,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestMetric(t *testing.T) {
+	tenant := common.NewTenant()
 	var testcases = []struct {
 		name         string
 		resources    []common.Resource
@@ -824,7 +833,7 @@ func TestMetric(t *testing.T) {
 
 	for _, tc := range testcases {
 		c := MakeTestRanch(tc.resources)
-		metric, err := c.Metric(tc.metricType, common.NewTenant())
+		metric, err := c.Metric(tc.metricType, tenant)
 		if !AreErrorsEqual(err, tc.expectErr) {
 			t.Errorf("%s - Got error %v, expect error %v", tc.name, err, tc.expectErr)
 			//continue

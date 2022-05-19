@@ -159,6 +159,7 @@ func handleAcquire(r *ranch.Ranch) http.HandlerFunc {
 		dest := req.URL.Query().Get("dest")
 		owner := req.URL.Query().Get("owner")
 		requestID := req.URL.Query().Get("request_id")
+		tenant := common.NewTenant()
 		if rtype == "" || state == "" || dest == "" || owner == "" {
 			bre := badRequestError(fmt.Sprintf("Type: %v, state: %v, dest: %v, owner: %v, all of them must be set in the request.", rtype, state, dest, owner))
 			returnAndLogError(res, bre, "Bad request")
@@ -167,7 +168,7 @@ func handleAcquire(r *ranch.Ranch) http.HandlerFunc {
 
 		logrus.Infof("Request for a %v %v from %v, dest %v", state, rtype, owner, dest)
 
-		resource, createdTime, err := r.Acquire(rtype, state, dest, owner, requestID, common.NewTenant())
+		resource, createdTime, err := r.Acquire(rtype, state, dest, owner, requestID, tenant)
 		if err != nil {
 			returnAndLogError(res, err, "Acquire failed")
 			return
@@ -178,7 +179,7 @@ func handleAcquire(r *ranch.Ranch) http.HandlerFunc {
 			logrus.WithError(err).Errorf("json.Marshal failed: %v, resource will be released", resource)
 			http.Error(res, err.Error(), errorToStatus(err))
 			// release the resource, though this is not expected to happen.
-			err = r.Release(resource.Name, state, owner, common.NewTenant())
+			err = r.Release(resource.Name, state, owner, tenant)
 			if err != nil {
 				logrus.WithError(err).Warningf("unable to release resource %s", resource.Name)
 			}
@@ -217,6 +218,7 @@ func handleAcquireByState(r *ranch.Ranch) http.HandlerFunc {
 		dest := req.URL.Query().Get("dest")
 		owner := req.URL.Query().Get("owner")
 		names := req.URL.Query().Get("names")
+		tenant := common.NewTenant()
 		if state == "" || dest == "" || owner == "" || names == "" {
 			msg := fmt.Sprintf(
 				"state: %v, dest: %v, owner: %v, names: %v - all of them must be set in the request.",
@@ -229,7 +231,7 @@ func handleAcquireByState(r *ranch.Ranch) http.HandlerFunc {
 		logrus.Infof("Request resources %s at state %v from %v, to state %v",
 			strings.Join(rNames, ", "), state, owner, dest)
 
-		resources, err := r.AcquireByState(state, dest, owner, rNames, common.NewTenant())
+		resources, err := r.AcquireByState(state, dest, owner, rNames, tenant)
 
 		if err != nil {
 			returnAndLogError(res, err, "AcquireByState")
@@ -247,7 +249,7 @@ func handleAcquireByState(r *ranch.Ranch) http.HandlerFunc {
 			logrus.WithError(err).Errorf("json.Marshal failed: %v, resources will be released", apiResources)
 			http.Error(res, err.Error(), errorToStatus(err))
 			for _, resource := range resources {
-				err := r.Release(resource.Name, state, owner, common.NewTenant())
+				err := r.Release(resource.Name, state, owner, tenant)
 				if err != nil {
 					logrus.WithError(err).Warningf("unable to release resource %s", resource.Name)
 				}
@@ -279,6 +281,7 @@ func handleRelease(r *ranch.Ranch) http.HandlerFunc {
 		name := req.URL.Query().Get("name")
 		dest := req.URL.Query().Get("dest")
 		owner := req.URL.Query().Get("owner")
+		tenant := common.NewTenant()
 		if name == "" || dest == "" || owner == "" {
 			msg := fmt.Sprintf("Name: %v, dest: %v, owner: %v, all of them must be set in the request.", name, dest, owner)
 			logrus.Warning(msg)
@@ -286,7 +289,7 @@ func handleRelease(r *ranch.Ranch) http.HandlerFunc {
 			return
 		}
 
-		if err := r.Release(name, dest, owner, common.NewTenant()); err != nil {
+		if err := r.Release(name, dest, owner, tenant); err != nil {
 			returnAndLogError(res, err, fmt.Sprintf("Done failed: %v - %v (from %v)", name, dest, owner))
 			return
 		}
@@ -317,6 +320,7 @@ func handleReset(r *ranch.Ranch) http.HandlerFunc {
 		state := req.URL.Query().Get("state")
 		expireStr := req.URL.Query().Get("expire")
 		dest := req.URL.Query().Get("dest")
+		tenant := common.NewTenant()
 
 		logrus.Infof("%v, %v, %v, %v", rtype, state, expireStr, dest)
 
@@ -334,7 +338,7 @@ func handleReset(r *ranch.Ranch) http.HandlerFunc {
 			return
 		}
 
-		rmap, err := r.Reset(rtype, state, expire, dest, common.NewTenant())
+		rmap, err := r.Reset(rtype, state, expire, dest, tenant)
 		if err != nil {
 			returnAndLogError(res, err, "could not reset states")
 			return
@@ -371,6 +375,7 @@ func handleUpdate(r *ranch.Ranch) http.HandlerFunc {
 		name := req.URL.Query().Get("name")
 		owner := req.URL.Query().Get("owner")
 		state := req.URL.Query().Get("state")
+		tenant := common.NewTenant()
 
 		if name == "" || owner == "" || state == "" {
 			msg := fmt.Sprintf("Name: %v, owner: %v, state : %v, all of them must be set in the request.", name, owner, state)
@@ -393,7 +398,7 @@ func handleUpdate(r *ranch.Ranch) http.HandlerFunc {
 			}
 		}
 
-		if err := r.Update(name, owner, state, &userData, common.NewTenant()); err != nil {
+		if err := r.Update(name, owner, state, &userData, tenant); err != nil {
 			returnAndLogError(res, err, fmt.Sprintf("Update failed: %v - %v (%v)", name, state, owner))
 			return
 		}
@@ -415,6 +420,7 @@ func handleMetric(r *ranch.Ranch) http.HandlerFunc {
 		}
 
 		rtype := req.URL.Query().Get("type")
+		tenant := common.NewTenant()
 		if rtype == "" {
 			msg := "Type must be set in the request."
 			logrus.Warning(msg)
@@ -422,7 +428,7 @@ func handleMetric(r *ranch.Ranch) http.HandlerFunc {
 			return
 		}
 
-		metric, err := r.Metric(rtype, common.NewTenant())
+		metric, err := r.Metric(rtype, tenant)
 		if err != nil {
 			logrus.WithError(err).Errorf("Metric for %s failed", rtype)
 			http.Error(res, err.Error(), errorToStatus(err))
