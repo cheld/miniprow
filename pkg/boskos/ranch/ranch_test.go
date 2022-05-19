@@ -118,7 +118,7 @@ func AreErrorsEqual(got error, expect error) bool {
 
 func TestSimple(t *testing.T) {
 	c := MakeTestRanch([]common.Resource{})
-	c.Acquire("tc.rtype", "tc.state", "tc.dest", "tc.owner", "requestID")
+	c.Acquire("tc.rtype", "tc.state", "tc.dest", "tc.owner", "requestID", common.NewTenant())
 }
 
 func TestAcquire(t *testing.T) {
@@ -213,7 +213,7 @@ func TestAcquire(t *testing.T) {
 
 	for _, tc := range testcases {
 		c := MakeTestRanch(tc.resources)
-		res, _, err := c.Acquire(tc.rtype, tc.state, tc.dest, tc.owner, "requestID")
+		res, _, err := c.Acquire(tc.rtype, tc.state, tc.dest, tc.owner, "requestID", common.NewTenant())
 		if !AreErrorsEqual(err, tc.expectErr) {
 			t.Errorf("%s - Got error %v, expect error %v", tc.name, err, tc.expectErr)
 			continue
@@ -250,7 +250,7 @@ func TestAcquireRoundRobin(t *testing.T) {
 
 	c := MakeTestRanch(resources)
 	for i := 0; i < 4; i++ {
-		res, _, err := c.Acquire("t", "s", "d", "foo", "")
+		res, _, err := c.Acquire("t", "s", "d", "foo", "", common.NewTenant())
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
@@ -258,7 +258,7 @@ func TestAcquireRoundRobin(t *testing.T) {
 		if found {
 			t.Errorf("resource %s was used more than once", res.Name)
 		}
-		c.Release(res.Name, "s", "foo")
+		c.Release(res.Name, "s", "foo", common.NewTenant())
 	}
 }
 
@@ -309,7 +309,7 @@ func TestAcquireOrder(t *testing.T) {
 
 	c := MakeTestRanch(resources)
 	for i := 0; i < 2; i++ {
-		_, _, err := c.Acquire("t", "s", "d", "foo", "requestID")
+		_, _, err := c.Acquire("t", "s", "d", "foo", "requestID", common.NewTenant())
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
@@ -348,7 +348,7 @@ func TestAcquireOnDemand(t *testing.T) {
 	c.Storage.SyncResources(config, common.NewTenant())
 
 	// First acquire should trigger a creation
-	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1); err == nil {
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1, common.NewTenant()); err == nil {
 		t.Errorf("should fail since there is not resource yet")
 	}
 	if resources, err := c.Storage.GetResources(common.NewTenant()); err != nil {
@@ -357,7 +357,7 @@ func TestAcquireOnDemand(t *testing.T) {
 		t.Fatal("A resource should have been created")
 	}
 	// Attempting to create another resource
-	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1); err == nil {
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1, common.NewTenant()); err == nil {
 		t.Errorf("should succeed since the created is dirty")
 	}
 	if resources, err := c.Storage.GetResources(common.NewTenant()); err != nil {
@@ -366,7 +366,7 @@ func TestAcquireOnDemand(t *testing.T) {
 		t.Errorf("No new resource should have been created")
 	}
 	// Creating another
-	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID2); err == nil {
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID2, common.NewTenant()); err == nil {
 		t.Errorf("should succeed since the created is dirty")
 	}
 	if resources, err := c.Storage.GetResources(common.NewTenant()); err != nil {
@@ -375,7 +375,7 @@ func TestAcquireOnDemand(t *testing.T) {
 		t.Errorf("Another resource should have been created")
 	}
 	// Attempting to create another
-	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID3); err == nil {
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID3, common.NewTenant()); err == nil {
 		t.Errorf("should fail since there is not resource yet")
 	}
 	resources, err := c.Storage.GetResources(common.NewTenant())
@@ -387,7 +387,7 @@ func TestAcquireOnDemand(t *testing.T) {
 	for _, res := range resources {
 		c.Storage.DeleteResource(res.Name, common.NewTenant())
 	}
-	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, ""); err == nil {
+	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, "", common.NewTenant()); err == nil {
 		t.Errorf("should fail since there is not resource yet")
 	}
 	if resources, err := c.Storage.GetResources(common.NewTenant()); err != nil {
@@ -467,7 +467,7 @@ func TestRelease(t *testing.T) {
 
 	for _, tc := range testcases {
 		c := MakeTestRanch(tc.resources)
-		err := c.Release(tc.resName, tc.dest, tc.owner)
+		err := c.Release(tc.resName, tc.dest, tc.owner, common.NewTenant())
 		if !AreErrorsEqual(err, tc.expectErr) {
 			t.Errorf("%s - Got error %v, expect error %v", tc.name, err, tc.expectErr)
 			continue
@@ -591,7 +591,7 @@ func TestReset(t *testing.T) {
 
 	for _, tc := range testcases {
 		c := MakeTestRanch(tc.resources)
-		rmap, _ := c.Reset(tc.rtype, tc.state, tc.expire, tc.dest)
+		rmap, _ := c.Reset(tc.rtype, tc.state, tc.expire, tc.dest, common.NewTenant())
 
 		if !tc.hasContent {
 			if len(rmap) != 0 {
@@ -698,7 +698,7 @@ func TestUpdate(t *testing.T) {
 
 	for _, tc := range testcases {
 		c := MakeTestRanch(tc.resources)
-		err := c.Update(tc.resName, tc.owner, tc.state, nil)
+		err := c.Update(tc.resName, tc.owner, tc.state, nil, common.NewTenant())
 		if !AreErrorsEqual(err, tc.expectErr) {
 			t.Errorf("%s - Got error %v, expect error %v", tc.name, err, tc.expectErr)
 			continue
@@ -824,7 +824,7 @@ func TestMetric(t *testing.T) {
 
 	for _, tc := range testcases {
 		c := MakeTestRanch(tc.resources)
-		metric, err := c.Metric(tc.metricType)
+		metric, err := c.Metric(tc.metricType, common.NewTenant())
 		if !AreErrorsEqual(err, tc.expectErr) {
 			t.Errorf("%s - Got error %v, expect error %v", tc.name, err, tc.expectErr)
 			//continue
@@ -1009,7 +1009,7 @@ func TestSyncConfig(t *testing.T) {
 	for _, tc := range testcases {
 		c := MakeTestRanch(tc.oldRes)
 		//c.syncConfigHelper(tc.newRes)
-		resources, _ := c.Storage.GetResources(common.NewTenant())
+		resources, _ := c.Storage.GetResources()
 		if !reflect.DeepEqual(resources, tc.expect) {
 			t.Errorf("Test %v: got %v, expect %v", tc.name, resources, tc.expect)
 		}

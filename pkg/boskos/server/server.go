@@ -64,7 +64,7 @@ type Boskos struct {
 //Adds the boskos endpoints to the handler
 func NewHandler(boskosCfg *[]byte) *Boskos {
 	storage := ranch.NewStorage(storage.NewMemoryStorage())
-	r, err := ranch.NewRanch(boskosCfg, storage, defaultRequestTTL)
+	r, err := ranch.NewRanch(boskosCfg, storage, defaultRequestTTL, common.NewTenant())
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -167,7 +167,7 @@ func handleAcquire(r *ranch.Ranch) http.HandlerFunc {
 
 		logrus.Infof("Request for a %v %v from %v, dest %v", state, rtype, owner, dest)
 
-		resource, createdTime, err := r.Acquire(rtype, state, dest, owner, requestID)
+		resource, createdTime, err := r.Acquire(rtype, state, dest, owner, requestID, common.NewTenant())
 		if err != nil {
 			returnAndLogError(res, err, "Acquire failed")
 			return
@@ -178,7 +178,7 @@ func handleAcquire(r *ranch.Ranch) http.HandlerFunc {
 			logrus.WithError(err).Errorf("json.Marshal failed: %v, resource will be released", resource)
 			http.Error(res, err.Error(), errorToStatus(err))
 			// release the resource, though this is not expected to happen.
-			err = r.Release(resource.Name, state, owner)
+			err = r.Release(resource.Name, state, owner, common.NewTenant())
 			if err != nil {
 				logrus.WithError(err).Warningf("unable to release resource %s", resource.Name)
 			}
@@ -229,7 +229,7 @@ func handleAcquireByState(r *ranch.Ranch) http.HandlerFunc {
 		logrus.Infof("Request resources %s at state %v from %v, to state %v",
 			strings.Join(rNames, ", "), state, owner, dest)
 
-		resources, err := r.AcquireByState(state, dest, owner, rNames)
+		resources, err := r.AcquireByState(state, dest, owner, rNames, common.NewTenant())
 
 		if err != nil {
 			returnAndLogError(res, err, "AcquireByState")
@@ -247,7 +247,7 @@ func handleAcquireByState(r *ranch.Ranch) http.HandlerFunc {
 			logrus.WithError(err).Errorf("json.Marshal failed: %v, resources will be released", apiResources)
 			http.Error(res, err.Error(), errorToStatus(err))
 			for _, resource := range resources {
-				err := r.Release(resource.Name, state, owner)
+				err := r.Release(resource.Name, state, owner, common.NewTenant())
 				if err != nil {
 					logrus.WithError(err).Warningf("unable to release resource %s", resource.Name)
 				}
@@ -286,7 +286,7 @@ func handleRelease(r *ranch.Ranch) http.HandlerFunc {
 			return
 		}
 
-		if err := r.Release(name, dest, owner); err != nil {
+		if err := r.Release(name, dest, owner, common.NewTenant()); err != nil {
 			returnAndLogError(res, err, fmt.Sprintf("Done failed: %v - %v (from %v)", name, dest, owner))
 			return
 		}
@@ -334,7 +334,7 @@ func handleReset(r *ranch.Ranch) http.HandlerFunc {
 			return
 		}
 
-		rmap, err := r.Reset(rtype, state, expire, dest)
+		rmap, err := r.Reset(rtype, state, expire, dest, common.NewTenant())
 		if err != nil {
 			returnAndLogError(res, err, "could not reset states")
 			return
@@ -393,7 +393,7 @@ func handleUpdate(r *ranch.Ranch) http.HandlerFunc {
 			}
 		}
 
-		if err := r.Update(name, owner, state, &userData); err != nil {
+		if err := r.Update(name, owner, state, &userData, common.NewTenant()); err != nil {
 			returnAndLogError(res, err, fmt.Sprintf("Update failed: %v - %v (%v)", name, state, owner))
 			return
 		}
@@ -422,7 +422,7 @@ func handleMetric(r *ranch.Ranch) http.HandlerFunc {
 			return
 		}
 
-		metric, err := r.Metric(rtype)
+		metric, err := r.Metric(rtype, common.NewTenant())
 		if err != nil {
 			logrus.WithError(err).Errorf("Metric for %s failed", rtype)
 			http.Error(res, err.Error(), errorToStatus(err))
