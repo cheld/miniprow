@@ -42,31 +42,31 @@ func NewStorage(persistence storage.PersistenceLayer) *Storage {
 }
 
 // AddResource adds a new resource
-func (s *Storage) AddResource(resource *common.Resource) error {
-	return s.persistence.Add(*resource, common.NewTenant())
+func (s *Storage) AddResource(resource *common.Resource, tenant common.Tenant) error {
+	return s.persistence.Add(*resource, tenant)
 }
 
 // DeleteResource deletes a resource if it exists, errors otherwise
-func (s *Storage) DeleteResource(name string) error {
-	return s.persistence.Delete(name, common.NewTenant())
+func (s *Storage) DeleteResource(name string, tenant common.Tenant) error {
+	return s.persistence.Delete(name, tenant)
 }
 
 // UpdateResource updates a resource if it exists, errors otherwise
-func (s *Storage) UpdateResource(resource *common.Resource) (*common.Resource, error) {
+func (s *Storage) UpdateResource(resource *common.Resource, tenant common.Tenant) (*common.Resource, error) {
 	resource.LastUpdate = s.now()
-	s.persistence.Update(*resource, common.NewTenant())
+	s.persistence.Update(*resource, tenant)
 	return resource, nil
 }
 
 // GetResource gets an existing resource, errors otherwise
-func (s *Storage) GetResource(name string) (*common.Resource, error) {
-	res, err := s.persistence.Get(name, common.NewTenant())
+func (s *Storage) GetResource(name string, tenant common.Tenant) (*common.Resource, error) {
+	res, err := s.persistence.Get(name, tenant)
 	return &res, err
 }
 
 // GetResources list all resources
-func (s *Storage) GetResources() ([]*common.Resource, error) {
-	r, _ := s.persistence.List(common.NewTenant())
+func (s *Storage) GetResources(tenant common.Tenant) ([]*common.Resource, error) {
+	r, _ := s.persistence.List(tenant)
 	resourceList := make([]*common.Resource, len(r))
 	for i := 0; i < len(r); i++ {
 		resourceList[i] = &r[i]
@@ -100,7 +100,7 @@ func (s *Storage) GetDynamicResourceLifeCycles() ([]common.DynamicResourceLifeCy
 // from storage.
 // If the newly deleted resource is currently held by a user, the deletion will
 // yield to next update cycle.
-func (s *Storage) SyncResources(config *common.BoskosConfig) error {
+func (s *Storage) SyncResources(config *common.BoskosConfig, tenant common.Tenant) error {
 	if config == nil {
 		return nil
 	}
@@ -109,7 +109,7 @@ func (s *Storage) SyncResources(config *common.BoskosConfig) error {
 			s.DRLCByType[entry.Type] = common.NewDynamicResourceLifeCycleFromConfig(entry)
 		} else {
 			for _, res := range common.NewResourcesFromConfig(entry) {
-				s.persistence.Add(res, common.NewTenant())
+				s.persistence.Add(res, tenant)
 			}
 		}
 	}

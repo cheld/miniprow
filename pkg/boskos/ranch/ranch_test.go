@@ -223,14 +223,14 @@ func TestAcquire(t *testing.T) {
 			if res.State != tc.dest {
 				t.Errorf("%s - Wrong final state. Got %v, expect %v", tc.name, res.State, tc.dest)
 			}
-			resources, _ := c.Storage.GetResources()
+			resources, _ := c.Storage.GetResources(common.NewTenant())
 			if *res != *resources[0] {
 				t.Errorf("%s - Wrong resource. Got %v, expect %v", tc.name, res, resources[0])
 			} else if !res.LastUpdate.After(FakeNow) {
 				t.Errorf("%s - LastUpdate did not update.", tc.name)
 			}
 		} else {
-			resources, _ := c.Storage.GetResources()
+			resources, _ := c.Storage.GetResources(common.NewTenant())
 			for _, res := range resources {
 				if res.LastUpdate != FakeNow {
 					t.Errorf("%s - LastUpdate should not update. Got %v, expect %v", tc.name, resources[0].LastUpdate, FakeNow)
@@ -315,7 +315,7 @@ func TestAcquireOrder(t *testing.T) {
 		}
 	}
 
-	updatedRessources, _ := c.Storage.GetResources()
+	updatedRessources, _ := c.Storage.GetResources(common.NewTenant())
 	for idx, _ := range updatedRessources {
 		if updatedRessources[idx].Name != expected[idx] {
 			t.Errorf("Resource %d, expected %v, got %v", idx, expected[idx], updatedRessources[idx].Name)
@@ -345,13 +345,13 @@ func TestAcquireOnDemand(t *testing.T) {
 
 	// Not adding any resources to start with
 	c := MakeTestRanch([]common.Resource{})
-	c.Storage.SyncResources(config)
+	c.Storage.SyncResources(config, common.NewTenant())
 
 	// First acquire should trigger a creation
 	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1); err == nil {
 		t.Errorf("should fail since there is not resource yet")
 	}
-	if resources, err := c.Storage.GetResources(); err != nil {
+	if resources, err := c.Storage.GetResources(common.NewTenant()); err != nil {
 		t.Fatal(err)
 	} else if len(resources) != 1 {
 		t.Fatal("A resource should have been created")
@@ -360,7 +360,7 @@ func TestAcquireOnDemand(t *testing.T) {
 	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID1); err == nil {
 		t.Errorf("should succeed since the created is dirty")
 	}
-	if resources, err := c.Storage.GetResources(); err != nil {
+	if resources, err := c.Storage.GetResources(common.NewTenant()); err != nil {
 		t.Error(err)
 	} else if len(resources) != 1 {
 		t.Errorf("No new resource should have been created")
@@ -369,7 +369,7 @@ func TestAcquireOnDemand(t *testing.T) {
 	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID2); err == nil {
 		t.Errorf("should succeed since the created is dirty")
 	}
-	if resources, err := c.Storage.GetResources(); err != nil {
+	if resources, err := c.Storage.GetResources(common.NewTenant()); err != nil {
 		t.Error(err)
 	} else if len(resources) != 2 {
 		t.Errorf("Another resource should have been created")
@@ -378,19 +378,19 @@ func TestAcquireOnDemand(t *testing.T) {
 	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, requestID3); err == nil {
 		t.Errorf("should fail since there is not resource yet")
 	}
-	resources, err := c.Storage.GetResources()
+	resources, err := c.Storage.GetResources(common.NewTenant())
 	if err != nil {
 		t.Error(err)
 	} else if len(resources) != 2 {
 		t.Errorf("No other resource should have been created")
 	}
 	for _, res := range resources {
-		c.Storage.DeleteResource(res.Name)
+		c.Storage.DeleteResource(res.Name, common.NewTenant())
 	}
 	if _, _, err := c.Acquire(rType, common.Free, common.Busy, owner, ""); err == nil {
 		t.Errorf("should fail since there is not resource yet")
 	}
-	if resources, err := c.Storage.GetResources(); err != nil {
+	if resources, err := c.Storage.GetResources(common.NewTenant()); err != nil {
 		t.Error(err)
 	} else if len(resources) != 0 {
 		t.Errorf("No new resource should have been created")
@@ -474,7 +474,7 @@ func TestRelease(t *testing.T) {
 		}
 
 		if err == nil {
-			resources, _ := c.Storage.GetResources()
+			resources, _ := c.Storage.GetResources(common.NewTenant())
 			if resources[0].Owner != "" {
 				t.Errorf("%s - Wrong owner after release. Got %v, expect empty", tc.name, resources[0].Owner)
 			} else if resources[0].State != tc.dest {
@@ -483,7 +483,7 @@ func TestRelease(t *testing.T) {
 				t.Errorf("%s - LastUpdate did not update.", tc.name)
 			}
 		} else {
-			resources, _ := c.Storage.GetResources()
+			resources, _ := c.Storage.GetResources(common.NewTenant())
 			for _, res := range resources {
 				if res.LastUpdate != FakeNow {
 					t.Errorf("%s - LastUpdate should not update. Got %v, expect %v", tc.name, resources[0].LastUpdate, FakeNow)
@@ -601,7 +601,7 @@ func TestReset(t *testing.T) {
 			if owner, ok := rmap["res"]; !ok || owner != "user" {
 				t.Errorf("%s - Expect res - user. Got %v", tc.name, rmap)
 			}
-			resources, _ := c.Storage.GetResources()
+			resources, _ := c.Storage.GetResources(common.NewTenant())
 			fmt.Println(FakeNow)
 			fmt.Println(fakeTime(fakeNow))
 			fmt.Println(resources[0].LastUpdate)
@@ -705,7 +705,7 @@ func TestUpdate(t *testing.T) {
 		}
 
 		if err == nil {
-			resources, _ := c.Storage.GetResources()
+			resources, _ := c.Storage.GetResources(common.NewTenant())
 			if resources[0].Owner != tc.owner {
 				t.Errorf("%s - Wrong owner after release. Got %v, expect %v", tc.name, resources[0].Owner, tc.owner)
 			} else if resources[0].State != tc.state {
@@ -714,7 +714,7 @@ func TestUpdate(t *testing.T) {
 				t.Errorf("%s - LastUpdate did not update.", tc.name)
 			}
 		} else {
-			resources, _ := c.Storage.GetResources()
+			resources, _ := c.Storage.GetResources(common.NewTenant())
 			for _, res := range resources {
 				if res.LastUpdate != FakeNow {
 					t.Errorf("%s - LastUpdate should not update. Got %v, expect %v", tc.name, resources[0].LastUpdate, FakeNow)
@@ -1009,7 +1009,7 @@ func TestSyncConfig(t *testing.T) {
 	for _, tc := range testcases {
 		c := MakeTestRanch(tc.oldRes)
 		//c.syncConfigHelper(tc.newRes)
-		resources, _ := c.Storage.GetResources()
+		resources, _ := c.Storage.GetResources(common.NewTenant())
 		if !reflect.DeepEqual(resources, tc.expect) {
 			t.Errorf("Test %v: got %v, expect %v", tc.name, resources, tc.expect)
 		}
