@@ -192,34 +192,34 @@ func NewRequestManager(ttl time.Duration) *RequestManager {
 	}
 }
 
-func (rp *RequestManager) cleanup(now time.Time) {
-	rp.lock.Lock()
-	defer rp.lock.Unlock()
-	for key, rq := range rp.requests {
+func (rm *RequestManager) cleanup(now time.Time) {
+	rm.lock.Lock()
+	defer rm.lock.Unlock()
+	for key, rq := range rm.requests {
 		logrus.Infof("cleaning up %v request queue", key)
 		rq.cleanup(now)
 		if rq.isEmpty() {
-			delete(rp.requests, key)
+			delete(rm.requests, key)
 		}
 	}
 }
 
 // StartGC starts a goroutine that will call cleanup every gcInterval
-func (rp *RequestManager) StartGC(gcPeriod time.Duration) {
+func (rm *RequestManager) StartGC(gcPeriod time.Duration) {
 	ctx, stop := context.WithCancel(context.Background())
-	rp.stopGC = stop
+	rm.stopGC = stop
 	tick := time.Tick(gcPeriod)
-	rp.wg.Add(1)
+	rm.wg.Add(1)
 	go func() {
 		logrus.Info("starting cleanup go routine")
 		defer logrus.Info("exiting cleanup go routine")
-		defer rp.wg.Done()
+		defer rm.wg.Done()
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-tick:
-				rp.cleanup(rp.now())
+				rm.cleanup(rm.now())
 			}
 		}
 
@@ -227,31 +227,31 @@ func (rp *RequestManager) StartGC(gcPeriod time.Duration) {
 }
 
 // StopGC is a blocking call that will stop the GC goroutine.
-func (rp *RequestManager) StopGC() {
-	if rp.stopGC != nil {
-		rp.stopGC()
-		rp.wg.Wait()
+func (rm *RequestManager) StopGC() {
+	if rm.stopGC != nil {
+		rm.stopGC()
+		rm.wg.Wait()
 	}
 }
 
 // GetRank provides the rank of a given request and whether request is new (was added)
-func (rp *RequestManager) GetRank(key interface{}, id string) (int, bool) {
-	rp.lock.Lock()
-	defer rp.lock.Unlock()
-	rq := rp.requests[key]
+func (rm *RequestManager) GetRank(key interface{}, id string) (int, bool) {
+	rm.lock.Lock()
+	defer rm.lock.Unlock()
+	rq := rm.requests[key]
 	if rq == nil {
 		rq = newRequestQueue()
-		rp.requests[key] = rq
+		rm.requests[key] = rq
 	}
-	return rq.getRank(id, rp.ttl, rp.now())
+	return rq.getRank(id, rm.ttl, rm.now())
 }
 
 // GetCreatedAt returns when the request was created
-func (rp *RequestManager) GetCreatedAt(key interface{}, id string) (time.Time, error) {
-	rp.lock.Lock()
-	defer rp.lock.Unlock()
+func (rm *RequestManager) GetCreatedAt(key interface{}, id string) (time.Time, error) {
+	rm.lock.Lock()
+	defer rm.lock.Unlock()
 	var createdTime time.Time
-	rq := rp.requests[key]
+	rq := rm.requests[key]
 	if rq == nil {
 		//This should never happen
 		return createdTime, fmt.Errorf("failed to get the created time because the request queue is nil for the key %v", key)
@@ -267,10 +267,10 @@ func (rp *RequestManager) GetCreatedAt(key interface{}, id string) (time.Time, e
 
 // Delete deletes a specific request such that it is not accounted in the next GetRank call.
 // This is usually called when the request has been fulfilled.
-func (rp *RequestManager) Delete(key interface{}, requestID string) {
-	rp.lock.Lock()
-	defer rp.lock.Unlock()
-	rq := rp.requests[key]
+func (rm *RequestManager) Delete(key interface{}, requestID string) {
+	rm.lock.Lock()
+	defer rm.lock.Unlock()
+	rq := rm.requests[key]
 	if rq != nil {
 		rq.delete(requestID)
 	}
