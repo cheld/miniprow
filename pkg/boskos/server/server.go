@@ -28,8 +28,8 @@ import (
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
 	"github.com/cheld/miniprow/pkg/boskos/metrics"
+	"github.com/cheld/miniprow/pkg/boskos/persistence"
 	"github.com/cheld/miniprow/pkg/boskos/ranch"
-	"github.com/cheld/miniprow/pkg/boskos/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -63,7 +63,7 @@ type Boskos struct {
 
 //Adds the boskos endpoints to the handler
 func NewHandler(boskosCfg *[]byte) *Boskos {
-	storage := ranch.NewStorage(storage.NewMemoryStorage())
+	storage := ranch.NewStorage(persistence.NewMemoryStorage())
 	r, err := ranch.NewRanch(boskosCfg, storage, defaultRequestTTL, common.NewTenant())
 	if err != nil {
 		fmt.Println(err)
