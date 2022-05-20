@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
-	"github.com/cheld/miniprow/pkg/boskos/storage"
+	storage "github.com/cheld/miniprow/pkg/boskos/persistence"
 )
 
 var (
