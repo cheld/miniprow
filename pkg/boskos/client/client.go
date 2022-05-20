@@ -36,7 +36,7 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
-	"github.com/cheld/miniprow/pkg/boskos/storage"
+	"github.com/cheld/miniprow/pkg/boskos/persistence"
 	"k8s.io/test-infra/prow/config/secret"
 )
 
@@ -69,7 +69,7 @@ type Client struct {
 	getPassword func() []byte
 	lock        sync.Mutex
 
-	storage storage.PersistenceLayer
+	storage persistence.PersistenceLayer
 }
 
 // NewClient creates a Boskos client for the specified URL and resource owner.
@@ -106,7 +106,7 @@ func NewClient(owner string, urlString, username, passwordFile string) (*Client,
 		username:    username,
 		getPassword: getPassword,
 		owner:       owner,
-		storage:     storage.NewMemoryStorage(),
+		storage:     persistence.NewMemoryStorage(),
 	}
 
 	// Configure the dialer to attempt three additional times to establish

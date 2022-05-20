@@ -19,12 +19,12 @@ import (
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
 
-	storage "github.com/cheld/miniprow/pkg/boskos/persistence"
+	"github.com/cheld/miniprow/pkg/boskos/persistence"
 )
 
 // Storage is used to decouple ranch functionality with the resource persistence layer
 type Storage struct {
-	persistence storage.PersistenceLayer
+	persistence persistence.PersistenceLayer
 	DRLCByType  map[string]common.DynamicResourceLifeCycle
 	// For testing
 	now          func() time.Time
@@ -32,7 +32,7 @@ type Storage struct {
 }
 
 // NewStorage instantiates a new Storage with a PersistenceLayer implementation
-func NewStorage(persistence storage.PersistenceLayer) *Storage {
+func NewStorage(persistence persistence.PersistenceLayer) *Storage {
 	return &Storage{
 		persistence:  persistence,
 		now:          func() time.Time { return time.Now() },
@@ -97,7 +97,7 @@ func (s *Storage) GetDynamicResourceLifeCycles() ([]common.DynamicResourceLifeCy
 
 // SyncResources will update static and dynamic resources.
 // It will add new resources to storage and try to remove newly deleted resources
-// from storage.
+// from persistence.
 // If the newly deleted resource is currently held by a user, the deletion will
 // yield to next update cycle.
 func (s *Storage) SyncResources(config *common.BoskosConfig, tenant common.Tenant) error {

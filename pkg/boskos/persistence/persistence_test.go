@@ -16,7 +16,7 @@ limitations under the License.
 
 // This is an xtest because it imports the crds package, but the crds package
 // also imports storage, creating a cycle.
-package storage
+package persistence
 
 import (
 	"fmt"

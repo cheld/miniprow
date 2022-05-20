@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
-	storage "github.com/cheld/miniprow/pkg/boskos/persistence"
+	"github.com/cheld/miniprow/pkg/boskos/persistence"
 )
 
 var (
@@ -45,7 +45,7 @@ func (g *nameGenerator) name() string {
 }
 
 func MakeTestRanch(resources []common.Resource) *Ranch {
-	persistence := storage.NewMemoryStorage()
+	persistence := persistence.NewMemoryStorage()
 	s := NewStorage(persistence)
 	s.now = func() time.Time {
 		return fakeNow
