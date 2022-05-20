@@ -95,7 +95,7 @@ func NewRanch(config *[]byte, s *Storage, ttl time.Duration, tenant common.Tenan
 
 // acquireRequestPriorityKey is used as key for request priority cache.
 type acquireRequestPriorityKey struct {
-	rType, state string
+	rType, state, tenant string
 }
 
 // Acquire checks out a type of resource in certain state without an owner,
@@ -120,7 +120,7 @@ func (r *Ranch) Acquire(rType, state, dest, owner, requestID string, tenant comm
 	createdTime := r.now()
 	if err := retryOnConflict(func() error {
 		logger.Debug("Determining request priority...")
-		ts := acquireRequestPriorityKey{rType: rType, state: state}
+		ts := acquireRequestPriorityKey{rType: rType, state: state, tenant: tenant.ID()}
 		rank, new := r.requestMgr.GetRank(ts, requestID)
 		logger.WithFields(logrus.Fields{"rank": rank, "new": new}).Debug("Determined request priority.")
 
