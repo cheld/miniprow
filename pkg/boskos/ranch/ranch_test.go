@@ -45,6 +45,7 @@ func (g *nameGenerator) name() string {
 }
 
 func MakeTestRanch(resources []common.Resource) *Ranch {
+
 	resPersistence := persistence.NewResourceMemoryStorage()
 	tenPersistence := persistence.NewTenantMemoryStorage()
 	s := NewStorage(resPersistence, tenPersistence)

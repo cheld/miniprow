@@ -1,6 +1,7 @@
 package util
 
 import (
+	"runtime"
 	"testing"
 )
 
@@ -23,6 +24,9 @@ func TestDefaultConfigLocations(t *testing.T) {
 }
 
 func TestFindExistingFile(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		return
+	}
 	givenFiles := []string{"non-existing.yaml", "/etc/environment"}
 	existingFile := FindExistingFile(givenFiles)
 	if existingFile != "/etc/environment" {
@@ -31,7 +35,9 @@ func TestFindExistingFile(t *testing.T) {
 }
 
 func TestReadConfiguration(t *testing.T) {
-
+	if runtime.GOOS == "windows" {
+		return
+	}
 	// test existing file
 	content, err := ReadConfiguration("/etc/environment", "")
 	if len(*content) == 0 || err != nil {
