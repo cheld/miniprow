@@ -122,6 +122,44 @@ func TestSimple(t *testing.T) {
 	c.Acquire("tc.rtype", "tc.state", "tc.dest", "tc.owner", "requestID", tenant)
 }
 
+func TestMultiTenant(t *testing.T) {
+	tenant1 := common.Tenant{
+		Organization: "org1",
+		Project:      "proj1",
+	}
+	tenant2 := common.Tenant{
+		Organization: "org2",
+		Project:      "proj2",
+	}
+	c := MakeTestRanch([]common.Resource{})
+	c.Storage.AddResource(&common.Resource{
+		Name:       "res",
+		Type:       "t",
+		State:      "s",
+		Owner:      "",
+		LastUpdate: startTime,
+	}, tenant1)
+
+	if resources, err := c.Storage.GetResources(tenant1); err != nil {
+		t.Fatal(err)
+	} else if len(resources) != 1 {
+		t.Fatal("A resource should be visible for tenant1")
+	}
+	if resources, err := c.Storage.GetResources(tenant2); err != nil {
+		t.Fatal(err)
+	} else if len(resources) != 0 {
+		t.Fatal("No resource should be visible for tenant2")
+	}
+	_, _, err := c.Acquire("t", "s", "dest", "o", "requestID", tenant2)
+	if err == nil {
+		t.Fatalf("No resource should be available for tenant2")
+	}
+	_, _, err = c.Acquire("t", "s", "dest", "o", "requestID", tenant1)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+}
+
 func TestAcquire(t *testing.T) {
 	FakeNow := startTime
 	tenant := common.NewTenant()
