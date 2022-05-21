@@ -4,3 +4,6 @@ go run cmd/boskosctl/boskosctl.go metrics --server-url https://cicdbot-taa2y7tmp
 
 # acquire
 go run cmd/boskosctl/boskosctl.go acquire --server-url https://cicdbot-taa2y7tmpq-ey.a.run.app/boskos/ --owner-name Christoph --type aws-account --state free --target-state used
+
+# acquire local
+go run cmd/boskosctl/boskosctl.go acquire --server-url http://localhost:3000 --owner-name Christoph --type aws-account --state free --target-state used

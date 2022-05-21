@@ -18,6 +18,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -50,11 +51,13 @@ import (
 // 		l("metric"),
 // 	))
 // }
+type contextKey int
 
 const (
-	defaultDynamicResourceUpdatePeriod = 10 * time.Minute
-	defaultRequestTTL                  = 30 * time.Second
-	defaultRequestGCPeriod             = time.Minute
+	defaultDynamicResourceUpdatePeriod            = 10 * time.Minute
+	defaultRequestTTL                             = 30 * time.Second
+	defaultRequestGCPeriod                        = time.Minute
+	authenticatedTenantKey             contextKey = 0
 )
 
 type Boskos struct {
@@ -74,12 +77,12 @@ func NewHandler(boskosCfg *[]byte) *Boskos {
 	prometheus.MustRegister(metrics.NewResourcesCollector(r))
 
 	mux := http.NewServeMux()
-	mux.Handle("/boskos/acquire", handleAcquire(r))
-	mux.Handle("/boskos/acquirebystate", handleAcquireByState(r))
-	mux.Handle("/boskos/release", handleRelease(r))
-	mux.Handle("/boskos/reset", handleReset(r))
-	mux.Handle("/boskos/update", handleUpdate(r))
-	mux.Handle("/boskos/metric", handleMetric(r))
+	mux.Handle("/boskos/acquire", authHandler(handleAcquire(r)))
+	mux.Handle("/boskos/acquirebystate", authHandler(handleAcquireByState(r)))
+	mux.Handle("/boskos/release", authHandler(handleRelease(r)))
+	mux.Handle("/boskos/reset", authHandler(handleReset(r)))
+	mux.Handle("/boskos/update", authHandler(handleUpdate(r)))
+	mux.Handle("/boskos/metric", authHandler(handleMetric(r)))
 	return &Boskos{
 		mux: mux,
 	}
@@ -108,6 +111,14 @@ func errorToStatus(err error) int {
 		return http.StatusConflict
 	case badRequestError:
 		return http.StatusBadRequest
+	}
+}
+
+func authHandler(next http.Handler) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx := context.WithValue(req.Context(), authenticatedTenantKey, common.NewTenant())
+		reqWithOrg := req.WithContext(ctx)
+		next.ServeHTTP(res, reqWithOrg)
 	}
 }
 
@@ -159,7 +170,8 @@ func handleAcquire(r *ranch.Ranch) http.HandlerFunc {
 		dest := req.URL.Query().Get("dest")
 		owner := req.URL.Query().Get("owner")
 		requestID := req.URL.Query().Get("request_id")
-		tenant := common.NewTenant()
+		tenant := req.Context().Value(authenticatedTenantKey).(common.Tenant)
+
 		if rtype == "" || state == "" || dest == "" || owner == "" {
 			bre := badRequestError(fmt.Sprintf("Type: %v, state: %v, dest: %v, owner: %v, all of them must be set in the request.", rtype, state, dest, owner))
 			returnAndLogError(res, bre, "Bad request")
@@ -218,7 +230,7 @@ func handleAcquireByState(r *ranch.Ranch) http.HandlerFunc {
 		dest := req.URL.Query().Get("dest")
 		owner := req.URL.Query().Get("owner")
 		names := req.URL.Query().Get("names")
-		tenant := common.NewTenant()
+		tenant := req.Context().Value(authenticatedTenantKey).(common.Tenant)
 		if state == "" || dest == "" || owner == "" || names == "" {
 			msg := fmt.Sprintf(
 				"state: %v, dest: %v, owner: %v, names: %v - all of them must be set in the request.",
@@ -281,7 +293,7 @@ func handleRelease(r *ranch.Ranch) http.HandlerFunc {
 		name := req.URL.Query().Get("name")
 		dest := req.URL.Query().Get("dest")
 		owner := req.URL.Query().Get("owner")
-		tenant := common.NewTenant()
+		tenant := req.Context().Value(authenticatedTenantKey).(common.Tenant)
 		if name == "" || dest == "" || owner == "" {
 			msg := fmt.Sprintf("Name: %v, dest: %v, owner: %v, all of them must be set in the request.", name, dest, owner)
 			logrus.Warning(msg)
@@ -320,7 +332,7 @@ func handleReset(r *ranch.Ranch) http.HandlerFunc {
 		state := req.URL.Query().Get("state")
 		expireStr := req.URL.Query().Get("expire")
 		dest := req.URL.Query().Get("dest")
-		tenant := common.NewTenant()
+		tenant := req.Context().Value(authenticatedTenantKey).(common.Tenant)
 
 		logrus.Infof("%v, %v, %v, %v", rtype, state, expireStr, dest)
 
@@ -375,7 +387,7 @@ func handleUpdate(r *ranch.Ranch) http.HandlerFunc {
 		name := req.URL.Query().Get("name")
 		owner := req.URL.Query().Get("owner")
 		state := req.URL.Query().Get("state")
-		tenant := common.NewTenant()
+		tenant := req.Context().Value(authenticatedTenantKey).(common.Tenant)
 
 		if name == "" || owner == "" || state == "" {
 			msg := fmt.Sprintf("Name: %v, owner: %v, state : %v, all of them must be set in the request.", name, owner, state)
@@ -420,7 +432,7 @@ func handleMetric(r *ranch.Ranch) http.HandlerFunc {
 		}
 
 		rtype := req.URL.Query().Get("type")
-		tenant := common.NewTenant()
+		tenant := req.Context().Value(authenticatedTenantKey).(common.Tenant)
 		if rtype == "" {
 			msg := "Type must be set in the request."
 			logrus.Warning(msg)
