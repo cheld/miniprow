@@ -26,7 +26,7 @@ import (
 )
 
 // PersistenceLayer defines a simple interface to persists Boskos Information
-type PersistenceLayer interface {
+type ResourcePersistence interface {
 	Add(r common.Resource, tenant common.Tenant) error
 	Delete(name string, tenant common.Tenant) error
 	Update(r common.Resource, tenant common.Tenant) (common.Resource, error)
@@ -39,8 +39,8 @@ type inMemoryStore struct {
 	lock      sync.RWMutex
 }
 
-// NewMemoryStorage creates an in memory persistence layer
-func NewMemoryStorage() PersistenceLayer {
+// NewResourceMemoryStorage creates an in memory persistence layer
+func NewResourceMemoryStorage() ResourcePersistence {
 	mem := map[string]map[string]common.Resource{}
 	mem["default"] = map[string]common.Resource{}
 	return &inMemoryStore{

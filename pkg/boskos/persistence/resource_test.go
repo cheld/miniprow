@@ -27,9 +27,9 @@ import (
 	"github.com/cheld/miniprow/pkg/boskos/common"
 )
 
-func createStorages() []PersistenceLayer {
-	return []PersistenceLayer{
-		NewMemoryStorage(),
+func createStorages() []ResourcePersistence {
+	return []ResourcePersistence{
+		NewResourceMemoryStorage(),
 	}
 }
 

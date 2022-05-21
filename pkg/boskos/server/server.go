@@ -66,7 +66,9 @@ type Boskos struct {
 
 //Adds the boskos endpoints to the handler
 func NewHandler(boskosCfg *[]byte) *Boskos {
-	storage := ranch.NewStorage(persistence.NewMemoryStorage())
+	resPersistence := persistence.NewResourceMemoryStorage()
+	tenPersistence := persistence.NewTenantMemoryStorage()
+	storage := ranch.NewStorage(resPersistence, tenPersistence)
 	r, err := ranch.NewRanch(boskosCfg, storage, defaultRequestTTL, common.NewTenant())
 	if err != nil {
 		fmt.Println(err)
@@ -77,12 +79,12 @@ func NewHandler(boskosCfg *[]byte) *Boskos {
 	prometheus.MustRegister(metrics.NewResourcesCollector(r))
 
 	mux := http.NewServeMux()
-	mux.Handle("/boskos/acquire", authHandler(handleAcquire(r)))
-	mux.Handle("/boskos/acquirebystate", authHandler(handleAcquireByState(r)))
-	mux.Handle("/boskos/release", authHandler(handleRelease(r)))
-	mux.Handle("/boskos/reset", authHandler(handleReset(r)))
-	mux.Handle("/boskos/update", authHandler(handleUpdate(r)))
-	mux.Handle("/boskos/metric", authHandler(handleMetric(r)))
+	mux.Handle("/boskos/acquire", authHandler(r, handleAcquire(r)))
+	mux.Handle("/boskos/acquirebystate", authHandler(r, handleAcquireByState(r)))
+	mux.Handle("/boskos/release", authHandler(r, handleRelease(r)))
+	mux.Handle("/boskos/reset", authHandler(r, handleReset(r)))
+	mux.Handle("/boskos/update", authHandler(r, handleUpdate(r)))
+	mux.Handle("/boskos/metric", authHandler(r, handleMetric(r)))
 	return &Boskos{
 		mux: mux,
 	}
@@ -114,9 +116,10 @@ func errorToStatus(err error) int {
 	}
 }
 
-func authHandler(next http.Handler) http.HandlerFunc {
+func authHandler(r *ranch.Ranch, next http.Handler) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), authenticatedTenantKey, common.NewTenant())
+		tenant, _ := r.ValidateAuthToken("", "")
+		ctx := context.WithValue(req.Context(), authenticatedTenantKey, tenant)
 		reqWithOrg := req.WithContext(ctx)
 		next.ServeHTTP(res, reqWithOrg)
 	}

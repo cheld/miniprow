@@ -510,3 +510,7 @@ func newResourceFromNewDynamicResourceLifeCycle(name string, now time.Time, life
 func retryOnConflict(fn func() error) error {
 	return fn()
 }
+
+func (r *Ranch) ValidateAuthToken(token, project string) (common.Tenant, error) {
+	return r.Storage.ValidateToken(token, project)
+}
