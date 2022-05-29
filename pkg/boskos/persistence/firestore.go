@@ -8,6 +8,7 @@ import (
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
 	"github.com/cheld/miniprow/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/common/util"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
@@ -22,9 +23,15 @@ type store struct {
 func NewFirestore() Persistence {
 	// Use a service account
 	ctx := context.Background()
-	conf := &firebase.Config{ProjectID: "smart-altar-272110"}
-	sa := option.WithCredentialsFile("../firestore.json")
-	app, err := firebase.NewApp(ctx, conf, sa)
+	var app *firebase.App
+	var err error
+	if util.FileExists("../firestore.json") {
+		sa := option.WithCredentialsFile("../firestore.json")
+		app, err = firebase.NewApp(ctx, nil, sa)
+	} else {
+		conf := &firebase.Config{ProjectID: "smart-altar-272110"}
+		app, err = firebase.NewApp(ctx, conf)
+	}
 	if err != nil {
 		log.Fatalln(err)
 	}

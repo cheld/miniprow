@@ -41,14 +41,14 @@ func DefaultConfigLocations(fileName string) []string {
 
 func FindExistingFile(filenames []string) string {
 	for _, filename := range filenames {
-		if fileExists(filename) {
+		if FileExists(filename) {
 			return filename
 		}
 	}
 	return ""
 }
 
-func fileExists(filename string) bool {
+func FileExists(filename string) bool {
 	info, err := os.Stat(filename)
 	if os.IsNotExist(err) {
 		return false
