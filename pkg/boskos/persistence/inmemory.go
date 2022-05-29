@@ -13,8 +13,12 @@ type inMemoryStore struct {
 	lock      sync.RWMutex
 }
 
-// NewResourceMemoryStorage creates an in memory persistence layer
-func NewResourceMemoryStorage() ResourcePersistence {
+func NewClientCache() ClientCache {
+	return NewPersistence()
+}
+
+// NewMemoryStorage creates an in memory persistence layer
+func NewPersistence() Persistence {
 	mem := map[string]map[string]common.Resource{}
 	mem["default"] = map[string]common.Resource{}
 	return &inMemoryStore{
@@ -93,33 +97,23 @@ func (im *inMemoryStore) List(tenant common.Tenant) ([]common.Resource, error) {
 	return resources, nil
 }
 
-type tenantInMemoryStore struct {
-	tokens map[string]string
-	lock   sync.RWMutex
-}
-
-// NewMemoryStorage creates an in memory persistence layer
-func NewTenantMemoryStorage() TenantPersistence {
-	mem := map[string]string{}
-	return &tenantInMemoryStore{
-		tokens: mem,
-	}
-}
-
-func (im *tenantInMemoryStore) AddToken(token string, tenant common.Tenant) error {
+func (im *inMemoryStore) AddToken(token string, tenant common.Tenant) error {
 	im.lock.Lock()
 	defer im.lock.Unlock()
 	return nil
 }
 
-func (im *tenantInMemoryStore) DeleteToken(tenant common.Tenant) error {
+func (im *inMemoryStore) DeleteToken(tenant common.Tenant) error {
 	im.lock.Lock()
 	defer im.lock.Unlock()
 	return nil
 }
 
-func (im *tenantInMemoryStore) GetTenant(token, project string) (common.Tenant, error) {
+func (im *inMemoryStore) GetTenant(token, project string) (common.Tenant, error) {
 	im.lock.Lock()
 	defer im.lock.Unlock()
 	return common.NewTenant(), nil
+}
+
+func (im *inMemoryStore) Close() {
 }

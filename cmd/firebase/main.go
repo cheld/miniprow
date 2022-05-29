@@ -11,10 +11,10 @@ import (
 func main() {
 	fmt.Println("hello")
 	// Use a service account
-	resources, tenants := persistence.NewFirestore()
+	store := persistence.NewFirestore()
 	r := common.NewResource("someresource", "free", "used", "cheld", time.Now())
-	resources.Add(r, common.NewTenant())
-	tenants.AddToken("aaaaaaaaa", common.NewTenant())
-	l, _ := resources.Get("someresource", common.NewTenant())
+	store.Add(r, common.NewTenant())
+	store.AddToken("aaaaaaaaa", common.NewTenant())
+	l, _ := store.Get("someresource", common.NewTenant())
 	fmt.Println(l)
 }

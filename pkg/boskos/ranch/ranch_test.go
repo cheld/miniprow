@@ -46,9 +46,8 @@ func (g *nameGenerator) name() string {
 
 func MakeTestRanch(resources []common.Resource) *Ranch {
 
-	resPersistence := persistence.NewResourceMemoryStorage()
-	tenPersistence := persistence.NewTenantMemoryStorage()
-	s := NewStorage(resPersistence, tenPersistence)
+	persistence := persistence.NewPersistence()
+	s := NewStorage(persistence)
 	s.now = func() time.Time {
 		return fakeNow
 	}
@@ -62,7 +61,7 @@ func MakeTestRanch(resources []common.Resource) *Ranch {
 	}
 	ranch.requestMgr = NewRequestManager(testTTL)
 	for _, res := range resources {
-		resPersistence.Add(res, common.NewTenant())
+		persistence.Add(res, common.NewTenant())
 	}
 
 	return ranch

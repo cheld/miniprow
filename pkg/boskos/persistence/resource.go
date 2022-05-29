@@ -21,7 +21,7 @@ import (
 )
 
 // PersistenceLayer defines a simple interface to persists Boskos Information
-type ResourcePersistence interface {
+type ClientCache interface {
 	Add(r common.Resource, tenant common.Tenant) error
 	Delete(name string, tenant common.Tenant) error
 	Update(r common.Resource, tenant common.Tenant) (common.Resource, error)
@@ -29,8 +29,14 @@ type ResourcePersistence interface {
 	List(tenant common.Tenant) ([]common.Resource, error)
 }
 
-type TenantPersistence interface {
+type Persistence interface {
+	Add(r common.Resource, tenant common.Tenant) error
+	Delete(name string, tenant common.Tenant) error
+	Update(r common.Resource, tenant common.Tenant) (common.Resource, error)
+	Get(name string, tenant common.Tenant) (common.Resource, error)
+	List(tenant common.Tenant) ([]common.Resource, error)
 	AddToken(token string, tenant common.Tenant) error
 	DeleteToken(tenant common.Tenant) error
 	GetTenant(token, project string) (common.Tenant, error)
+	Close()
 }

@@ -18,7 +18,7 @@ type store struct {
 }
 
 // NewResourceMemoryStorage creates an in memory persistence layer
-func NewFirestore() (ResourcePersistence, TenantPersistence) {
+func NewFirestore() Persistence {
 	// Use a service account
 	ctx := context.Background()
 	sa := option.WithCredentialsFile("../firestore.json")
@@ -35,7 +35,7 @@ func NewFirestore() (ResourcePersistence, TenantPersistence) {
 		client: client,
 		ctx:    ctx,
 	}
-	return firestore, firestore
+	return firestore
 }
 
 func (im *store) Close() {

@@ -24,51 +24,49 @@ import (
 
 // Storage is used to decouple ranch functionality with the resource persistence layer
 type Storage struct {
-	resPersistence persistence.ResourcePersistence
-	tenPersistence persistence.TenantPersistence
-	DRLCByType     map[string]common.DynamicResourceLifeCycle
+	persistence persistence.Persistence
+	DRLCByType  map[string]common.DynamicResourceLifeCycle
 	// For testing
 	now          func() time.Time
 	generateName func() string
 }
 
 // NewStorage instantiates a new Storage with a PersistenceLayer implementation
-func NewStorage(resourcePersistence persistence.ResourcePersistence, tenantPersistence persistence.TenantPersistence) *Storage {
+func NewStorage(resourcePersistence persistence.Persistence) *Storage {
 	return &Storage{
-		resPersistence: resourcePersistence,
-		tenPersistence: tenantPersistence,
-		now:            func() time.Time { return time.Now() },
-		generateName:   common.GenerateDynamicResourceName,
-		DRLCByType:     make(map[string]common.DynamicResourceLifeCycle),
+		persistence:  resourcePersistence,
+		now:          func() time.Time { return time.Now() },
+		generateName: common.GenerateDynamicResourceName,
+		DRLCByType:   make(map[string]common.DynamicResourceLifeCycle),
 	}
 }
 
 // AddResource adds a new resource
 func (s *Storage) AddResource(resource *common.Resource, tenant common.Tenant) error {
-	return s.resPersistence.Add(*resource, tenant)
+	return s.persistence.Add(*resource, tenant)
 }
 
 // DeleteResource deletes a resource if it exists, errors otherwise
 func (s *Storage) DeleteResource(name string, tenant common.Tenant) error {
-	return s.resPersistence.Delete(name, tenant)
+	return s.persistence.Delete(name, tenant)
 }
 
 // UpdateResource updates a resource if it exists, errors otherwise
 func (s *Storage) UpdateResource(resource *common.Resource, tenant common.Tenant) (*common.Resource, error) {
 	resource.LastUpdate = s.now()
-	s.resPersistence.Update(*resource, tenant)
+	s.persistence.Update(*resource, tenant)
 	return resource, nil
 }
 
 // GetResource gets an existing resource, errors otherwise
 func (s *Storage) GetResource(name string, tenant common.Tenant) (*common.Resource, error) {
-	res, err := s.resPersistence.Get(name, tenant)
+	res, err := s.persistence.Get(name, tenant)
 	return &res, err
 }
 
 // GetResources list all resources
 func (s *Storage) GetResources(tenant common.Tenant) ([]*common.Resource, error) {
-	r, _ := s.resPersistence.List(tenant)
+	r, _ := s.persistence.List(tenant)
 	resourceList := make([]*common.Resource, len(r))
 	for i := 0; i < len(r); i++ {
 		resourceList[i] = &r[i]
@@ -77,7 +75,7 @@ func (s *Storage) GetResources(tenant common.Tenant) ([]*common.Resource, error)
 }
 
 func (s *Storage) ValidateToken(token, project string) (common.Tenant, error) {
-	return s.tenPersistence.GetTenant(token, project)
+	return s.persistence.GetTenant(token, project)
 }
 
 // GetDynamicResourceLifeCycle gets an existing dynamic resource life cycle, errors otherwise
@@ -115,7 +113,7 @@ func (s *Storage) SyncResources(config *common.BoskosConfig, tenant common.Tenan
 			s.DRLCByType[entry.Type] = common.NewDynamicResourceLifeCycleFromConfig(entry)
 		} else {
 			for _, res := range common.NewResourcesFromConfig(entry) {
-				s.resPersistence.Add(res, tenant)
+				s.persistence.Add(res, tenant)
 			}
 		}
 	}

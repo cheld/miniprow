@@ -66,9 +66,8 @@ type Boskos struct {
 
 //Adds the boskos endpoints to the handler
 func NewHandler(boskosCfg *[]byte) *Boskos {
-	resPersistence := persistence.NewResourceMemoryStorage()
-	tenPersistence := persistence.NewTenantMemoryStorage()
-	storage := ranch.NewStorage(resPersistence, tenPersistence)
+	persistence := persistence.NewFirestore()
+	storage := ranch.NewStorage(persistence)
 	r, err := ranch.NewRanch(boskosCfg, storage, defaultRequestTTL, common.NewTenant())
 	if err != nil {
 		fmt.Println(err)

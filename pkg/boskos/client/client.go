@@ -69,7 +69,7 @@ type Client struct {
 	getPassword func() []byte
 	lock        sync.Mutex
 
-	storage persistence.ResourcePersistence
+	storage persistence.ClientCache
 }
 
 // NewClient creates a Boskos client for the specified URL and resource owner.
@@ -106,7 +106,7 @@ func NewClient(owner string, urlString, username, passwordFile string) (*Client,
 		username:    username,
 		getPassword: getPassword,
 		owner:       owner,
-		storage:     persistence.NewResourceMemoryStorage(),
+		storage:     persistence.NewClientCache(),
 	}
 
 	// Configure the dialer to attempt three additional times to establish
