@@ -3,6 +3,8 @@ module github.com/cheld/miniprow
 go 1.13
 
 require (
+	cloud.google.com/go/firestore v1.1.0 // indirect
+	firebase.google.com/go v3.13.0+incompatible // indirect
 	github.com/go-playground/webhooks v5.17.0+incompatible // indirect
 	github.com/go-playground/webhooks/v6 v6.0.1 // indirect
 	github.com/go-test/deep v1.0.4
@@ -17,6 +19,7 @@ require (
 	github.com/spf13/flag v0.0.0-20140426202619-916eaf9e2dc5
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
+	google.golang.org/api v0.15.0 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/go-playground/webhooks.v5 v5.15.0
 	gopkg.in/yaml.v2 v2.3.0
