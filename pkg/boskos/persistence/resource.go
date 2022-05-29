@@ -37,6 +37,6 @@ type Persistence interface {
 	List(tenant common.Tenant) ([]common.Resource, error)
 	AddToken(token string, tenant common.Tenant) error
 	DeleteToken(tenant common.Tenant) error
-	GetTenant(token, project string) (common.Tenant, error)
+	GetTenantFromToken(token, project string) (common.Tenant, error)
 	Close()
 }

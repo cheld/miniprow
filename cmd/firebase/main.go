@@ -17,4 +17,9 @@ func main() {
 	store.AddToken("aaaaaaaaa", common.NewTenant())
 	l, _ := store.Get("someresource", common.NewTenant())
 	fmt.Println(l)
+	all, _ := store.List(common.NewTenant())
+	fmt.Println(len(all))
+	store.Delete("someresource", common.NewTenant())
+	all, _ = store.List(common.NewTenant())
+	fmt.Println(len(all))
 }

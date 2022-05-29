@@ -109,7 +109,7 @@ func (im *inMemoryStore) DeleteToken(tenant common.Tenant) error {
 	return nil
 }
 
-func (im *inMemoryStore) GetTenant(token, project string) (common.Tenant, error) {
+func (im *inMemoryStore) GetTenantFromToken(token, project string) (common.Tenant, error) {
 	im.lock.Lock()
 	defer im.lock.Unlock()
 	return common.NewTenant(), nil

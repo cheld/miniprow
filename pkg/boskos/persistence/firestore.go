@@ -8,6 +8,7 @@ import (
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
 	"github.com/cheld/miniprow/pkg/boskos/common"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
@@ -21,8 +22,9 @@ type store struct {
 func NewFirestore() Persistence {
 	// Use a service account
 	ctx := context.Background()
+	conf := &firebase.Config{ProjectID: "smart-altar-272110"}
 	sa := option.WithCredentialsFile("../firestore.json")
-	app, err := firebase.NewApp(ctx, nil, sa)
+	app, err := firebase.NewApp(ctx, conf, sa)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -31,47 +33,47 @@ func NewFirestore() Persistence {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	firestore := &store{
+	store := &store{
 		client: client,
 		ctx:    ctx,
 	}
-	return firestore
+	return store
 }
 
-func (im *store) Close() {
-	im.client.Close()
+func (s *store) Close() {
+	s.client.Close()
 }
 
-func (im *store) Add(r common.Resource, tenant common.Tenant) error {
-	im.lock.Lock()
-	defer im.lock.Unlock()
-	base := im.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
-	_, err := base.Collection("resources").Doc(r.Name).Set(im.ctx, r)
+func (s *store) Add(r common.Resource, tenant common.Tenant) error {
+	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
+	_, err := baseQuery.Collection("resources").Doc(r.Name).Set(s.ctx, r)
 	if err != nil {
-		log.Fatalf("Failed adding alovelace: %v", err)
+		log.Fatalf("Failed adding resource to firestore: %v", err)
 	}
 	return nil
 }
 
-func (im *store) Delete(name string, tenant common.Tenant) error {
-	im.lock.Lock()
-	defer im.lock.Unlock()
-
+func (s *store) Delete(name string, tenant common.Tenant) error {
+	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
+	_, err := baseQuery.Collection("resources").Doc(name).Delete(s.ctx)
+	if err != nil {
+		log.Fatalf("Failed deleting resource from firestore: %v", err)
+	}
 	return nil
 }
 
-func (im *store) Update(r common.Resource, tenant common.Tenant) (common.Resource, error) {
-	im.lock.Lock()
-	defer im.lock.Unlock()
-
+func (s *store) Update(r common.Resource, tenant common.Tenant) (common.Resource, error) {
+	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
+	_, err := baseQuery.Collection("resources").Doc(r.Name).Set(s.ctx, r)
+	if err != nil {
+		log.Fatalf("Failed updating resource to firestore: %v", err)
+	}
 	return r, nil
 }
 
-func (im *store) Get(name string, tenant common.Tenant) (common.Resource, error) {
-	im.lock.RLock()
-	defer im.lock.RUnlock()
-	base := im.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
-	dsnap, err := base.Collection("resources").Doc(name).Get(im.ctx)
+func (s *store) Get(name string, tenant common.Tenant) (common.Resource, error) {
+	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
+	dsnap, err := baseQuery.Collection("resources").Doc(name).Get(s.ctx)
 	if err != nil {
 		return common.Resource{}, err
 	}
@@ -80,17 +82,29 @@ func (im *store) Get(name string, tenant common.Tenant) (common.Resource, error)
 	return r, nil
 }
 
-func (im *store) List(tenant common.Tenant) ([]common.Resource, error) {
-	im.lock.RLock()
-	defer im.lock.RUnlock()
-
-	return []common.Resource{}, nil
+func (s *store) List(tenant common.Tenant) ([]common.Resource, error) {
+	result := []common.Resource{}
+	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
+	iter := baseQuery.Collection("resources").Documents(s.ctx)
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return result, err
+		}
+		var r common.Resource
+		doc.DataTo(&r)
+		result = append(result, r)
+	}
+	return result, nil
 }
 
-func (im *store) AddToken(token string, tenant common.Tenant) error {
-	im.lock.Lock()
-	defer im.lock.Unlock()
-	_, err := im.client.Collection("tokens").Doc(token).Set(im.ctx, map[string]interface{}{
+func (s *store) AddToken(token string, tenant common.Tenant) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	_, err := s.client.Collection("tokens").Doc(token).Set(s.ctx, map[string]interface{}{
 		"organization": tenant.Organization,
 	})
 	if err != nil {
@@ -99,14 +113,14 @@ func (im *store) AddToken(token string, tenant common.Tenant) error {
 	return nil
 }
 
-func (im *store) DeleteToken(tenant common.Tenant) error {
-	im.lock.Lock()
-	defer im.lock.Unlock()
+func (s *store) DeleteToken(tenant common.Tenant) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	return nil
 }
 
-func (im *store) GetTenant(token, project string) (common.Tenant, error) {
-	im.lock.Lock()
-	defer im.lock.Unlock()
+func (s *store) GetTenantFromToken(token, project string) (common.Tenant, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	return common.NewTenant(), nil
 }

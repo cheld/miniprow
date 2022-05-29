@@ -75,7 +75,7 @@ func (s *Storage) GetResources(tenant common.Tenant) ([]*common.Resource, error)
 }
 
 func (s *Storage) ValidateToken(token, project string) (common.Tenant, error) {
-	return s.persistence.GetTenant(token, project)
+	return s.persistence.GetTenantFromToken(token, project)
 }
 
 // GetDynamicResourceLifeCycle gets an existing dynamic resource life cycle, errors otherwise
