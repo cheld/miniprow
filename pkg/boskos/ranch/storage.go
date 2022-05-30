@@ -14,7 +14,6 @@ limitations under the License.
 package ranch
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
@@ -25,7 +24,6 @@ import (
 // Storage is used to decouple ranch functionality with the resource persistence layer
 type Storage struct {
 	persistence persistence.Persistence
-	DRLCByType  map[string]common.DynamicResourceLifeCycle
 	// For testing
 	now          func() time.Time
 	generateName func() string
@@ -37,7 +35,6 @@ func NewStorage(resourcePersistence persistence.Persistence) *Storage {
 		persistence:  resourcePersistence,
 		now:          func() time.Time { return time.Now() },
 		generateName: common.GenerateDynamicResourceName,
-		DRLCByType:   make(map[string]common.DynamicResourceLifeCycle),
 	}
 }
 
@@ -79,20 +76,13 @@ func (s *Storage) ValidateToken(token, project string) (common.Tenant, error) {
 }
 
 // GetDynamicResourceLifeCycle gets an existing dynamic resource life cycle, errors otherwise
-func (s *Storage) GetDynamicResourceLifeCycle(name string) (common.DynamicResourceLifeCycle, error) {
-	if drl, ok := s.DRLCByType[name]; ok {
-		return drl, nil
-	}
-	return common.DynamicResourceLifeCycle{}, fmt.Errorf("DynamicResourceLifeCycle with type %s not found", name)
+func (s *Storage) GetDynamicResourceLifeCycle(name string, tenant common.Tenant) (common.DynamicResourceLifeCycle, error) {
+	return s.persistence.GetDynamicResourceLifeCycle(name, tenant)
 }
 
 // GetDynamicResourceLifeCycles list all dynamic resource life cycle
 func (s *Storage) GetDynamicResourceLifeCycles() ([]common.DynamicResourceLifeCycle, error) {
-	// drlcList := &crds.DRLCObjectList{}
-	// if err := s.client.List(s.ctx, drlcList, ctrlruntimeclient.InNamespace(s.namespace)); err != nil {
-	// 	return nil, fmt.Errorf("failed to list drlcs: %v", err)
-	// }
-	drls := make([]common.DynamicResourceLifeCycle, 0, len(s.DRLCByType))
+	drls := make([]common.DynamicResourceLifeCycle, 0, 5)
 	for _, drl := range drls {
 		drls = append(drls, drl)
 	}
@@ -110,7 +100,7 @@ func (s *Storage) SyncResources(config *common.BoskosConfig, tenant common.Tenan
 	}
 	for _, entry := range config.Resources {
 		if entry.IsDRLC() {
-			s.DRLCByType[entry.Type] = common.NewDynamicResourceLifeCycleFromConfig(entry)
+			s.persistence.AddDynamicResourceLifeCycle(common.NewDynamicResourceLifeCycleFromConfig(entry), tenant)
 		} else {
 			for _, res := range common.NewResourcesFromConfig(entry) {
 				s.persistence.Add(res, tenant)

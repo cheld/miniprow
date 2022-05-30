@@ -201,7 +201,7 @@ func addResource(new bool, logger *logrus.Entry, r *Ranch, rType string, typeCou
 		return
 	}
 	logger.Debug("Checking for associated dynamic resource type...")
-	lifeCycle, err := r.Storage.GetDynamicResourceLifeCycle(rType)
+	lifeCycle, err := r.Storage.GetDynamicResourceLifeCycle(rType, tenant)
 	// // Assuming error means no associated dynamic resource.
 	if err == nil {
 		if typeCount < lifeCycle.MaxCount {
@@ -298,7 +298,7 @@ func (r *Ranch) Release(name, dest, owner string, tenant common.Tenant) error {
 		res.Owner = ""
 		res.State = dest
 
-		if lf, err := r.Storage.GetDynamicResourceLifeCycle(res.Type); err == nil {
+		if lf, err := r.Storage.GetDynamicResourceLifeCycle(res.Type, tenant); err == nil {
 			// Assuming error means not existing as the only way to differentiate would be to list
 			// all resources and find the right one which is more costly.
 			if lf.LifeSpan != nil {

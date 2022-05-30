@@ -35,6 +35,8 @@ type Persistence interface {
 	Update(r common.Resource, tenant common.Tenant) (common.Resource, error)
 	Get(name string, tenant common.Tenant) (common.Resource, error)
 	List(tenant common.Tenant) ([]common.Resource, error)
+	AddDynamicResourceLifeCycle(r common.DynamicResourceLifeCycle, tenant common.Tenant) error
+	GetDynamicResourceLifeCycle(rtype string, tenant common.Tenant) (common.DynamicResourceLifeCycle, error)
 	AddToken(token string, tenant common.Tenant) error
 	DeleteToken(tenant common.Tenant) error
 	GetTenantFromToken(token, project string) (common.Tenant, error)

@@ -108,6 +108,26 @@ func (s *store) List(tenant common.Tenant) ([]common.Resource, error) {
 	return result, nil
 }
 
+func (s *store) AddDynamicResourceLifeCycle(r common.DynamicResourceLifeCycle, tenant common.Tenant) error {
+	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
+	_, err := baseQuery.Collection("drlc").Doc(r.Type).Set(s.ctx, r)
+	if err != nil {
+		log.Fatalf("Failed adding resource to firestore: %v", err)
+	}
+	return nil
+}
+
+func (s *store) GetDynamicResourceLifeCycle(rtype string, tenant common.Tenant) (common.DynamicResourceLifeCycle, error) {
+	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
+	dsnap, err := baseQuery.Collection("resources").Doc(rtype).Get(s.ctx)
+	if err != nil {
+		return common.DynamicResourceLifeCycle{}, err
+	}
+	var r common.DynamicResourceLifeCycle
+	dsnap.DataTo(&r)
+	return r, nil
+}
+
 func (s *store) AddToken(token string, tenant common.Tenant) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()

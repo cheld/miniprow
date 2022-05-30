@@ -10,6 +10,7 @@ import (
 
 type inMemoryStore struct {
 	resources map[string]map[string]common.Resource
+	drlc      map[string]map[string]common.DynamicResourceLifeCycle
 	lock      sync.RWMutex
 }
 
@@ -19,10 +20,11 @@ func NewClientCache() ClientCache {
 
 // NewMemoryStorage creates an in memory persistence layer
 func NewPersistence() Persistence {
-	mem := map[string]map[string]common.Resource{}
-	mem["default"] = map[string]common.Resource{}
+	res := map[string]map[string]common.Resource{}
+	drlc := map[string]map[string]common.DynamicResourceLifeCycle{}
 	return &inMemoryStore{
-		resources: mem,
+		resources: res,
+		drlc:      drlc,
 	}
 }
 
@@ -95,6 +97,32 @@ func (im *inMemoryStore) List(tenant common.Tenant) ([]common.Resource, error) {
 		return resources[i].Name < resources[j].Name
 	})
 	return resources, nil
+}
+
+func (im *inMemoryStore) AddDynamicResourceLifeCycle(r common.DynamicResourceLifeCycle, tenant common.Tenant) error {
+	im.lock.Lock()
+	defer im.lock.Unlock()
+	if im.drlc[tenant.ID()] == nil {
+		im.drlc[tenant.ID()] = map[string]common.DynamicResourceLifeCycle{}
+	}
+	_, ok := im.drlc[tenant.ID()][r.Type]
+	if ok {
+		return fmt.Errorf("drlc %s already exists", r.Type)
+	}
+	im.drlc[tenant.ID()][r.Type] = r
+	return nil
+}
+func (im *inMemoryStore) GetDynamicResourceLifeCycle(rtype string, tenant common.Tenant) (common.DynamicResourceLifeCycle, error) {
+	im.lock.Lock()
+	defer im.lock.Unlock()
+	if im.drlc[tenant.ID()] == nil {
+		return common.DynamicResourceLifeCycle{}, fmt.Errorf("cannot find drlc %s", rtype)
+	}
+	r, ok := im.drlc[tenant.ID()][rtype]
+	if !ok {
+		return common.DynamicResourceLifeCycle{}, fmt.Errorf("cannot find drlc %s", rtype)
+	}
+	return r, nil
 }
 
 func (im *inMemoryStore) AddToken(token string, tenant common.Tenant) error {
