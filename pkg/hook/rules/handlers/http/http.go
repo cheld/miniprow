@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	config "github.com/cheld/miniprow/pkg/hook/model"
-	"github.com/cheld/miniprow/pkg/hook/plugins/actions"
+	"github.com/cheld/miniprow/pkg/hook/model"
+	"github.com/cheld/miniprow/pkg/hook/rules/handlers"
 )
 
 const (
@@ -20,10 +20,10 @@ const (
 )
 
 func init() {
-	actions.RegisterHandler(HANDLER_ID, handleAction)
+	handlers.RegisterHandler(HANDLER_ID, handleAction)
 }
 
-func handleAction(params map[string]interface{}, event *config.Event) {
+func handleAction(event *model.Event, params map[string]interface{}) {
 	url := params[PARAM_URL].(string)
 	event.Log("URL: %v", url)
 	method := params[PARAM_METHOD].(string)

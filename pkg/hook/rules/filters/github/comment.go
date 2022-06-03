@@ -3,8 +3,8 @@ package github
 import (
 	"strings"
 
-	config "github.com/cheld/miniprow/pkg/hook/model"
-	"github.com/cheld/miniprow/pkg/hook/plugins/triggers"
+	"github.com/cheld/miniprow/pkg/hook/model"
+	"github.com/cheld/miniprow/pkg/hook/rules/filters"
 	"github.com/go-playground/webhooks/v6/github"
 )
 
@@ -13,11 +13,11 @@ const (
 )
 
 func init() {
-	triggers.RegisterHandler(HANDLER_ID, handleEvent)
+	filters.RegisterFilter(HANDLER_ID, isEventHandled)
 }
 
-func handleEvent(event config.Event, rule config.Rule) bool {
-	searchText := rule.If.When["contains"]
+func isEventHandled(event model.Event, params map[string]string) bool {
+	searchText := params["contains"]
 	eventBody := event.Data.(github.IssueCommentPayload).Comment.Body
 	ruleApplies := strings.Contains(strings.ToUpper(searchText), strings.ToUpper(eventBody))
 	return ruleApplies

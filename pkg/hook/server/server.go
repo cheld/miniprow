@@ -9,9 +9,8 @@ import (
 	"strings"
 
 	config "github.com/cheld/miniprow/pkg/hook/model"
-	_ "github.com/cheld/miniprow/pkg/hook/plugins-imports"
-	"github.com/cheld/miniprow/pkg/hook/plugins/actions"
-	"github.com/cheld/miniprow/pkg/hook/plugins/triggers"
+	"github.com/cheld/miniprow/pkg/hook/rules"
+	_ "github.com/cheld/miniprow/pkg/hook/rulesimports"
 	"github.com/go-playground/webhooks/v6/github"
 	"github.com/sirupsen/logrus"
 )
@@ -72,8 +71,11 @@ func handleGithub(githubWebhook *github.Webhook, cfg config.Configuration) http.
 		//fmt.Println(event.Data.(github.IssueCommentPayload).Repository.Owner.SiteAdmin)
 		//fmt.Println(event.Data.(github.IssueCommentPayload).Repository.Name)
 		event.Type = "github_comment"
-		triggeredRules := triggers.Handle(&event, tenant)
-		actions.Handle(triggeredRules, &event, tenant)
+
+		listeners := rules.NewRuleBasedListeners(cfg.Rules)
+		for _, l := range listeners {
+			l.Handle(event)
+		}
 
 		fmt.Printf("%s", event.Trail())
 	}
@@ -102,8 +104,11 @@ func handleHTTP(cfg config.Configuration) http.HandlerFunc {
 		event.Data = body
 
 		// execute
-		triggeredRules := triggers.Handle(&event, tenant)
-		actions.Handle(triggeredRules, &event, tenant)
+
+		listeners := rules.NewRuleBasedListeners(cfg.Rules)
+		for _, l := range listeners {
+			l.Handle(event)
+		}
 
 		fmt.Printf("%s", event.Trail())
 	}

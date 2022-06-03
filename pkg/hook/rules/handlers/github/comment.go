@@ -5,9 +5,9 @@ import (
 
 	"github.com/cheld/miniprow/pkg/common/util"
 	"github.com/cheld/miniprow/pkg/hook/model"
-	"github.com/cheld/miniprow/pkg/hook/plugins/actions"
-	"github.com/cheld/miniprow/pkg/hook/plugins/actions/http"
-	trigger "github.com/cheld/miniprow/pkg/hook/plugins/triggers/github"
+	filter "github.com/cheld/miniprow/pkg/hook/rules/filters/github"
+	"github.com/cheld/miniprow/pkg/hook/rules/handlers"
+	"github.com/cheld/miniprow/pkg/hook/rules/handlers/http"
 	"github.com/go-playground/webhooks/v6/github"
 )
 
@@ -17,12 +17,12 @@ const (
 )
 
 func init() {
-	actions.RegisterHandler(HANDLER_ID, handleAction)
+	handlers.RegisterHandler(HANDLER_ID, handleAction)
 }
 
-func handleAction(params map[string]interface{}, event *model.Event) {
+func handleAction(event *model.Event, params map[string]interface{}) {
 	if _, ok := event.Data.(github.IssueCommentPayload); !ok {
-		event.Err("Action %v can only be combined with Trigger %v", HANDLER_ID, trigger.HANDLER_ID)
+		event.Err("Action %v can only be combined with Trigger %v", HANDLER_ID, filter.HANDLER_ID)
 		return
 	}
 	issueNumber := event.Data.(github.IssueCommentPayload).Issue.Number
@@ -38,6 +38,6 @@ func handleAction(params map[string]interface{}, event *model.Event) {
 	params[http.PARAM_METHOD] = "POST" //http.VALUE_POST
 	params[http.PARAM_BODY] = fmt.Sprintf("{\"body\": \"![cat](https://static.elle.de/1200x630/smart/images/2016-03/15325082_523f72f18b.jpg)\"}")
 	params[http.PARAM_HEADERS] = headers
-	httptHandler := actions.GetHandler(http.HANDLER_ID)
-	httptHandler(params, event)
+	httptHandler := handlers.GetHandler(http.HANDLER_ID)
+	httptHandler(event, params)
 }
