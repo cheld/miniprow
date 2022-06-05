@@ -25,6 +25,7 @@ import (
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
 	"github.com/cheld/miniprow/pkg/boskos/persistence"
+	"github.com/cheld/miniprow/pkg/common/core"
 )
 
 var (
@@ -61,7 +62,7 @@ func MakeTestRanch(resources []common.Resource) *Ranch {
 	}
 	ranch.requestMgr = NewRequestManager(testTTL)
 	for _, res := range resources {
-		persistence.Add(res, common.NewTenant())
+		persistence.Add(res, core.NewTenant())
 	}
 
 	return ranch
@@ -118,17 +119,17 @@ func AreErrorsEqual(got error, expect error) bool {
 }
 
 func TestSimple(t *testing.T) {
-	tenant := common.NewTenant()
+	tenant := core.NewTenant()
 	c := MakeTestRanch([]common.Resource{})
 	c.Acquire("tc.rtype", "tc.state", "tc.dest", "tc.owner", "requestID", tenant)
 }
 
 func TestMultiTenant(t *testing.T) {
-	tenant1 := common.Tenant{
+	tenant1 := core.Tenant{
 		Organization: "org1",
 		Project:      "proj1",
 	}
-	tenant2 := common.Tenant{
+	tenant2 := core.Tenant{
 		Organization: "org2",
 		Project:      "proj2",
 	}
@@ -163,7 +164,7 @@ func TestMultiTenant(t *testing.T) {
 
 func TestAcquire(t *testing.T) {
 	FakeNow := startTime
-	tenant := common.NewTenant()
+	tenant := core.NewTenant()
 	var testcases = []struct {
 		name      string
 		resources []common.Resource
@@ -282,7 +283,7 @@ func TestAcquire(t *testing.T) {
 }
 
 func TestAcquireRoundRobin(t *testing.T) {
-	tenant := common.NewTenant()
+	tenant := core.NewTenant()
 	var resources []common.Resource
 	for i := 1; i < 5; i++ {
 		resources = append(resources, newResource(fmt.Sprintf("res-%d", i), "t", "s", "", startTime))
@@ -315,7 +316,7 @@ func newResource(name, t, state, owner string, lastUpdate time.Time) common.Reso
 }
 
 func TestAcquireOrder(t *testing.T) {
-	tenant := common.NewTenant()
+	tenant := core.NewTenant()
 	FakeNow := startTime
 	resources := []common.Resource{
 		{
@@ -368,7 +369,7 @@ func TestAcquireOrder(t *testing.T) {
 }
 
 func TestAcquireOnDemand(t *testing.T) {
-	tenant := common.NewTenant()
+	tenant := core.NewTenant()
 	owner := "tester"
 	rType := "dr"
 	requestID1 := "req1234"
@@ -442,7 +443,7 @@ func TestAcquireOnDemand(t *testing.T) {
 }
 
 func TestRelease(t *testing.T) {
-	tenant := common.NewTenant()
+	tenant := core.NewTenant()
 	FakeNow := time.Now()
 	var testcases = []struct {
 		name      string
@@ -539,7 +540,7 @@ func TestRelease(t *testing.T) {
 }
 
 func TestReset(t *testing.T) {
-	tenant := common.NewTenant()
+	tenant := core.NewTenant()
 	FakeNow := startTime
 
 	var testcases = []struct {
@@ -659,7 +660,7 @@ func TestReset(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	tenant := common.NewTenant()
+	tenant := core.NewTenant()
 	FakeNow := startTime
 
 	var testcases = []struct {
@@ -772,7 +773,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestMetric(t *testing.T) {
-	tenant := common.NewTenant()
+	tenant := core.NewTenant()
 	var testcases = []struct {
 		name         string
 		resources    []common.Resource

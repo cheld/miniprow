@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"github.com/cheld/miniprow/pkg/common/core"
 	"github.com/cheld/miniprow/pkg/hook/model"
 	"github.com/cheld/miniprow/pkg/hook/rules/filters"
 	"github.com/cheld/miniprow/pkg/hook/rules/handlers"
@@ -30,10 +31,10 @@ func NewListener(rule model.Rule) listener {
 	return l
 }
 
-func (l *listener) Handle(event model.Event) {
+func (l *listener) Handle(event *core.Event) {
 	if l.eventFilter(event, l.filterParam) {
 		return
 	}
-	l.eventHandler(&event, l.handlerParam)
+	l.eventHandler(event, l.handlerParam)
 
 }

@@ -1,7 +1,7 @@
 package debug
 
 import (
-	"github.com/cheld/miniprow/pkg/hook/model"
+	"github.com/cheld/miniprow/pkg/common/core"
 	"github.com/cheld/miniprow/pkg/hook/rules/handlers"
 )
 
@@ -13,6 +13,6 @@ func init() {
 	handlers.RegisterHandler(HANDLER_ID, handleAction)
 }
 
-func handleAction(event *model.Event, params map[string]interface{}) {
+func handleAction(event *core.Event, params map[string]interface{}) {
 	event.Log("Debug action executed")
 }

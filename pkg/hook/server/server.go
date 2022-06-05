@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cheld/miniprow/pkg/common/core"
 	config "github.com/cheld/miniprow/pkg/hook/model"
 	"github.com/cheld/miniprow/pkg/hook/rules"
 	_ "github.com/cheld/miniprow/pkg/hook/rulesimports"
@@ -50,7 +51,7 @@ func handleGithub(githubWebhook *github.Webhook, cfg config.Configuration) http.
 		logrus.Infof("Github event received")
 		tenant := config.Tenant{}
 		tenant.Config = cfg
-		event := config.Event{}
+		event := core.Event{}
 		payload, err := githubWebhook.Parse(req, github.IssueCommentEvent, github.InstallationEvent)
 		if err != nil {
 			if err == github.ErrEventNotFound {
@@ -74,7 +75,7 @@ func handleGithub(githubWebhook *github.Webhook, cfg config.Configuration) http.
 
 		listeners := rules.NewRuleBasedListeners(cfg.Rules)
 		for _, l := range listeners {
-			l.Handle(event)
+			l.Handle(&event)
 		}
 
 		fmt.Printf("%s", event.Trail())
@@ -88,7 +89,7 @@ func handleHTTP(cfg config.Configuration) http.HandlerFunc {
 		tenant.Config = cfg
 
 		//parse event
-		event := config.Event{}
+		event := core.Event{}
 		event.Type = "http"
 		path := strings.TrimPrefix(req.URL.Path, "/hook/http/")
 		if path != "" {
@@ -107,7 +108,7 @@ func handleHTTP(cfg config.Configuration) http.HandlerFunc {
 
 		listeners := rules.NewRuleBasedListeners(cfg.Rules)
 		for _, l := range listeners {
-			l.Handle(event)
+			l.Handle(&event)
 		}
 
 		fmt.Printf("%s", event.Trail())

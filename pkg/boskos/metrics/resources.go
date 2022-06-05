@@ -22,6 +22,7 @@ import (
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
 	"github.com/cheld/miniprow/pkg/boskos/ranch"
+	"github.com/cheld/miniprow/pkg/common/core"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
@@ -56,7 +57,7 @@ func (rc resourcesCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (rc resourcesCollector) Collect(ch chan<- prometheus.Metric) {
-	metrics, err := rc.ranch.AllMetrics(common.NewTenant())
+	metrics, err := rc.ranch.AllMetrics(core.NewTenant())
 	if err != nil {
 		logrus.WithError(err).Error("failed to get metrics")
 	}

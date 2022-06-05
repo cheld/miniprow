@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 
+	"github.com/cheld/miniprow/pkg/common/core"
 	"github.com/cheld/miniprow/pkg/common/util"
 	"gopkg.in/yaml.v3"
 )
@@ -26,7 +27,7 @@ type Action struct {
 	With   map[string]interface{}
 }
 
-func (config *Configuration) Filter(event *Event) []Rule {
+func (config *Configuration) Filter(event *core.Event) []Rule {
 	matchingRules := []Rule{}
 	for _, rule := range config.Rules {
 		if rule.If.Trigger == event.Type {

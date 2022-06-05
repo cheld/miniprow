@@ -3,8 +3,8 @@ package github
 import (
 	"fmt"
 
+	"github.com/cheld/miniprow/pkg/common/core"
 	"github.com/cheld/miniprow/pkg/common/util"
-	"github.com/cheld/miniprow/pkg/hook/model"
 	filter "github.com/cheld/miniprow/pkg/hook/rules/filters/github"
 	"github.com/cheld/miniprow/pkg/hook/rules/handlers"
 	"github.com/cheld/miniprow/pkg/hook/rules/handlers/http"
@@ -20,7 +20,7 @@ func init() {
 	handlers.RegisterHandler(HANDLER_ID, handleAction)
 }
 
-func handleAction(event *model.Event, params map[string]interface{}) {
+func handleAction(event *core.Event, params map[string]interface{}) {
 	if _, ok := event.Data.(github.IssueCommentPayload); !ok {
 		event.Err("Action %v can only be combined with Trigger %v", HANDLER_ID, filter.HANDLER_ID)
 		return

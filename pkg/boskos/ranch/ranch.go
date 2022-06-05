@@ -25,6 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/common/core"
 	"github.com/cheld/miniprow/pkg/common/util"
 )
 
@@ -80,7 +81,7 @@ func (s StateNotMatch) Error() string {
 // In: config - path to resource file
 //     storage - path to where to save/restore the state data
 // Out: A Ranch object, loaded from config/storage, or error
-func NewRanch(config *[]byte, s *Storage, ttl time.Duration, tenant common.Tenant) (*Ranch, error) {
+func NewRanch(config *[]byte, s *Storage, ttl time.Duration, tenant core.Tenant) (*Ranch, error) {
 	newRanch := &Ranch{
 		Storage:    s,
 		requestMgr: NewRequestManager(ttl),
@@ -107,7 +108,7 @@ type acquireRequestPriorityKey struct {
 //     requestID - request ID to get a priority in the queue
 // Out: A valid Resource object and the time when the resource was originally requested on success, or
 //      ResourceNotFound error if target type resource does not exist in target state.
-func (r *Ranch) Acquire(rType, state, dest, owner, requestID string, tenant common.Tenant) (*common.Resource, time.Time, error) {
+func (r *Ranch) Acquire(rType, state, dest, owner, requestID string, tenant core.Tenant) (*common.Resource, time.Time, error) {
 	logger := logrus.WithFields(logrus.Fields{
 		"type":       rType,
 		"state":      state,
@@ -195,7 +196,7 @@ func (r *Ranch) Acquire(rType, state, dest, owner, requestID string, tenant comm
 	return returnRes, createdTime, nil
 }
 
-func addResource(new bool, logger *logrus.Entry, r *Ranch, rType string, typeCount int, tenant common.Tenant) {
+func addResource(new bool, logger *logrus.Entry, r *Ranch, rType string, typeCount int, tenant core.Tenant) {
 	fmt.Printf("add resource %v\n", new)
 	if !new {
 		return
@@ -225,7 +226,7 @@ func addResource(new bool, logger *logrus.Entry, r *Ranch, rType string, typeCou
 //     names - names of resource to acquire
 // Out: A valid list of Resource object on success, or
 //      ResourceNotFound error if target type resource does not exist in target state.
-func (r *Ranch) AcquireByState(state, dest, owner string, names []string, tenant common.Tenant) ([]*common.Resource, error) {
+func (r *Ranch) AcquireByState(state, dest, owner string, names []string, tenant core.Tenant) ([]*common.Resource, error) {
 	if names == nil {
 		return nil, fmt.Errorf("must provide names of expected resources")
 	}
@@ -283,7 +284,7 @@ func (r *Ranch) AcquireByState(state, dest, owner string, names []string, tenant
 // Out: nil on success, or
 //      OwnerNotMatch error if owner does not match current owner of the resource, or
 //      ResourceNotFound error if target named resource does not exist.
-func (r *Ranch) Release(name, dest, owner string, tenant common.Tenant) error {
+func (r *Ranch) Release(name, dest, owner string, tenant core.Tenant) error {
 	logrus.Infof("Release")
 	if err := retryOnConflict(func() error {
 		res, err := r.Storage.GetResource(name, tenant)
@@ -330,7 +331,7 @@ func (r *Ranch) Release(name, dest, owner string, tenant common.Tenant) error {
 //      OwnerNotMatch error if owner does not match current owner of the resource, or
 //      ResourceNotFound error if target named resource does not exist, or
 //      StateNotMatch error if state does not match current state of the resource.
-func (r *Ranch) Update(name, owner, state string, ud *common.UserData, tenant common.Tenant) error {
+func (r *Ranch) Update(name, owner, state string, ud *common.UserData, tenant core.Tenant) error {
 	if err := retryOnConflict(func() error {
 		res, err := r.Storage.GetResource(name, tenant)
 		if err != nil {
@@ -365,7 +366,7 @@ func (r *Ranch) Update(name, owner, state string, ud *common.UserData, tenant co
 //     expire - duration before resource's last update
 //     dest - destination state of expired resources
 // Out: map of resource name - resource owner.
-func (r *Ranch) Reset(rtype, state string, expire time.Duration, dest string, tenant common.Tenant) (map[string]string, error) {
+func (r *Ranch) Reset(rtype, state string, expire time.Duration, dest string, tenant core.Tenant) (map[string]string, error) {
 	var ret map[string]string
 	if err := retryOnConflict(func() error {
 		ret = make(map[string]string)
@@ -396,7 +397,7 @@ func (r *Ranch) Reset(rtype, state string, expire time.Duration, dest string, te
 }
 
 // SyncConfig updates resource list from a file
-func (r *Ranch) SyncConfig(cfg *[]byte, tenant common.Tenant) error {
+func (r *Ranch) SyncConfig(cfg *[]byte, tenant core.Tenant) error {
 	config, err := common.ParseConfig(cfg)
 	if err != nil {
 		return err
@@ -432,7 +433,7 @@ func (r *Ranch) StartRequestGC(gcPeriod time.Duration) {
 }
 
 // Metric returns a metric object with metrics filled in
-func (r *Ranch) Metric(rtype string, tenant common.Tenant) (common.Metric, error) {
+func (r *Ranch) Metric(rtype string, tenant core.Tenant) (common.Metric, error) {
 	metric := common.NewMetric(rtype)
 
 	resources, err := r.Storage.GetResources(tenant)
@@ -458,7 +459,7 @@ func (r *Ranch) Metric(rtype string, tenant common.Tenant) (common.Metric, error
 }
 
 // AllMetrics returns a list of Metric objects for all resource types.
-func (r *Ranch) AllMetrics(tenant common.Tenant) ([]common.Metric, error) {
+func (r *Ranch) AllMetrics(tenant core.Tenant) ([]common.Metric, error) {
 	resources, err := r.Storage.GetResources(tenant)
 	if err != nil {
 		logrus.WithError(err).Error("cannot get resources")
@@ -511,6 +512,6 @@ func retryOnConflict(fn func() error) error {
 	return fn()
 }
 
-func (r *Ranch) ValidateAuthToken(token, project string) (common.Tenant, error) {
+func (r *Ranch) ValidateAuthToken(token, project string) (core.Tenant, error) {
 	return r.Storage.ValidateToken(token, project)
 }

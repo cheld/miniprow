@@ -31,6 +31,7 @@ import (
 	"github.com/cheld/miniprow/pkg/boskos/metrics"
 	"github.com/cheld/miniprow/pkg/boskos/persistence"
 	"github.com/cheld/miniprow/pkg/boskos/ranch"
+	"github.com/cheld/miniprow/pkg/common/core"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -68,7 +69,7 @@ type Boskos struct {
 func NewHandler(boskosCfg *[]byte) *Boskos {
 	persistence := persistence.NewFirestore()
 	storage := ranch.NewStorage(persistence)
-	r, err := ranch.NewRanch(boskosCfg, storage, defaultRequestTTL, common.NewTenant())
+	r, err := ranch.NewRanch(boskosCfg, storage, defaultRequestTTL, core.NewTenant())
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -172,7 +173,7 @@ func handleAcquire(r *ranch.Ranch) http.HandlerFunc {
 		dest := req.URL.Query().Get("dest")
 		owner := req.URL.Query().Get("owner")
 		requestID := req.URL.Query().Get("request_id")
-		tenant := req.Context().Value(authenticatedTenantKey).(common.Tenant)
+		tenant := req.Context().Value(authenticatedTenantKey).(core.Tenant)
 
 		if rtype == "" || state == "" || dest == "" || owner == "" {
 			bre := badRequestError(fmt.Sprintf("Type: %v, state: %v, dest: %v, owner: %v, all of them must be set in the request.", rtype, state, dest, owner))
@@ -232,7 +233,7 @@ func handleAcquireByState(r *ranch.Ranch) http.HandlerFunc {
 		dest := req.URL.Query().Get("dest")
 		owner := req.URL.Query().Get("owner")
 		names := req.URL.Query().Get("names")
-		tenant := req.Context().Value(authenticatedTenantKey).(common.Tenant)
+		tenant := req.Context().Value(authenticatedTenantKey).(core.Tenant)
 		if state == "" || dest == "" || owner == "" || names == "" {
 			msg := fmt.Sprintf(
 				"state: %v, dest: %v, owner: %v, names: %v - all of them must be set in the request.",
@@ -295,7 +296,7 @@ func handleRelease(r *ranch.Ranch) http.HandlerFunc {
 		name := req.URL.Query().Get("name")
 		dest := req.URL.Query().Get("dest")
 		owner := req.URL.Query().Get("owner")
-		tenant := req.Context().Value(authenticatedTenantKey).(common.Tenant)
+		tenant := req.Context().Value(authenticatedTenantKey).(core.Tenant)
 		if name == "" || dest == "" || owner == "" {
 			msg := fmt.Sprintf("Name: %v, dest: %v, owner: %v, all of them must be set in the request.", name, dest, owner)
 			logrus.Warning(msg)
@@ -334,7 +335,7 @@ func handleReset(r *ranch.Ranch) http.HandlerFunc {
 		state := req.URL.Query().Get("state")
 		expireStr := req.URL.Query().Get("expire")
 		dest := req.URL.Query().Get("dest")
-		tenant := req.Context().Value(authenticatedTenantKey).(common.Tenant)
+		tenant := req.Context().Value(authenticatedTenantKey).(core.Tenant)
 
 		logrus.Infof("%v, %v, %v, %v", rtype, state, expireStr, dest)
 
@@ -389,7 +390,7 @@ func handleUpdate(r *ranch.Ranch) http.HandlerFunc {
 		name := req.URL.Query().Get("name")
 		owner := req.URL.Query().Get("owner")
 		state := req.URL.Query().Get("state")
-		tenant := req.Context().Value(authenticatedTenantKey).(common.Tenant)
+		tenant := req.Context().Value(authenticatedTenantKey).(core.Tenant)
 
 		if name == "" || owner == "" || state == "" {
 			msg := fmt.Sprintf("Name: %v, owner: %v, state : %v, all of them must be set in the request.", name, owner, state)
@@ -434,7 +435,7 @@ func handleMetric(r *ranch.Ranch) http.HandlerFunc {
 		}
 
 		rtype := req.URL.Query().Get("type")
-		tenant := req.Context().Value(authenticatedTenantKey).(common.Tenant)
+		tenant := req.Context().Value(authenticatedTenantKey).(core.Tenant)
 		if rtype == "" {
 			msg := "Type must be set in the request."
 			logrus.Warning(msg)

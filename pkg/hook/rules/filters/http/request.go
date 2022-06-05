@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/cheld/miniprow/pkg/hook/model"
+	"github.com/cheld/miniprow/pkg/common/core"
 	"github.com/cheld/miniprow/pkg/hook/rules/filters"
 )
 
@@ -13,7 +13,7 @@ func init() {
 	filters.RegisterFilter(HANDLER_ID, isEventHandled)
 }
 
-func isEventHandled(event model.Event, params map[string]string) bool {
+func isEventHandled(event *core.Event, params map[string]string) bool {
 
 	return true
 }

@@ -1,13 +1,13 @@
 package handlers
 
-import config "github.com/cheld/miniprow/pkg/hook/model"
+import "github.com/cheld/miniprow/pkg/common/core"
 
 var (
 	handlers = map[string]Handler{}
 )
 
 // TriggerHandler defines the function contract for all triggers.
-type Handler func(*config.Event, map[string]interface{})
+type Handler func(*core.Event, map[string]interface{})
 
 func RegisterHandler(name string, fn Handler) {
 	handlers[name] = fn
