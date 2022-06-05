@@ -22,6 +22,7 @@ import (
 
 	boskosServer "github.com/cheld/miniprow/pkg/boskos/server"
 	"github.com/cheld/miniprow/pkg/common/info"
+	"github.com/cheld/miniprow/pkg/common/notification"
 	commonServer "github.com/cheld/miniprow/pkg/common/server"
 	"github.com/cheld/miniprow/pkg/common/util"
 	hookServer "github.com/cheld/miniprow/pkg/hook/server"
@@ -79,11 +80,12 @@ chat-ops via /foo style commands and Slack notifications.`,
 		logrus.Infof("Version: %s, commit %s\n", info.Version, info.Commit)
 
 		// Register http endpoints
+		notifyer := notification.NewDispatcher()
 		mux := http.NewServeMux()
-		mux.Handle("/hook/", hookServer.NewHandler(hookCfg, secret))
+		mux.Handle("/hook/", hookServer.NewHandler(notifyer, hookCfg, secret))
 		mux.Handle("/boskos/", boskosServer.NewHandler(boskosCfg))
 		mux.Handle("/metrics", promhttp.Handler())
-		mux.Handle("/", commonServer.NewHandler())
+		mux.Handle("/", commonServer.NewHandler(notifyer))
 
 		// Start server
 		addr := fmt.Sprintf("%s:%d", bindaddr, port)

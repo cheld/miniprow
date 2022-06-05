@@ -1,22 +1,28 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/cheld/miniprow/pkg/common/core"
 	"github.com/cheld/miniprow/pkg/common/info"
+	"github.com/cheld/miniprow/pkg/common/notification"
 )
 
 type CommonServer struct {
 	mux *http.ServeMux
 }
 
-func NewHandler() *CommonServer {
+func NewHandler(notifyer *notification.Dispatcher) *CommonServer {
 	server := CommonServer{
 		mux: http.NewServeMux(),
 	}
 	server.mux.Handle("/health", handleHealth())
 	server.mux.Handle("/version", handleVersion())
+	notifyer.Register(func(*core.Event, core.Tenant, context.Context) {
+		fmt.Println("----------------event received")
+	}, "github_comment")
 	return &server
 }
 

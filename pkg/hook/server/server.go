@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/cheld/miniprow/pkg/common/core"
+	"github.com/cheld/miniprow/pkg/common/notification"
 	config "github.com/cheld/miniprow/pkg/hook/model"
 	"github.com/cheld/miniprow/pkg/hook/rules"
 	_ "github.com/cheld/miniprow/pkg/hook/rulesimports"
@@ -16,7 +18,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewHandler(hookCfg *[]byte, secret string) *Hook {
+func NewHandler(notifyer *notification.Dispatcher, hookCfg *[]byte, secret string) *Hook {
 	cfg, err := config.Load(hookCfg)
 	if err != nil {
 		fmt.Println(err)
@@ -32,9 +34,11 @@ func NewHandler(hookCfg *[]byte, secret string) *Hook {
 		mux: http.NewServeMux(),
 	}
 
-	hook.mux.Handle("/hook/github", handleGithub(githubWebhook, cfg))
+	hook.mux.Handle("/hook/github", handleGithub(notifyer, githubWebhook, cfg))
 	hook.mux.Handle("/hook/http/", handleHTTP(cfg))
-
+	notifyer.Register(func(*core.Event, core.Tenant, context.Context) {
+		fmt.Println("----------------event received in hook")
+	}, "github_comment")
 	return hook
 }
 
@@ -46,7 +50,7 @@ func (piper *Hook) ServeHTTP(writer http.ResponseWriter, request *http.Request) 
 	piper.mux.ServeHTTP(writer, request)
 }
 
-func handleGithub(githubWebhook *github.Webhook, cfg config.Configuration) http.HandlerFunc {
+func handleGithub(notifyer *notification.Dispatcher, githubWebhook *github.Webhook, cfg config.Configuration) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		logrus.Infof("Github event received")
 		tenant := config.Tenant{}
@@ -72,6 +76,8 @@ func handleGithub(githubWebhook *github.Webhook, cfg config.Configuration) http.
 		//fmt.Println(event.Data.(github.IssueCommentPayload).Repository.Owner.SiteAdmin)
 		//fmt.Println(event.Data.(github.IssueCommentPayload).Repository.Name)
 		event.Type = "github_comment"
+
+		notifyer.Dispatch(&event, core.NewTenant())
 
 		listeners := rules.NewRuleBasedListeners(cfg.Rules)
 		for _, l := range listeners {
