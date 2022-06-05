@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/common/core"
 )
 
 type inMemoryStore struct {
@@ -28,7 +29,7 @@ func NewPersistence() Persistence {
 	}
 }
 
-func (im *inMemoryStore) Add(r common.Resource, tenant common.Tenant) error {
+func (im *inMemoryStore) Add(r common.Resource, tenant core.Tenant) error {
 	im.lock.Lock()
 	defer im.lock.Unlock()
 	if im.resources[tenant.ID()] == nil {
@@ -42,7 +43,7 @@ func (im *inMemoryStore) Add(r common.Resource, tenant common.Tenant) error {
 	return nil
 }
 
-func (im *inMemoryStore) Delete(name string, tenant common.Tenant) error {
+func (im *inMemoryStore) Delete(name string, tenant core.Tenant) error {
 	im.lock.Lock()
 	defer im.lock.Unlock()
 	if im.resources[tenant.ID()] == nil {
@@ -56,7 +57,7 @@ func (im *inMemoryStore) Delete(name string, tenant common.Tenant) error {
 	return nil
 }
 
-func (im *inMemoryStore) Update(r common.Resource, tenant common.Tenant) (common.Resource, error) {
+func (im *inMemoryStore) Update(r common.Resource, tenant core.Tenant) (common.Resource, error) {
 	im.lock.Lock()
 	defer im.lock.Unlock()
 	if im.resources[tenant.ID()] == nil {
@@ -70,7 +71,7 @@ func (im *inMemoryStore) Update(r common.Resource, tenant common.Tenant) (common
 	return r, nil
 }
 
-func (im *inMemoryStore) Get(name string, tenant common.Tenant) (common.Resource, error) {
+func (im *inMemoryStore) Get(name string, tenant core.Tenant) (common.Resource, error) {
 	im.lock.RLock()
 	defer im.lock.RUnlock()
 	if im.resources[tenant.ID()] == nil {
@@ -83,7 +84,7 @@ func (im *inMemoryStore) Get(name string, tenant common.Tenant) (common.Resource
 	return r, nil
 }
 
-func (im *inMemoryStore) List(tenant common.Tenant) ([]common.Resource, error) {
+func (im *inMemoryStore) List(tenant core.Tenant) ([]common.Resource, error) {
 	im.lock.RLock()
 	defer im.lock.RUnlock()
 	if im.resources[tenant.ID()] == nil {
@@ -99,7 +100,7 @@ func (im *inMemoryStore) List(tenant common.Tenant) ([]common.Resource, error) {
 	return resources, nil
 }
 
-func (im *inMemoryStore) AddDynamicResourceLifeCycle(r common.DynamicResourceLifeCycle, tenant common.Tenant) error {
+func (im *inMemoryStore) AddDynamicResourceLifeCycle(r common.DynamicResourceLifeCycle, tenant core.Tenant) error {
 	im.lock.Lock()
 	defer im.lock.Unlock()
 	if im.drlc[tenant.ID()] == nil {
@@ -112,7 +113,7 @@ func (im *inMemoryStore) AddDynamicResourceLifeCycle(r common.DynamicResourceLif
 	im.drlc[tenant.ID()][r.Type] = r
 	return nil
 }
-func (im *inMemoryStore) GetDynamicResourceLifeCycle(rtype string, tenant common.Tenant) (common.DynamicResourceLifeCycle, error) {
+func (im *inMemoryStore) GetDynamicResourceLifeCycle(rtype string, tenant core.Tenant) (common.DynamicResourceLifeCycle, error) {
 	im.lock.Lock()
 	defer im.lock.Unlock()
 	if im.drlc[tenant.ID()] == nil {
@@ -125,22 +126,22 @@ func (im *inMemoryStore) GetDynamicResourceLifeCycle(rtype string, tenant common
 	return r, nil
 }
 
-func (im *inMemoryStore) AddToken(token string, tenant common.Tenant) error {
+func (im *inMemoryStore) AddToken(token string, tenant core.Tenant) error {
 	im.lock.Lock()
 	defer im.lock.Unlock()
 	return nil
 }
 
-func (im *inMemoryStore) DeleteToken(tenant common.Tenant) error {
+func (im *inMemoryStore) DeleteToken(tenant core.Tenant) error {
 	im.lock.Lock()
 	defer im.lock.Unlock()
 	return nil
 }
 
-func (im *inMemoryStore) GetTenantFromToken(token, project string) (common.Tenant, error) {
+func (im *inMemoryStore) GetTenantFromToken(token, project string) (core.Tenant, error) {
 	im.lock.Lock()
 	defer im.lock.Unlock()
-	return common.NewTenant(), nil
+	return core.NewTenant(), nil
 }
 
 func (im *inMemoryStore) Close() {

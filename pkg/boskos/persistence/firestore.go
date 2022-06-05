@@ -8,6 +8,7 @@ import (
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
 	"github.com/cheld/miniprow/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/common/core"
 	"github.com/cheld/miniprow/pkg/common/util"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -51,7 +52,7 @@ func (s *store) Close() {
 	s.client.Close()
 }
 
-func (s *store) Add(r common.Resource, tenant common.Tenant) error {
+func (s *store) Add(r common.Resource, tenant core.Tenant) error {
 	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
 	_, err := baseQuery.Collection("resources").Doc(r.Name).Set(s.ctx, r)
 	if err != nil {
@@ -60,7 +61,7 @@ func (s *store) Add(r common.Resource, tenant common.Tenant) error {
 	return nil
 }
 
-func (s *store) Delete(name string, tenant common.Tenant) error {
+func (s *store) Delete(name string, tenant core.Tenant) error {
 	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
 	_, err := baseQuery.Collection("resources").Doc(name).Delete(s.ctx)
 	if err != nil {
@@ -69,7 +70,7 @@ func (s *store) Delete(name string, tenant common.Tenant) error {
 	return nil
 }
 
-func (s *store) Update(r common.Resource, tenant common.Tenant) (common.Resource, error) {
+func (s *store) Update(r common.Resource, tenant core.Tenant) (common.Resource, error) {
 	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
 	_, err := baseQuery.Collection("resources").Doc(r.Name).Set(s.ctx, r)
 	if err != nil {
@@ -78,7 +79,7 @@ func (s *store) Update(r common.Resource, tenant common.Tenant) (common.Resource
 	return r, nil
 }
 
-func (s *store) Get(name string, tenant common.Tenant) (common.Resource, error) {
+func (s *store) Get(name string, tenant core.Tenant) (common.Resource, error) {
 	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
 	dsnap, err := baseQuery.Collection("resources").Doc(name).Get(s.ctx)
 	if err != nil {
@@ -89,7 +90,7 @@ func (s *store) Get(name string, tenant common.Tenant) (common.Resource, error) 
 	return r, nil
 }
 
-func (s *store) List(tenant common.Tenant) ([]common.Resource, error) {
+func (s *store) List(tenant core.Tenant) ([]common.Resource, error) {
 	result := []common.Resource{}
 	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
 	iter := baseQuery.Collection("resources").Documents(s.ctx)
@@ -108,7 +109,7 @@ func (s *store) List(tenant common.Tenant) ([]common.Resource, error) {
 	return result, nil
 }
 
-func (s *store) AddDynamicResourceLifeCycle(r common.DynamicResourceLifeCycle, tenant common.Tenant) error {
+func (s *store) AddDynamicResourceLifeCycle(r common.DynamicResourceLifeCycle, tenant core.Tenant) error {
 	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
 	_, err := baseQuery.Collection("drlc").Doc(r.Type).Set(s.ctx, r)
 	if err != nil {
@@ -117,7 +118,7 @@ func (s *store) AddDynamicResourceLifeCycle(r common.DynamicResourceLifeCycle, t
 	return nil
 }
 
-func (s *store) GetDynamicResourceLifeCycle(rtype string, tenant common.Tenant) (common.DynamicResourceLifeCycle, error) {
+func (s *store) GetDynamicResourceLifeCycle(rtype string, tenant core.Tenant) (common.DynamicResourceLifeCycle, error) {
 	baseQuery := s.client.Collection("organizations").Doc(tenant.Organization).Collection("projects").Doc(tenant.Project)
 	dsnap, err := baseQuery.Collection("resources").Doc(rtype).Get(s.ctx)
 	if err != nil {
@@ -128,7 +129,7 @@ func (s *store) GetDynamicResourceLifeCycle(rtype string, tenant common.Tenant) 
 	return r, nil
 }
 
-func (s *store) AddToken(token string, tenant common.Tenant) error {
+func (s *store) AddToken(token string, tenant core.Tenant) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	_, err := s.client.Collection("tokens").Doc(token).Set(s.ctx, map[string]interface{}{
@@ -140,14 +141,14 @@ func (s *store) AddToken(token string, tenant common.Tenant) error {
 	return nil
 }
 
-func (s *store) DeleteToken(tenant common.Tenant) error {
+func (s *store) DeleteToken(tenant core.Tenant) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	return nil
 }
 
-func (s *store) GetTenantFromToken(token, project string) (common.Tenant, error) {
+func (s *store) GetTenantFromToken(token, project string) (core.Tenant, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	return common.NewTenant(), nil
+	return core.NewTenant(), nil
 }

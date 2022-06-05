@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/common/core"
 )
 
 func createStorages() []Persistence {
@@ -45,11 +46,11 @@ func TestAddDelete(t *testing.T) {
 		}
 		sort.Stable(common.ResourceByName(resources))
 		for _, res := range resources {
-			if err = s.Add(res, common.NewTenant()); err != nil {
+			if err = s.Add(res, core.NewTenant()); err != nil {
 				t.Errorf("unable to add %s, %v", res.Name, err)
 			}
 		}
-		returnedResources, err := s.List(common.NewTenant())
+		returnedResources, err := s.List(core.NewTenant())
 		if err != nil {
 			t.Errorf("unable to list resources, %v", err)
 		}
@@ -58,12 +59,12 @@ func TestAddDelete(t *testing.T) {
 			t.Errorf("received resources (%v) do not match resources (%v)", resources, returnedResources)
 		}
 		for _, r := range returnedResources {
-			err = s.Delete(r.Name, common.NewTenant())
+			err = s.Delete(r.Name, core.NewTenant())
 			if err != nil {
 				t.Errorf("unable to delete resource %s.%v", r.Name, err)
 			}
 		}
-		eResources, err := s.List(common.NewTenant())
+		eResources, err := s.List(core.NewTenant())
 		if err != nil {
 			t.Errorf("unable to list resources, %v", err)
 		}
@@ -79,15 +80,15 @@ func TestUpdateGet(t *testing.T) {
 			Name: "original",
 			Type: "type",
 		}
-		if err := s.Add(oRes, common.NewTenant()); err != nil {
+		if err := s.Add(oRes, core.NewTenant()); err != nil {
 			t.Errorf("unable to add resource, %v", err)
 		}
 		uRes := oRes
 		uRes.Type = "typeUpdated"
-		if _, err := s.Update(uRes, common.NewTenant()); err != nil {
+		if _, err := s.Update(uRes, core.NewTenant()); err != nil {
 			t.Errorf("unable to update resource %v", err)
 		}
-		res, err := s.Get(oRes.Name, common.NewTenant())
+		res, err := s.Get(oRes.Name, core.NewTenant())
 		if err != nil {
 			t.Errorf("unable to get resource, %v", err)
 		}
@@ -103,17 +104,17 @@ func TestNegativeDeleteGet(t *testing.T) {
 			Name: "original",
 			Type: "type",
 		}
-		if err := s.Add(oRes, common.NewTenant()); err != nil {
+		if err := s.Add(oRes, core.NewTenant()); err != nil {
 			t.Errorf("unable to add resource, %v", err)
 		}
 		uRes := common.Resource{
 			Name: "notExist",
 			Type: "type",
 		}
-		if _, err := s.Update(uRes, common.NewTenant()); err == nil {
+		if _, err := s.Update(uRes, core.NewTenant()); err == nil {
 			t.Errorf("should not be able to update resource, %v", err)
 		}
-		if err := s.Delete(uRes.Name, common.NewTenant()); err == nil {
+		if err := s.Delete(uRes.Name, core.NewTenant()); err == nil {
 			t.Errorf("should not be able to delete resource, %v", err)
 		}
 	}
@@ -125,14 +126,14 @@ func TestMultiTenant(t *testing.T) {
 			Name: "original",
 			Type: "type",
 		}
-		if err := s.Add(oRes, common.NewTenant()); err != nil {
+		if err := s.Add(oRes, core.NewTenant()); err != nil {
 			t.Errorf("unable to add resource, %v", err)
 		}
-		_, err := s.Get(oRes.Name, common.NewTenant())
+		_, err := s.Get(oRes.Name, core.NewTenant())
 		if err != nil {
 			t.Errorf("unable to get resource, %v", err)
 		}
-		_, err = s.Get(oRes.Name, common.Tenant{
+		_, err = s.Get(oRes.Name, core.Tenant{
 			Organization: "different",
 			Project:      "different",
 		})

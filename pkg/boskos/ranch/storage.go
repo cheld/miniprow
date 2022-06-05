@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/common/core"
 
 	"github.com/cheld/miniprow/pkg/boskos/persistence"
 )
@@ -39,30 +40,30 @@ func NewStorage(resourcePersistence persistence.Persistence) *Storage {
 }
 
 // AddResource adds a new resource
-func (s *Storage) AddResource(resource *common.Resource, tenant common.Tenant) error {
+func (s *Storage) AddResource(resource *common.Resource, tenant core.Tenant) error {
 	return s.persistence.Add(*resource, tenant)
 }
 
 // DeleteResource deletes a resource if it exists, errors otherwise
-func (s *Storage) DeleteResource(name string, tenant common.Tenant) error {
+func (s *Storage) DeleteResource(name string, tenant core.Tenant) error {
 	return s.persistence.Delete(name, tenant)
 }
 
 // UpdateResource updates a resource if it exists, errors otherwise
-func (s *Storage) UpdateResource(resource *common.Resource, tenant common.Tenant) (*common.Resource, error) {
+func (s *Storage) UpdateResource(resource *common.Resource, tenant core.Tenant) (*common.Resource, error) {
 	resource.LastUpdate = s.now()
 	s.persistence.Update(*resource, tenant)
 	return resource, nil
 }
 
 // GetResource gets an existing resource, errors otherwise
-func (s *Storage) GetResource(name string, tenant common.Tenant) (*common.Resource, error) {
+func (s *Storage) GetResource(name string, tenant core.Tenant) (*common.Resource, error) {
 	res, err := s.persistence.Get(name, tenant)
 	return &res, err
 }
 
 // GetResources list all resources
-func (s *Storage) GetResources(tenant common.Tenant) ([]*common.Resource, error) {
+func (s *Storage) GetResources(tenant core.Tenant) ([]*common.Resource, error) {
 	r, _ := s.persistence.List(tenant)
 	resourceList := make([]*common.Resource, len(r))
 	for i := 0; i < len(r); i++ {
@@ -71,12 +72,12 @@ func (s *Storage) GetResources(tenant common.Tenant) ([]*common.Resource, error)
 	return resourceList, nil
 }
 
-func (s *Storage) ValidateToken(token, project string) (common.Tenant, error) {
+func (s *Storage) ValidateToken(token, project string) (core.Tenant, error) {
 	return s.persistence.GetTenantFromToken(token, project)
 }
 
 // GetDynamicResourceLifeCycle gets an existing dynamic resource life cycle, errors otherwise
-func (s *Storage) GetDynamicResourceLifeCycle(name string, tenant common.Tenant) (common.DynamicResourceLifeCycle, error) {
+func (s *Storage) GetDynamicResourceLifeCycle(name string, tenant core.Tenant) (common.DynamicResourceLifeCycle, error) {
 	return s.persistence.GetDynamicResourceLifeCycle(name, tenant)
 }
 
@@ -94,7 +95,7 @@ func (s *Storage) GetDynamicResourceLifeCycles() ([]common.DynamicResourceLifeCy
 // from persistence.
 // If the newly deleted resource is currently held by a user, the deletion will
 // yield to next update cycle.
-func (s *Storage) SyncResources(config *common.BoskosConfig, tenant common.Tenant) error {
+func (s *Storage) SyncResources(config *common.BoskosConfig, tenant core.Tenant) error {
 	if config == nil {
 		return nil
 	}

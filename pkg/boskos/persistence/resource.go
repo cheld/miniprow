@@ -18,27 +18,28 @@ package persistence
 
 import (
 	"github.com/cheld/miniprow/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/common/core"
 )
 
 // PersistenceLayer defines a simple interface to persists Boskos Information
 type ClientCache interface {
-	Add(r common.Resource, tenant common.Tenant) error
-	Delete(name string, tenant common.Tenant) error
-	Update(r common.Resource, tenant common.Tenant) (common.Resource, error)
-	Get(name string, tenant common.Tenant) (common.Resource, error)
-	List(tenant common.Tenant) ([]common.Resource, error)
+	Add(r common.Resource, tenant core.Tenant) error
+	Delete(name string, tenant core.Tenant) error
+	Update(r common.Resource, tenant core.Tenant) (common.Resource, error)
+	Get(name string, tenant core.Tenant) (common.Resource, error)
+	List(tenant core.Tenant) ([]common.Resource, error)
 }
 
 type Persistence interface {
-	Add(r common.Resource, tenant common.Tenant) error
-	Delete(name string, tenant common.Tenant) error
-	Update(r common.Resource, tenant common.Tenant) (common.Resource, error)
-	Get(name string, tenant common.Tenant) (common.Resource, error)
-	List(tenant common.Tenant) ([]common.Resource, error)
-	AddDynamicResourceLifeCycle(r common.DynamicResourceLifeCycle, tenant common.Tenant) error
-	GetDynamicResourceLifeCycle(rtype string, tenant common.Tenant) (common.DynamicResourceLifeCycle, error)
-	AddToken(token string, tenant common.Tenant) error
-	DeleteToken(tenant common.Tenant) error
-	GetTenantFromToken(token, project string) (common.Tenant, error)
+	Add(r common.Resource, tenant core.Tenant) error
+	Delete(name string, tenant core.Tenant) error
+	Update(r common.Resource, tenant core.Tenant) (common.Resource, error)
+	Get(name string, tenant core.Tenant) (common.Resource, error)
+	List(tenant core.Tenant) ([]common.Resource, error)
+	AddDynamicResourceLifeCycle(r common.DynamicResourceLifeCycle, tenant core.Tenant) error
+	GetDynamicResourceLifeCycle(rtype string, tenant core.Tenant) (common.DynamicResourceLifeCycle, error)
+	AddToken(token string, tenant core.Tenant) error
+	DeleteToken(tenant core.Tenant) error
+	GetTenantFromToken(token, project string) (core.Tenant, error)
 	Close()
 }

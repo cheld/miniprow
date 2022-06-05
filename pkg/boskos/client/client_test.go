@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/cheld/miniprow/pkg/boskos/common"
+	"github.com/cheld/miniprow/pkg/common/core"
 )
 
 const (
@@ -91,7 +92,7 @@ func TestAcquire(t *testing.T) {
 			if res.Name != "res" {
 				t.Errorf("Test %v, got resource name %v, expect res", tc.name, res.Name)
 			} else {
-				resources, _ := c.storage.List(common.NewTenant())
+				resources, _ := c.storage.List(core.NewTenant())
 				if len(resources) != 1 {
 					t.Errorf("Test %v, resource in client: %d, expect 1", tc.name, len(resources))
 				}
@@ -149,7 +150,7 @@ func TestRelease(t *testing.T) {
 			t.Fatalf("failed to create the Boskos client")
 		}
 		for _, r := range tc.resources {
-			c.storage.Add(common.Resource{Name: r}, common.NewTenant())
+			c.storage.Add(common.Resource{Name: r}, core.NewTenant())
 		}
 		if tc.res == "" {
 			err = c.ReleaseAll("d")
@@ -160,7 +161,7 @@ func TestRelease(t *testing.T) {
 		if !AreErrorsEqual(err, tc.expectErr) {
 			t.Errorf("Test %v, got err %v, expect %v", tc.name, err, tc.expectErr)
 		}
-		resources, _ := c.storage.List(common.NewTenant())
+		resources, _ := c.storage.List(core.NewTenant())
 		if tc.expectErr == nil && len(resources) != 0 {
 			t.Errorf("Test %v, resource count %v, expect 0", tc.name, len(resources))
 		}
@@ -214,7 +215,7 @@ func TestUpdate(t *testing.T) {
 			t.Fatalf("failed to create the Boskos client")
 		}
 		for _, r := range tc.resources {
-			c.storage.Add(common.Resource{Name: r}, common.NewTenant())
+			c.storage.Add(common.Resource{Name: r}, core.NewTenant())
 		}
 
 		if tc.res == "" {
