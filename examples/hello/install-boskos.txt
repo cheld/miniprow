@@ -1,0 +1,19 @@
+
+kind-0.10 create cluster
+
+# rbac and crds
+kubectl create namespace boskos
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/boskos/master/deployments/base/rbac.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/boskos/master/deployments/base/crd.yaml
+
+# service
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/boskos/master/deployments/base/service.yaml
+
+# deployment
+wget https://raw.githubusercontent.com/kubernetes-sigs/boskos/master/deployments/overlays/example/boskos-resources.yaml
+kubectl create configmap -n boskos boskos-resources --from-file=boskos-resources.yaml 
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/boskos/master/deployments/base/deployment.yaml
+
+# test
+kubectl run curl --image=radial/busyboxplus:curl -i --tty
+curl -X POST 'http://boskos.boskos.svc.cluster.local/acquire?type=numeric-project&state=dirtys&dest=busy&owner=user'
